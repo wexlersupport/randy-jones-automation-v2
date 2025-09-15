@@ -5,22 +5,9 @@ export default defineEventHandler(async (event) => {
     const pipedriveApiKey = config.public.pipedriveApiKey;
     const PIPEDRIVE_BASE_URL = "https://api.pipedrive.com/v1";
 
-    const body = await readBody(event)
-    const parseBody = JSON.parse(body)
-
-    const content = parseBody.ai_summary_overview
-    const person_id = parseBody.person_id || 1; // Default to 1 if not provided
-    const org_id = parseBody.org_id || 1; // Default to 1 if not provided
-
   try {
-    const response = await axios.post(
-      `${PIPEDRIVE_BASE_URL}/notes?api_token=${pipedriveApiKey}`,
-      {
-        content,
-        person_id,
-        org_id,
-        pinned_to_person_flag : true
-      }
+    const response = await axios.get(
+      `${PIPEDRIVE_BASE_URL}/persons?api_token=${pipedriveApiKey}`
     );
 
     return {

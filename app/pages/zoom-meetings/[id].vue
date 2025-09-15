@@ -52,7 +52,9 @@
         const formatted = today.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
         const { response: next_meeting } = await getNextMeeting(nextMeetingDate)
         console.log('Next Meeting:', next_meeting)
-        let add_note_date = `${formatted} - Did QC Meeting \n`
+        let meeting_end_time: any = new Date(response.meeting_end_time);
+        meeting_end_time = meeting_end_time.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
+        let add_note_date = `${formatted} - Did QC Meeting last ${meeting_end_time} \n`
         add_note_date += `${formatted} - Set IM & ASM - ${next_meeting.choices[0].message.content} \n`;
         add_note_date += `************************************************************* \n\n`
         form.value.ai_summary_overview = add_note_date + summary_overview.choices[0].message.content;
@@ -196,6 +198,7 @@
                         </template>
                         <div class="grid grid-cols-1 gap-4">
                             <UTextarea v-model="form.ai_summary_overview" label="Overview" :rows="20" />
+                            <span class="text-sm text-gray-500 italic">*Please review and edit the AI-generated summary before adding it as a note.</span>
                         </div>
                         <template #footer>
                             <div class="flex w-full justify-end">

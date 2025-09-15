@@ -123,10 +123,15 @@ export function getRandomDayFromNext7() {
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1); // start from tomorrow
 
-  // Random offset 0–6
+  // Random offset 0–6 (days)
   const randomOffset = Math.floor(Math.random() * 7);
   const randomDate = new Date(tomorrow);
   randomDate.setDate(tomorrow.getDate() + randomOffset);
+
+  // Random time between 9:00 AM and 4:30 PM
+  const randomHour = Math.floor(Math.random() * 8) + 9; // 9–16 (4 PM)
+  const randomMinute = Math.random() < 0.5 ? 0 : 30;    // 00 or 30
+  randomDate.setHours(randomHour, randomMinute, 0, 0);
 
   // Add English ordinal suffix (st, nd, rd, th)
   function addOrdinal(n) {
@@ -138,8 +143,16 @@ export function getRandomDayFromNext7() {
   const month = randomDate.toLocaleString('en-US', { month: 'long' });
   const day = randomDate.getDate();
 
-  return `${month} ${addOrdinal(day)}`;
+  // Format time in 12-hour format with AM/PM
+  const time = randomDate.toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  return `${month} ${addOrdinal(day)} at ${time}`;
 }
+
 
 export function convertHtmlEmail(body: any) {
   return `<html>
