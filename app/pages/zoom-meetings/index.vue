@@ -223,9 +223,9 @@
         v-if="isLoading"
         class="w-full border rounded-md p-6 my-4 border-neutral-800"
     />
-    <UDashboardPanel id="material-index">
+    <UDashboardPanel v-if="!isLoading" id="zoom-meetings-index">
         <template #header>
-            <UDashboardNavbar title="Material List">
+            <UDashboardNavbar title="Zoom Meetings">
                 <template #leading>
                     <UDashboardSidebarCollapse />
                 </template>

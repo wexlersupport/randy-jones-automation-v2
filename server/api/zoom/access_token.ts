@@ -2,7 +2,6 @@ import axios from "axios";
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
-  console.log('Runtime Config:', config);
   const clientId = config.public.zoomClientId;
   const clientSecret = config.public.zoomClientSecret;
   const accountId = config.public.zoomAccountId;

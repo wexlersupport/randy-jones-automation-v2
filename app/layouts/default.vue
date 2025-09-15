@@ -14,9 +14,38 @@ const links = [[
     onSelect: () => {
       open.value = false
     }
+  },
+  {
+    label: 'For Follow Up',
+    icon: 'i-lucide-send',
+    to: '/for-follow-up',
+    slot: 'for-follow-up-components' as const,
+    onSelect: () => {
+      open.value = false
+    }
+  },
+  {
+    label: 'Inbox',
+    icon: 'i-lucide-inbox',
+    to: '/inbox',
+    onSelect: () => {
+      open.value = false
+    }
+  },
+],[],
+[
+  {
+    label: 'Feedback',
+    icon: 'i-lucide-message-circle',
+    to: 'https://github.com/nuxt-ui-pro/dashboard',
+    target: '_blank'
+  }, {
+    label: 'Help & Support',
+    icon: 'i-lucide-info',
+    to: 'https://github.com/nuxt/ui-pro',
+    target: '_blank'
   }
-],
-[]
+]
 ] satisfies NavigationMenuItem[][]
 
 const groups = computed(() => [{
