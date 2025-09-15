@@ -118,6 +118,29 @@ export function filterStringsByIndex(arrayIndex: any, arrayString: any) {
   return filteredStrings.filter((item: any) => item !== undefined);
 }
 
+export function getRandomDayFromNext7() {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1); // start from tomorrow
+
+  // Random offset 0–6
+  const randomOffset = Math.floor(Math.random() * 7);
+  const randomDate = new Date(tomorrow);
+  randomDate.setDate(tomorrow.getDate() + randomOffset);
+
+  // Add English ordinal suffix (st, nd, rd, th)
+  function addOrdinal(n) {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  const month = randomDate.toLocaleString('en-US', { month: 'long' });
+  const day = randomDate.getDate();
+
+  return `${month} ${addOrdinal(day)}`;
+}
+
 export function convertHtmlEmail(body: any) {
   return `<html>
               <head>

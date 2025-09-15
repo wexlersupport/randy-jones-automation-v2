@@ -40,13 +40,22 @@
     onMounted(async () => {
         const { response } = await getMeetingDetail()
         console.log('Fetched data:', response)
+        const nextMeetingDate = getRandomDayFromNext7()
         form.value.meeting_host_email = response.meeting_host_email;
         form.value.summary_title = response.summary_title;
-        form.value.summary_overview = response.summary_overview;
+        form.value.summary_overview = response.summary_overview + ` Next meeting date is ${nextMeetingDate}`;
 
         const { response: summary_overview } = await generateSummary()
         console.log('Generated Summary:', summary_overview)
-        form.value.ai_summary_overview = summary_overview.choices[0].message.content;
+
+        const today = new Date();
+        const formatted = today.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
+        const { response: next_meeting } = await getNextMeeting(nextMeetingDate)
+        console.log('Next Meeting:', next_meeting)
+        let add_note_date = `${formatted} - Did QC Meeting \n`
+        add_note_date += `${formatted} - Set IM & ASM - ${next_meeting.choices[0].message.content} \n`;
+        add_note_date += `************************************************************* \n\n`
+        form.value.ai_summary_overview = add_note_date + summary_overview.choices[0].message.content;
 
         isLoading.value = false
     })
@@ -106,6 +115,21 @@
                 filterObj: {
                     summary_overview: form.value.summary_overview,
                     next_steps: form.value.next_steps
+                }
+            })
+        })
+        const res = await response.json()
+
+        return res
+    }
+
+    async function getNextMeeting(nextMeetingDate: string) {
+        
+        const response = await fetch('/api/openrouterai/next_meeting', {
+            method: 'POST',
+            body: JSON.stringify({
+                filterObj: {
+                    summary_overview: form.value.summary_overview + ' Next meeting date is ' + nextMeetingDate
                 }
             })
         })
