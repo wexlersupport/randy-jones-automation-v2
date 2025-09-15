@@ -6,10 +6,10 @@ defineProps<{
 }>()
 
 const teams = ref([{
-  label: 'Hawkins Electric',
+  label: 'RJ Automation',
   avatar: {
-    src: 'https://website-media.com/hawkins-electric-services/hawkins-electric-2025/2024/06/21150741/cropped-Tigerhive_favicon_red-240x240-1-192x192-1-150x150.png',
-    alt: 'Nuxt'
+    src: 'https://github.com/nuxt.png',
+    alt: 'RJ Automation'
   }
 }, {
   label: 'NuxtHub',

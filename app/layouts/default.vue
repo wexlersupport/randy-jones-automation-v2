@@ -6,14 +6,15 @@ const toast = useToast()
 
 const open = ref(false)
 
-const links = [[{
-  label: 'Home',
-  icon: 'i-lucide-house',
-  to: '/',
-  onSelect: () => {
-    open.value = false
+const links = [[
+  {
+    label: 'Zoom Meetings',
+    icon: 'i-lucide-video',
+    to: '/zoom-meetings',
+    onSelect: () => {
+      open.value = false
+    }
   }
-}
 ],
 []
 ] satisfies NavigationMenuItem[][]

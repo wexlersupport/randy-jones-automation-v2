@@ -10,15 +10,15 @@ useHead({
     { key: 'theme-color', name: 'theme-color', content: color }
   ],
   link: [
-    { rel: 'icon', href: '/hawkins-electric.ico' }
+    { rel: 'icon', href: '/favicon.ico' }
   ],
   htmlAttrs: {
     lang: 'en'
   }
 })
 
-const title = 'Hawkins Electric'
-const description = '-'
+const title = 'Randy Jones Automation'
+const description = 'Automate your Randy Jones tasks with ease.'
 
 useSeoMeta({
   title,

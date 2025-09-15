@@ -18,7 +18,7 @@
         from: 'francis.regala@strattonstudiogames.com',
         to: '',
         subject: 'Test Subject',
-        html: `<p>Hi,</p><p><br></p><p>You have a new generated quotation available. Please see attached file for more details.</p><p><br></p><p>If you wish to edit the generated pdf quote, click link below.</p><p><a href="https://hawkins-webapp.netlify.app/" rel="noopener noreferrer" target="_blank">Hawkins Electric Web Application Link</a></p><p><br></p><p>Thank you.</p>`,
+        html: `<p>Thank you!</p>`,
         filename: 'test.pdf',
         content: '',
     })
