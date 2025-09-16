@@ -25,7 +25,7 @@
     onMounted(async () => {
         const {response} = await getPipedrivePerson()
         persons.value = response?.data || []
-        console.log(persons.value)
+        // console.log(persons.value)
 
         isLoading.value = false
     })

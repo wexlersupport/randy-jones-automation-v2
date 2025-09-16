@@ -26,6 +26,7 @@
     "axios": "^1.10.0",
     "date-fns": "^4.1.0",
     "fuse.js": "^7.1.0",
+    "googleapis": "^159.0.0",
     "nodemailer": "^7.0.6",
     "nuxt": "^3.17.5",
     "pdfjs-dist": "^5.4.149",
