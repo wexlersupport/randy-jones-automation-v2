@@ -7,7 +7,7 @@
     const route = useRoute()
     const router = useRouter()
     const personId = route.params.id as string
-    console.log('Person ID:', personId)
+    // console.log('Person ID:', personId)
     const isLoading = ref(true)
     const isLoadingSave = ref(false)
     const person = ref<any>({})
@@ -26,7 +26,7 @@
         subject: z.string(),
     })
     const { data }: any = await useFetch('/api/drive/list')
-    // console.log('Drive List Data:', data.value)
+    console.log('Drive List Data:', data.value)
     const attachmentList = ref<any[]>(data.value?.files || [])
     const selectedAttachment = ref<any[]>([]);
     // const { data: file }: any = await useFetch('/api/drive/get_files')
