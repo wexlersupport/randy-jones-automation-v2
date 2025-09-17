@@ -31,9 +31,14 @@
     const selectedAttachment = ref<any[]>([]);
     // const { data: file }: any = await useFetch('/api/drive/get_files')
     // console.log('Drive File Data:', file.value)
+    const folderList = ref<any[]>([]);
+    const selectedFolder = ref<any>(null);
 
 
     onMounted(async () => {
+        // const test = await getDriveFolder()
+        // console.log('OneDrive folder info:', test)
+
         const { response } = await getPersonDetail()
         person.value = response?.data || {}
         console.log('Fetched data:', person.value)
@@ -167,6 +172,16 @@
             isLoadingSave.value = false
         }, 500);
     }
+
+    async function getDriveFolder() {
+        const response = await fetch('/api/onedrive/microsoft-drive', {
+            method: 'POST'
+        })
+        const res = await response.json()
+
+        return res
+    }
+
 </script>
 
 <template>
@@ -206,13 +221,24 @@
                         <template #header>
                             <h2 class="text-lg font-semibold">Auto-Generated Email</h2>
                         </template>
-                        <div class="grid grid-cols-1 gap-4">
+                        <div class="grid grid-cols-1 gap-2">
                             <USelect v-model="selectedOption" :items="items" @update:modelValue="handleChange" />
                             <UInput v-model="form.from" label="From" />
                             <UInput v-model="form.to" label="To" />
                             <UInput v-model="form.subject" label="Subject" />
                             <div class="w-full space-y-2">
-                                <label class="block text-sm font-medium w-50 my-auto">Google Drive Files:</label>
+                                <label class="block text-sm font-medium w-50 my-auto">OneDrive Folder:</label>
+                                <USelect
+                                    v-model="selectedFolder"
+                                    multiple
+                                    :items="folderList.map(item => ({ value: item.id, label: item.name }))"
+                                    placeholder="Choose folder"
+                                    class="w-full"
+                                     @update:modelValue="handleSelectAttachment"
+                                />
+                            </div>
+                            <div class="w-full space-y-2">
+                                <label class="block text-sm font-medium w-50 my-auto">OneDrive Files:</label>
                                 <USelect
                                     v-model="selectedAttachment"
                                     multiple
