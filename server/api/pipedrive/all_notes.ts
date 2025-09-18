@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
   const parseBody = JSON.parse(body)
-  console.log('Parsed Body:', parseBody)
+  // console.log('Parsed Body:', parseBody)
 
   // ✅ Always required
   const config = useRuntimeConfig()

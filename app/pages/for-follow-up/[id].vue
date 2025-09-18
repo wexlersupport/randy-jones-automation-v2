@@ -383,7 +383,7 @@
         )
 
         uploadedBase64Files.value = [...uploadedBase64Files.value, ...newUploadedFiles]
-        console.log('Uploaded Base64 Files:', uploadedBase64Files.value)
+        // console.log('Uploaded Base64 Files:', uploadedBase64Files.value)
     }
 
     // Trigger hidden file input

@@ -3,13 +3,13 @@
     const route = useRoute()
     const router = useRouter()
     const meetingId = route.params.id as string
-    console.log('Meeting ID:', meetingId)
+    // console.log('Meeting ID:', meetingId)
     const isLoading = ref(true)
     const isLoadingAi = ref(false)
     const notes = ref<any[]>([])
 
     const { data }: any = await useFetch('/api/pipedrive/all_person')
-    console.log('all_person:', data.value)
+    // console.log('all_person:', data.value)
     const contactList = ref<any[]>(data.value?.response?.data || [])
     const selectedContact = ref<any>(null);
     const meetingTypeList = ref<any[]>([])
