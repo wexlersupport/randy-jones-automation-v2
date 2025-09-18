@@ -6,6 +6,7 @@
     const toast = useToast()
     const form: any = useTemplateRef('form')
     const open = ref<boolean>(false)
+    const isLoading = ref<boolean>(false)
     type EmailObj = {
         from: string,
         to: string,
@@ -53,14 +54,16 @@
 
     async function onSubmit(event: FormSubmitEvent<Schema>) {
         // console.log('emailObj', emailObj, event)
+        isLoading.value = true
 
-        emailObj.content = props.data.pdf_base64
-        const response_send_quotation = await fetch('/api/sendgrid/send-quotation', {
-            method: 'POST',
-            body: JSON.stringify({emailObj})
-        })
-        const send_quotation_res = await response_send_quotation.json()
-        // console.log('send_quotation_res ', send_quotation_res)
+        try {
+            emailObj.content = props.data.pdf_base64
+            const response_send_quotation = await fetch('/api/sendgrid/send-quotation', {
+                method: 'POST',
+                body: JSON.stringify({emailObj})
+            })
+            const send_quotation_res = await response_send_quotation.json()
+            // console.log('send_quotation_res ', send_quotation_res)
 
         if (send_quotation_res?.accepted?.length > 0 || send_quotation_res?.data?.id || (send_quotation_res.length > 0 && send_quotation_res[0].statusCode)) {
             delete emailObj.content
@@ -90,6 +93,16 @@
                 description: 'There was a problem with your request!',
             })
         }
+        } catch (error) {
+            console.error('Error sending email:', error)
+            toast.add({
+                title: 'Error',
+                description: 'Failed to send email. Please try again.',
+                color: 'error'
+            })
+        } finally {
+            isLoading.value = false
+        }
     }
 
     function onSendEmail() {
@@ -98,72 +111,118 @@
 </script>
 
 <template>
-    <UModal v-model:open="open"
-        title="Compose Email"
-        description="Fill-up required fields (*) before click the 'Send Email' button "
-        :ui="{ footer: 'justify-end' }">
-        
-        <template #body>
-            <div class="py-2">
-                <UForm ref="form" :schema="schema" :state="emailObj" class="space-y-4" @submit="onSubmit">
-                    <div>
-                        <div class="grid grid-cols-4 gap-2">
-                            <div class="text-right col-span-1 pt-1">* From:</div>
-                            <div class="col-span-3">
-                                <UFormField name="from">
-                                    <UInput v-model="emailObj.from"
-                                        placeholder="From (email address)"
-                                        autocomplete="off"
-                                        class="w-full"
-                                        readonly
-                                        disabled
-                                    />
-                                </UFormField>
-                            </div>
-                            <div class="text-right col-span-1 pt-1">* To:</div>
-                            <div class="col-span-3">
-                                <UFormField name="to">
-                                    <UInput v-model="emailObj.to"
-                                        placeholder="To (email address)"
-                                        autocomplete="off"
-                                        class="w-full"
-                                    />
-                                </UFormField>
-                            </div>
-                            <div class="text-right col-span-1 pt-1">* Subject:</div>
-                            <div class="col-span-3">
-                                <UFormField name="subject">
-                                    <UInput v-model="emailObj.subject"
-                                        placeholder="Subject"
-                                        autocomplete="off"
-                                        class="w-full"
-                                    />
-                                </UFormField>
-                            </div>
-                            <div class="py-4 col-span-4 h-[200px]">
-                                <ClientOnly>
-                                    <QuillEditor contentType="html" v-model:content="emailObj.html"
-                                        theme="snow" placeholder="Write your message here..." />
-                                </ClientOnly>
-                            </div>
-                            <div id="uploadedFilesContainer" class="col-span-4 mt-6 p-4 rounded-md border">
-                                <div class="text-sm mb-2">Attachment Files:</div>
-                                <ul id="uploadedFilesList" class="list-disc pl-4 text-red-400" v-if="pdf_name">
-                                    <li class="flex items-center space-x-2 mb-1" @click="emits('download')">
-                                        <UButton :label="`${pdf_name}.pdf`" class="cursor-pointer" icon="i-lucide-file-text" variant="ghost" />
-                                    </li>
-                                </ul>
-                                <p  v-if="!pdf_name" id="noFilesMessage" class="text-gray-500 text-sm italic">No files uploaded yet.</p>
+    <UModal v-model="open" class="w-full sm:max-w-4xl">
+        <UForm ref="form" :schema="schema" :state="emailObj" @submit="onSubmit" class="space-y-6">
+            <UCard class="px-6 py-4 sm:p-6 divide-y divide-gray-100 dark:divide-gray-800">
+                <template #header>
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            Send Email
+                        </h3>
+                        <UButton 
+                            color="neutral" 
+                            variant="ghost" 
+                            icon="i-heroicons-x-mark-20-solid" 
+                            class="-my-1" 
+                            @click="open = false" 
+                        />
+                    </div>
+                </template>
+
+                <div class="space-y-6">
+                    <!-- Email Recipients -->
+                    <div class="grid grid-cols-1 gap-4">
+                        <UFormGroup label="To" name="to" class="space-y-2">
+                            <UInput 
+                                v-model="emailObj.to" 
+                                placeholder="recipient@example.com"
+                                type="email"
+                                size="lg"
+                                class="w-full"
+                            />
+                        </UFormGroup>
+                    </div>
+
+                    <!-- Email Subject -->
+                    <div class="grid grid-cols-1 gap-4">
+                        <UFormGroup label="Subject" name="subject" class="space-y-2">
+                            <UInput 
+                                v-model="emailObj.subject" 
+                                placeholder="Enter email subject"
+                                size="lg"
+                                class="w-full"
+                            />
+                        </UFormGroup>
+                    </div>
+
+                    <!-- Email Content -->
+                    <div class="space-y-3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Message
+                        </label>
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                            <QuillEditor 
+                                v-model:content="emailObj.html" 
+                                content-type="html"
+                                :options="{
+                                    theme: 'snow',
+                                    modules: {
+                                        toolbar: [
+                                            ['bold', 'italic', 'underline'],
+                                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                            ['link'],
+                                            ['clean']
+                                        ]
+                                    },
+                                    placeholder: 'Compose your email message...'
+                                }"
+                                class="min-h-[200px]"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Attachments Section -->
+                    <div v-if="pdf_name" class="space-y-3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Attachments
+                        </label>
+                        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center space-x-3">
+                                <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-gray-500" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                                    {{ pdf_name }}
+                                </span>
+                                <UBadge color="success" variant="soft" size="xs">
+                                    PDF
+                                </UBadge>
                             </div>
                         </div>
                     </div>
-                </UForm>
-            </div>
-        </template>
+                </div>
 
-        <template #footer="{ close }">
-            <UButton @click="open = false" label="Cancel" color="neutral" variant="outline" />
-            <UButton @click="onSendEmail" label="Send Email" icon="i-lucide-send" color="info" />
-        </template>
+                <template #footer>
+                    <div class="flex justify-end space-x-3">
+                        <UButton 
+                            color="neutral" 
+                            variant="soft" 
+                            @click="open = false"
+                            size="lg"
+                        >
+                            Cancel
+                        </UButton>
+                        <UButton 
+                            type="submit" 
+                            color="primary"
+                            size="lg"
+                            :loading="isLoading"
+                            :disabled="!emailObj.to || !emailObj.subject"
+                        >
+                            <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 mr-2" />
+                            Send Email
+                        </UButton>
+                    </div>
+                </template>
+            </UCard>
+        </UForm>
     </UModal>
 </template>
