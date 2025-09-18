@@ -6,6 +6,20 @@ export function randomFrom<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]!
 }
 
+export function toBase64(file: any) {
+  return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file) // returns "data:<mime>;base64,xxxx"
+      reader.onload = () => {
+          const result: any = reader.result
+          // Remove the "data:...;base64," prefix
+          const base64String = result.split(',')[1]
+          resolve(base64String)
+      }
+      reader.onerror = (error) => reject(error)
+  })
+}
+
 export function convertDate(date: any) {
     const todayLocal = new Date(
         date.getFullYear(),
@@ -118,13 +132,13 @@ export function filterStringsByIndex(arrayIndex: any, arrayString: any) {
   return filteredStrings.filter((item: any) => item !== undefined);
 }
 
-export function getRandomDayFromNext7() {
-  const today = new Date();
+export function getRandomDayFromNext7(_numberOfDays = 7, _startDate = new Date()): string {
+  const today = _startDate;
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1); // start from tomorrow
 
   // Random offset 0–6 (days)
-  const randomOffset = Math.floor(Math.random() * 7);
+  const randomOffset = Math.floor(Math.random() * _numberOfDays);
   const randomDate = new Date(tomorrow);
   randomDate.setDate(tomorrow.getDate() + randomOffset);
 
@@ -144,13 +158,27 @@ export function getRandomDayFromNext7() {
   const day = randomDate.getDate();
 
   // Format time in 12-hour format with AM/PM
-  const time = randomDate.toLocaleString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
+  // const time = randomDate.toLocaleString('en-US', {
+  //   hour: 'numeric',
+  //   minute: '2-digit',
+  //   hour12: true
+  // });
 
-  return `${month} ${addOrdinal(day)} at ${time}`;
+  return `${month} ${addOrdinal(day)}`;
+}
+
+export function convertToMMDD(dateString: any) {
+  // 1️⃣ Remove the "st", "nd", "rd", "th"
+  const cleaned = dateString.replace(/(\d+)(st|nd|rd|th)/, '$1');
+
+  // 2️⃣ Parse into a Date object
+  const date = new Date(cleaned + " 2025"); // Add a year to make it valid
+
+  // 3️⃣ Format to MM/DD
+  const formatted = String(date.getMonth() + 1).padStart(2, '0') + '/' + 
+                    String(date.getDate()).padStart(2, '0');
+
+  return formatted;
 }
 
 
