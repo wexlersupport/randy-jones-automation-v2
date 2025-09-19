@@ -24,6 +24,7 @@
         from: z.string(),
         to: z.string(),
         subject: z.string(),
+        next_meeting_date: z.string().optional(),
     })
     const { data }: any = await useFetch('/api/onedrive/microsoft-drive')
     // console.log('OneDrive:', data.value)
@@ -37,7 +38,16 @@
     // console.log('Zoom Meeting Summary:', _zoom.value)
     const zoomMeetingDetails = ref<any>(_zoom.value?.response?.summaries || {})
     const selectedZoomMeeting = ref<any>(zoomMeetingDetails.value[0]?.meeting_uuid || null);
+    const formattedNextMeeting = ref<any>('');
+    const nextMeetingDate = ref<any>('');
 
+    const selectedFollowUp = ref<any>(null);
+    const itemsFollowup = ref<any[]>([]);
+
+    // const { data: customers } = await useFetch('/api/postgre', {
+    //     query: { table: 'customers' }
+    // });
+    // console.log('PostgreSQL Customers:', customers.value);
 
     onMounted(async () => {
         const { data }: any = await useFetch('/api/calendar/all_calendar')
@@ -45,13 +55,33 @@
         calendarObject.value = data.value?.response?.value.find((cal: any) => cal.name === 'Calendar')
         // console.log('Calendar:', calendarObject.value)
 
-        const { response: calendarEvents }: any = await getCalendarEvents()
+        const res_next_meeting = await getNextMeetingDate();
+        console.log('res_next_meeting1:', res_next_meeting) // Mon Sep 22 2025
+        if (!res_next_meeting) {
+            const res_next_meeting = await getNextMeetingDate();
+            formattedNextMeeting.value = res_next_meeting.formattedNextMeeting
+            nextMeetingDate.value = res_next_meeting.nextMeetingDate
+            console.log('res_next_meeting2:', res_next_meeting) // Mon Sep 22 2025
+        }
+
+        if (!formattedNextMeeting.value) {
+            const today = new Date();
+            today.setDate(today.getDate() + 7);
+            form.value.next_meeting_date = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        } else {
+            const d = new Date(formattedNextMeeting.value);
+            const next_meeting_date = d.toISOString().split("T")[0];
+            form.value.next_meeting_date = next_meeting_date ?? ''
+        }
+
+        // const { response: calendarEvents }: any = await getCalendarEvents()
         // console.log('Calendar Events:', calendarEvents)
 
         const { response } = await getPersonDetail()
         person.value = response?.data || {}
         // console.log('Fetched data:', person.value)
         items.value = signatureList({ name: person.value?.name })
+        itemsFollowup.value = forFollowUp({ name: person.value?.name })
         form.value.id = person.value.id
         form.value.name = person.value.name
         form.value.org_name = person.value.org_name
@@ -83,6 +113,7 @@
         from: 'francis.regala@strattonstudiogames.com',
         to: '',
         subject: '',
+        next_meeting_date: '',
     })
 
     async function onSubmit() {
@@ -133,19 +164,8 @@
         }
         // console.log('Attachments:', attachments)
 
-        const response = await fetch('/api/email/send', {
-            method: 'POST',
-            body: JSON.stringify({
-                emailObj: {
-                    attachments,
-                    from: form.value.from,
-                    to: form.value.to,
-                    subject: form.value.subject,
-                    html: convertHtmlEmail(form.value.generated_email || ''),
-                }
-            })
-        })
-        const res = await response.json()
+        const res = await sendEmail(attachments)
+        // const res = {accepted: ['asdf@example.com']}
         // console.log('Email Send Response:', res)
 
         if (res?.accepted?.length > 0) {
@@ -163,10 +183,6 @@
                     color: 'success'
                 })
             }
-
-            // setTimeout(() => {
-            //     router.back()
-            // }, 1000)
         } else {
             toast.add({
                 title: 'Error',
@@ -180,40 +196,86 @@
         }, 1000);
     }
 
-    async function handleAddCalendarEvent() {
+    async function sendingMeetingInvites(actualMeetingStartDate: any) {
+        const send_meeting_date = actualMeetingStartDate.split("T")[0];
+        console.log('send_meeting_date:', send_meeting_date) // 2025-09-22
+        const dtStart = convertDateStamp(send_meeting_date, '15:00')
+        const dtEnd = convertDateStamp(send_meeting_date, '16:00')
+        console.log('dtStart dtEnd:', dtStart, dtEnd) //20250922T070000Z 20250922T080000Z
+
+        const response = await fetch('/api/email/meeting-invites', {
+            method: 'POST',
+            body: JSON.stringify({
+                emailObj: {
+                    dt_start: dtStart,
+                    dt_end: dtEnd,
+                    from: form.value.from,
+                    to: form.value.to,
+                    subject: form.value.subject,
+                }
+            })
+        })
+        const res = await response.json()
+
+        return res
+    }
+
+    async function sendEmail(attachments: any[]) {
+        // This function is now integrated into onSubmit
+        const response = await fetch('/api/email/send', {
+            method: 'POST',
+            body: JSON.stringify({
+                emailObj: {
+                    attachments,
+                    from: form.value.from,
+                    to: form.value.to,
+                    subject: form.value.subject,
+                    html: convertHtmlEmail(form.value.generated_email || ''),
+                }
+            })
+        })
+        const res = await response.json()
+
+        return res
+    }
+
+    async function getNextMeetingDate() {
         const nextMeetingDate = getRandomDayFromNext7(30)
-        // console.log('nextMeetingDate:', nextMeetingDate)
+        console.log('nextMeetingDate:', nextMeetingDate) //September 22nd
 
         const cleanDate = nextMeetingDate.replace(/(\d+)(st|nd|rd|th)/, "$1");
         const year = new Date().getFullYear();
         const fullDate = `${cleanDate} ${year}`;
         const date = new Date(fullDate);
         const formattedNextMeeting: any = date.toDateString().split("T")[0];
-        // console.log('formattedNextMeeting:', formattedNextMeeting)
+        console.log('formattedNextMeeting:', formattedNextMeeting)
 
-        const meetingDate = new Date(formattedNextMeeting); // Your meeting date
+        return { nextMeetingDate, formattedNextMeeting }
+    }
+
+    async function getPreviousSunday(formattedNextMeeting: any) {
+        const pad = (n: any) => String(n).padStart(2, '0');
+        
+        const meetingDate = new Date(formattedNextMeeting);
+        console.log('meetingDate:', meetingDate) //Mon Sep 22 2025 00:00:00 GMT+0800 (Philippine Standard Time)
         const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
         const previousSunday = new Date(meetingDate);
         previousSunday.setDate(meetingDate.getDate() - dayOfWeek);
         // Set the desired time (15:00:00)
-        previousSunday.setHours(15, 0, 0, 0);
-        // console.log('previousSunday:', previousSunday)
+        // previousSunday.setHours(15, 0, 0, 0);
+        const startPreviousSunday = previousSunday.getFullYear() + '-' +
+            pad(previousSunday.getMonth() + 1) + '-' +
+            pad(previousSunday.getDate()) + 'T15:00'
+
+        const endPreviousSunday = previousSunday.getFullYear() + '-' +
+            pad(previousSunday.getMonth() + 1) + '-' +
+            pad(previousSunday.getDate()) + 'T16:00'
+
+        return { startPreviousSunday, endPreviousSunday }
+    }
+
+    async function calenderEventFormatDate(formattedNextMeeting: any) {
         const pad = (n: any) => String(n).padStart(2, '0');
-
-        const formatDateStart = previousSunday.getFullYear() + '-' +
-            pad(previousSunday.getMonth() + 1) + '-' +
-            pad(previousSunday.getDate()) + 'T' +
-            pad(previousSunday.getHours()) + ':' +
-            pad(previousSunday.getMinutes());
-
-        const formatDateEnd = previousSunday.getFullYear() + '-' +
-            pad(previousSunday.getMonth() + 1) + '-' +
-            pad(previousSunday.getDate()) + 'T' +
-            pad(previousSunday.getHours()+1) + ':' +
-            pad(previousSunday.getMinutes());
-        // console.log('formatDateStart:', formatDateStart, formatDateEnd)
-        const { response: sundayReminder } = await addCalendarEvent(formatDateStart, formatDateEnd)
-
         const _nextMeeting = new Date(formattedNextMeeting);
         let actualMeetingStartDate = _nextMeeting.getFullYear() + '-' +
             pad(_nextMeeting.getMonth() + 1) + '-' +
@@ -221,20 +283,54 @@
         let actualMeetingEndDate = _nextMeeting.getFullYear() + '-' +
             pad(_nextMeeting.getMonth() + 1) + '-' +
             pad(_nextMeeting.getDate()) + 'T16:00'
-        const { response: actualMeetingInvite } = await addCalendarEvent(actualMeetingStartDate, actualMeetingEndDate)
-        // console.log('Add Calendar Event Response:', response)
 
-        const _date = new Date(formatDateStart);
-        const formatted = new Intl.DateTimeFormat("en-US", {
+        return { actualMeetingStartDate, actualMeetingEndDate }
+    }
+
+    async function handleAddCalendarEvent() {
+        // const { nextMeetingDate, formattedNextMeeting } = await getNextMeetingDate();
+        // console.log('formattedNextMeeting:', formattedNextMeeting) //Mon Sep 22 2025
+        formattedNextMeeting.value = form.value.next_meeting_date
+        console.log('formattedNextMeeting.value:', formattedNextMeeting.value)
+
+        const _date = new Date(form.value.next_meeting_date);
+        nextMeetingDate.value = new Intl.DateTimeFormat("en-US", {
+            year: "numeric",   // 2025
+            month: "long",     // October
+            day: "numeric"     // 5
+        }).format(_date);
+        console.log('nextMeetingDate.value:', nextMeetingDate.value)
+
+        const { startPreviousSunday, endPreviousSunday } = await getPreviousSunday(formattedNextMeeting.value);
+        console.log('startPreviousSunday:', startPreviousSunday, 'endPreviousSunday:', endPreviousSunday) //startPreviousSunday: 2025-09-21T15:00 endPreviousSunday: 2025-09-21T16:00
+        const { response: sundayReminder } = await addCalendarEvent(startPreviousSunday, endPreviousSunday)
+
+        const { actualMeetingStartDate, actualMeetingEndDate } = await calenderEventFormatDate(formattedNextMeeting.value);
+        console.log('actualMeetingStartDate:', actualMeetingStartDate, 'actualMeetingEndDate:', actualMeetingEndDate) //actualMeetingStartDate: 2025-09-22T09:00 actualMeetingEndDate: 2025-09-22T16:00
+        const { response: actualMeetingInvite } = await addCalendarEvent(actualMeetingStartDate, actualMeetingEndDate)
+        console.log('actualMeetingInvite:', actualMeetingInvite) //{@odata.context: "https://graph.microsoft.com/v1.0/$metadata#users('…y%40automationpm.onmicrosoft.com')/events/$entity", @odata.etag: 'W/"MbPvhBte9Uu/e4THen7M7wAAAYXvrQ=="', id: 'AAMkADExNjcwN2FmLWY0MTQtNGEwYy1iNzJlLTY3OTRhMDIxNT…6fszvAAAAAAENAAAxs__EG171S797hMd6fszvAAABiA19AAA=', createdDateTime: '2025-09-19T03:00:00.6838407Z', lastModifiedDateTime: '2025-09-19T03:00:00.7558834Z', …}
+
+        const sunday_reminder_calendar = await setSundayReminderCalendar(startPreviousSunday)
+        console.log('sunday_reminder_calendar:', sunday_reminder_calendar) //Sunday, September 21, 2025
+
+        const res_send_invites = await sendingMeetingInvites(actualMeetingStartDate)
+        console.log('Meeting Invite:', res_send_invites)
+
+        alert(`Email and Calendar Invite sent to ${form.value.to} for ${nextMeetingDate.value}. This will also send a Reminder Calendar Event for ${sunday_reminder_calendar}.`)
+
+        return {actualMeetingInvite, sundayReminder}
+    }
+
+    async function setSundayReminderCalendar(startPreviousSunday: any) {
+        const _date = new Date(startPreviousSunday);
+        const sunday_reminder_calendar = new Intl.DateTimeFormat("en-US", {
             weekday: "long",   // Sunday
             year: "numeric",   // 2025
             month: "long",     // October
             day: "numeric"     // 5
         }).format(_date);
 
-        alert(`Sending this email would also create a Reminder Calendar Appointment on ${formatted}. Next meeting date will be on ${nextMeetingDate}.`)
-
-        return {actualMeetingInvite, sundayReminder}
+        return sunday_reminder_calendar
     }
 
     async function addCalendarEvent(start_date_time: any, end_date_time: any) {
@@ -290,29 +386,7 @@
     }
 
     async function handleSelectAttachment(value: any) {
-        // isLoadingSave.value = true
-
-        // const file_id = selectedAttachment.value[selectedAttachment.value?.length - 1]
-        // const findIndex = attachmentList.value.findIndex((file: any) => file.id === file_id)
-        // const findItem = attachmentList.value.find((file: any) => file.id === file_id)
-
-        // if (selectedAttachment.value.length === 0 || !file_id || !findItem) {
-        //     return
-        // }
-
-        // const responseFiles = await fetch('/api/onedrive/base64_string', {
-        //     method: 'POST',
-        //     body: JSON.stringify({
-        //         filesObj: { file_id }
-        //     })
-        // })
-        // const {response: base64String} = await responseFiles.json()
-
-        // attachmentList.value[findIndex].base64String = base64String
-
-        // setTimeout(() => {
-        //     isLoadingSave.value = false
-        // }, 500);
+        // console.log('Selected Attachments:', value)
     }
 
     async function handleSelectFolder(value: any) {
@@ -391,6 +465,15 @@
         uploadedFiles.value?.click()
     }
 
+    async function handleForFollowUp() {
+        console.log('Selected For Follow Up:', selectedFollowUp.value)
+
+        const _items = forFollowUp({ name: person.value?.name })
+        const selected = _items.find(item => item.value === selectedFollowUp.value);
+        console.log('selected:', selected)
+        form.value.generated_email = selected?.html || '';
+    }
+
 </script>
 
 <template>
@@ -413,7 +496,7 @@
             <div class="p-6 space-y-8">
                 <UForm :state="form" :schema="schema" @submit="onSubmit" class="space-x-6 flex">
                     <!-- Summary Info -->
-                    <UCard class="w-full">
+                    <UCard class="w-full h-96">
                         <template #header>
                             <h2 class="text-lg font-semibold">Person Details</h2>
                         </template>
@@ -428,7 +511,7 @@
                             <UInput v-model="form.name" label="Person Name" />
                             <UInput v-model="form.primary_email" label="Primary Email" />
                             <UInput v-model="form.org_name" label="Organization Name" />
-                            <UTextarea v-model="form.owner_name" label="Contact By" :rows="15" />
+                            <UTextarea v-model="form.owner_name" label="Contact By" :rows="2" />
                         </div>
                     </UCard>
 
@@ -437,13 +520,29 @@
                         <template #header>
                             <h2 class="text-lg font-semibold">Auto-Generated Email</h2>
                         </template>
-                        <div class="grid grid-cols-1 gap-2">
-                            <USelect v-model="selectedOption" :items="items" @update:modelValue="handleChange" />
-                            <UInput v-model="form.from" label="From" />
-                            <UInput v-model="form.to" label="To" />
-                            <UInput v-model="form.subject" label="Subject" />
-                            <div class="w-full space-y-2">
-                                <label class="block text-sm font-medium w-50 my-auto">OneDrive Folder:</label>
+                        <div class="grid grid-cols-1 gap-1">
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting List:</label>
+                                <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" />
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
+                                <UInput v-model="form.from" label="From" class="w-full"/>
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
+                                <UInput v-model="form.to" label="To" class="w-full"/>
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Subject:</label>
+                                <UInput v-model="form.subject" label="Subject" class="w-full"/>
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
+                                <UInput v-model="form.next_meeting_date" type="date" label="Next Meeting Date" class="w-full"/>
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">OneDrive Folder:</label>
                                 <USelect
                                     v-model="selectedFolder"
                                     :items="folderList.map(item => ({ value: item.id, label: item.name }))"
@@ -456,8 +555,8 @@
                                 v-if="isLoadingSave"
                                 class="w-full border rounded-md p-6 my-4 border-neutral-800"
                             />
-                            <div v-if="!isLoadingSave" class="w-full space-y-2">
-                                <label class="block text-sm font-medium w-50 my-auto">OneDrive Files:</label>
+                            <div v-if="!isLoadingSave" class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">OneDrive Files:</label>
                                 <USelect
                                     v-model="selectedAttachment"
                                     multiple
@@ -469,7 +568,7 @@
                             </div>
                             <!-- Selected Files Layout -->
                             <div v-if="(selectedAttachment.length || uploadedBase64Files.length) && !isLoadingSave" class="space-y-2">
-                                <label class="block text-sm font-medium w-50 my-auto">Selected Attachments:</label>
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Selected Attachments:</label>
 
                                 <ul class="divide-y divide-gray-200 dark:divide-gray-800 border rounded p-3 
                                             bg-gray-50 dark:bg-gray-900">
@@ -502,6 +601,10 @@
                                 <UButton v-if="uploadedBase64Files.length" class="float-right ml-2 text-white" color="error" @click="uploadedBase64Files = []">
                                     Clear
                                 </UButton>
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">For Follow-Up:</label>
+                                <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="For Follow Up Signatures"/>
                             </div>
                             <div v-if="!isLoadingSave" class="mb-4 h-[360px]">
                                 <ClientOnly>
