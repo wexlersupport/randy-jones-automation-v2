@@ -33,6 +33,7 @@
     const folderList = ref<any[]>(data.value?.response || []);
     const selectedFolder = ref<any>(null);
     const calendarObject = ref<any>(null);
+    const eventObject = ref<any>(null);
 
     const { data: _zoom }: any = await useFetch('/api/zoom/meeting_summary')
     // console.log('Zoom Meeting Summary:', _zoom.value)
@@ -41,8 +42,11 @@
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
 
+    const { data: _data } = await useFetch('/api/postgre', {
+        query: { table: 'for_follow_up_templates', isDesc: true },
+    });
+    const itemsFollowup = ref<any[]>(_data.value?.data || []);
     const selectedFollowUp = ref<any>(null);
-    const itemsFollowup = ref<any[]>([]);
 
     // const { data: customers } = await useFetch('/api/postgre', {
     //     query: { table: 'customers' }
@@ -86,7 +90,7 @@
         person.value = response?.data || {}
         // console.log('Fetched data:', person.value)
         items.value = signatureList({ name: person.value?.name })
-        itemsFollowup.value = forFollowUp({ name: person.value?.name })
+        // itemsFollowup.value = forFollowUp({ name: person.value?.name })
         form.value.id = person.value.id
         form.value.name = person.value.name
         form.value.org_name = person.value.org_name
@@ -182,6 +186,9 @@
                 })
 
                 const new_event= await handleAddCalendarEvent()
+                const save_response = await saveClientResponse()
+                console.log('save_response:', save_response)
+
                 if (new_event) {
                     toast.add({
                         title: 'Calendar event created successfully',
@@ -207,6 +214,26 @@
         setTimeout(() => {
             isLoadingSave.value = false
         }, 1000);
+    }
+
+    async function saveClientResponse() {
+        const response = await $fetch('/api/postgre', {
+            method: 'POST',
+            query: {
+                table: 'client_response'
+            },
+            body: {
+                event_id: eventObject.value?.id || null,
+                person_id: person.value?.id || null,
+                meeting_id: selectedZoomMeeting.value,
+                signature_id: selectedOption.value,
+                next_meeting_date: form.value?.next_meeting_date || null,
+                person_email: person.value?.primary_email || null,
+                person_name: person.value?.name || null
+            }
+        })
+
+        return response
     }
 
     async function sendingMeetingInvites(actualMeetingStartDate: any) {
@@ -325,7 +352,7 @@
         let actualMeetingStartDate = formattedNextMeeting
         let actualMeetingEndDate = _nextMeeting.getFullYear() + '-' +
             pad(_nextMeeting.getMonth() + 1) + '-' +
-            pad(_nextMeeting.getDate()) + 'T16:00'
+            pad(_nextMeeting.getDate()) + 'T' + String(_nextMeeting.getHours() + 1).padStart(2, '0') + ':' + pad(_nextMeeting.getMinutes())
         console.log('actualMeetingStartDate:', actualMeetingStartDate, 'actualMeetingEndDate:', actualMeetingEndDate) //actualMeetingStartDate: 2025-09-22T09:00 actualMeetingEndDate: 2025-09-22T16:00
 
         return { actualMeetingStartDate, actualMeetingEndDate }
@@ -357,6 +384,7 @@
 
         const { response: actualMeetingInvite } = await addCalendarEvent(actualMeetingStartDate, actualMeetingEndDate) // Outlook
         console.log('actualMeetingInvite:', actualMeetingInvite) //{@odata.context: "https://graph.microsoft.com/v1.0/$metadata#users('…y%40automationpm.onmicrosoft.com')/events/$entity", @odata.etag: 'W/"MbPvhBte9Uu/e4THen7M7wAAAYXvrQ=="', id: 'AAMkADExNjcwN2FmLWY0MTQtNGEwYy1iNzJlLTY3OTRhMDIxNT…6fszvAAAAAAENAAAxs__EG171S797hMd6fszvAAABiA19AAA=', createdDateTime: '2025-09-19T03:00:00.6838407Z', lastModifiedDateTime: '2025-09-19T03:00:00.7558834Z', …}
+        eventObject.value = actualMeetingInvite
 
         const sunday_reminder_calendar = await setSundayReminderCalendar(startPreviousSunday)
         console.log('sunday_reminder_calendar:', sunday_reminder_calendar) //Sunday, September 21, 2025
@@ -507,10 +535,10 @@
     async function handleForFollowUp() {
         console.log('Selected For Follow Up:', selectedFollowUp.value)
 
-        const _items = forFollowUp({ name: person.value?.name })
+        const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
         console.log('selected:', selected)
-        form.value.generated_email = selected?.html || '';
+        form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
     }
 
     async function removeAttachment(file: any) {

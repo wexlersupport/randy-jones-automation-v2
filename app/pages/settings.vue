@@ -2,16 +2,16 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 const links = [[{
-  label: 'General',
-  icon: 'i-lucide-user',
-  to: '/settings/general',
+  label: 'For Follow Up',
+  icon: 'i-lucide-send',
+  to: '/settings',
   exact: true
 },
-{
-  label: 'Field Service',
-  icon: 'i-lucide-book-open',
-  to: '/settings/field_service',
-  exact: true
+// {
+//   label: 'Field Service',
+//   icon: 'i-lucide-book-open',
+//   to: '/settings/field_service',
+//   exact: true
 // }, {
 //   label: 'Members',
 //   icon: 'i-lucide-users',
@@ -34,7 +34,7 @@ const links = [[{
 //   icon: 'i-lucide-shopping-cart',
 //   to: 'https://ui.nuxt.com/pro/purchase',
 //   target: '_blank'
-}]] satisfies NavigationMenuItem[][]
+]] satisfies NavigationMenuItem[][]
 </script>
 
 <template>
@@ -53,7 +53,7 @@ const links = [[{
     </template>
 
     <template #body>
-      <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full lg:max-w-2xl mx-auto">
+      <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full mx-auto">
         <NuxtPage />
       </div>
     </template>
