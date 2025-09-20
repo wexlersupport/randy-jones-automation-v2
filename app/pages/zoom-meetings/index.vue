@@ -24,8 +24,8 @@
 
     onMounted(async () => {
         const { response } = await getAllZoomMeetings()
-        data.value = response?.summaries || []
-        console.log('Fetched Zoom meeting summaries:', data.value)
+        data.value = response || []
+        console.log('Fetched Zoom meeting:', data.value)
 
         isLoading.value = false
     })
@@ -152,7 +152,21 @@
         },
         {
             accessorKey: 'meeting_topic',
-            header: 'Meeting Topic',
+            header: 'Meeting Details',
+            cell: ({ row }) => {
+                const summary_details = row.original.detail.summary_details
+                console.log('Summary details:', summary_details)
+                return summary_details?.map((detail: any) => detail.label).join(' ') || '-'
+            }
+        },
+        {
+            accessorKey: 'detail.summary_overview',
+            header: 'Meeting Overview',
+            cell: ({ row }) => {
+                const summary_overview = row.original.detail.summary_overview
+                console.log('Summary overview:', summary_overview)
+                return summary_overview?.length > 50 ? summary_overview?.slice(0, 50) + "…" : summary_overview
+            }
         },
         {
             accessorKey: 'summary_created_time',

@@ -48,7 +48,8 @@
         })),
         next_steps: z.array(z.string()),
         summary_content: z.string(),
-        ai_summary_overview: z.string().optional()
+        ai_summary_overview: z.string().optional(),
+        client_email: z.string().email().optional()
     })
 
     onMounted(async () => {
@@ -56,6 +57,7 @@
         // console.log('meetingTypeList:', meetingTypeList.value)
         selectedMeetingType.value = meetingTypeList.value.length ? meetingTypeList.value[0].value : null;
         selectedContact.value = contactList.value.length ? contactList.value[0].id : null;
+        console.log('Selected Contact:', selectedContact.value)
         const { response: _notes } = await getNotes()
         if (_notes?.data?.length) {
             notes.value = _notes.data.filter((note: any) => note.content?.includes('************************************')) || []
@@ -70,6 +72,7 @@
         form.value.meeting_host_email = response.meeting_host_email;
         form.value.summary_title = response.summary_title;
         form.value.summary_overview = response.summary_overview + ` Next meeting date is ${nextMeetingDate}`;
+        form.value.client_email = selectedContact.value ? contactList.value.find(item => item.id === selectedContact.value)?.primary_email || '' : '';
 
         const { response: summary_overview } = await generateSummary()
         // console.log('Generated Summary:', summary_overview)
@@ -102,7 +105,8 @@
         summary_details: [],
         next_steps: [],
         summary_content: '',
-        ai_summary_overview: ''
+        ai_summary_overview: '',
+        client_email: ''
     })
 
     async function handleMeetingSummary() {
@@ -270,6 +274,8 @@
         } else {
             notes.value = []
         }
+
+        form.value.client_email = selectedContact.value ? contactList.value.find(item => item.id === selectedContact.value)?.primary_email || '' : '';
     }
 
     async function handleSelectMeetingType(value: any) {
@@ -307,10 +313,23 @@
                         <template #header>
                             <h2 class="text-lg font-semibold">Meeting Details</h2>
                         </template>
-                        <div class="grid grid-cols-1 gap-4">
-                            <UInput v-model="form.meeting_host_email" label="Meeting Host Email" />
-                            <UInput v-model="form.summary_title" label="Summary Title" />
-                            <UTextarea v-model="form.summary_overview" label="Overview" :rows="15" />
+                        <div class="grid grid-cols-1 gap-2">
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Host Email</label>
+                                <UInput v-model="form.meeting_host_email" label="Meeting Host Email" disabled class="w-full" />
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Client Email</label>
+                                <UInput v-model="form.client_email" label="Meeting Client Email" disabled class="w-full" />
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Title</label>
+                                <UInput v-model="form.summary_title" label="Summary Title" disabled class="w-full" />
+                            </div>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Overview</label>
+                                <UTextarea v-model="form.summary_overview" label="Overview" disabled :rows="15" class="w-full" />
+                            </div>
                         </div>
                     </UCard>
 
@@ -320,8 +339,8 @@
                             <h2 class="text-lg font-semibold">AI Generated Summary Details</h2>
                         </template>
                         <div class="grid grid-cols-1 gap-2">
-                            <div class="w-full space-y-2">
-                                <label class="block text-sm font-medium w-50 my-auto">Contacts:</label>
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Contacts:</label>
                                 <USelect
                                     v-model="selectedContact"
                                     :items="contactList.map(item => ({ value: item.id, label: item.name }))"
