@@ -12,6 +12,11 @@
     const search = ref('')
     const statusFilter = ref('all')
     const isLoading = ref<boolean>(true)
+    const { data: _data } = await useFetch('/api/postgre/zoom_meetings/all_meetings', {
+        query: { table: 'zoom_meetings' }
+    });
+    const postgreMeetings = ref<any[]>(_data.value?.data || [])
+    // console.log('Initial Postgre meetings:', postgreMeetings.value)
 
     const toast = useToast()
     const table = useTemplateRef('table')
@@ -23,9 +28,7 @@
     })
 
     onMounted(async () => {
-        const { response } = await getAllZoomMeetings()
-        data.value = response || []
-        console.log('Fetched Zoom meeting:', data.value)
+        await mergeMeetings()
 
         isLoading.value = false
     })
@@ -103,6 +106,45 @@
         ]
     }
 
+    async function mergeMeetings() {
+        const leaf_process = leafProcess()
+        const { response } = await getAllZoomMeetings()
+        data.value = response || []
+
+        const existingMeetingIds = new Set(postgreMeetings.value.map(m => m.meeting_uuid));
+        // console.log('existingMeetingIds:', existingMeetingIds);
+
+        const filteredZoomMeetings = data.value.filter((m) => {
+            const postgre_meeting_index = postgreMeetings.value.findIndex(
+                (pm) => pm.meeting_uuid === m.meeting_uuid
+            );
+
+            if (postgre_meeting_index !== -1) {
+                const meeting_process = leaf_process.find(p => p.value === postgreMeetings.value[postgre_meeting_index].signature_id)?.label;
+                const meeting_subject = leaf_process.find(p => p.value === postgreMeetings.value[postgre_meeting_index].signature_id)?.subject;
+                postgreMeetings.value[postgre_meeting_index] = {
+                    meeting_process,
+                    meeting_subject,
+                    ...postgreMeetings.value[postgre_meeting_index],
+                    ...m
+                };
+            }
+
+            return !existingMeetingIds.has(m.meeting_uuid);
+        });
+
+        // console.log('Filtered meeting summaries:', filteredZoomMeetings);
+        // console.log('postgreMeetings.value:', postgreMeetings.value);
+
+        // ✅ Merge and sort DESC by summary_created_time
+        data.value = [...postgreMeetings.value, ...filteredZoomMeetings]
+            .sort((a, b) => new Date(b.summary_created_time) - new Date(a.summary_created_time));
+        
+        data.value = data.value.filter((meeting) => meeting.meeting_id);
+
+        console.log('Fetched Zoom meeting (sorted):', data.value);
+    }
+
     const columns: TableColumn<any>[] = [
         {
             id: 'select',
@@ -123,14 +165,53 @@
             })
         },
         {
-            accessorKey: 'meeting_host_email',
+            accessorKey: 'meeting_topic',
+            header: 'Meeting Topic',
+            cell: ({ row }) => {
+                const summary_details = row.original.detail?.summary_details
+                // console.log('Summary details:', summary_details)
+                return h(UButton, {
+                    color: 'neutral',
+                    variant: 'subtle',
+                    label: summary_details?.map((detail: any) => detail.label).join(' ') || '-',
+                    onClick: () => navigateTo('/zoom-meetings/' + row.original.meeting_uuid),
+                    class: 'text-center cursor-pointer',
+                })
+            }
+        },
+        {
+            accessorKey: 'meeting_process',
+            header: 'Meeting Type',
+            cell: ({ row }) => row.original.meeting_process || '-'
+        },
+        {
+            accessorKey: 'meeting_subject',
+            header: 'Meeting Subject',
+            cell: ({ row }) => row.original.meeting_subject || '-'
+        },
+        {
+            accessorKey: 'detail.summary_overview',
+            header: 'Meeting Overview',
+            cell: ({ row }) => {
+                const summary_overview = row.original.detail?.summary_overview
+                // console.log('Summary overview:', summary_overview)
+                return summary_overview?.length > 50 ? summary_overview?.slice(0, 50) + "…" : summary_overview
+            }
+        },
+        {
+            accessorKey: 'person.name',
+            header: 'Client Email',
+            cell: ({ row }) => row.original.person?.name || '-'
+        },
+        {
+            accessorKey: 'summary_created_time',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
 
                 return h(UButton, {
                     color: 'neutral',
                     variant: 'ghost',
-                    label: 'Host Email',
+                    label: 'Last Meeting Date',
                     icon: isSorted
                     ? isSorted === 'asc'
                         ? 'i-lucide-arrow-up-narrow-wide'
@@ -139,43 +220,12 @@
                     class: '-mx-2.5',
                     onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
                 })
-                },
-            cell: ({ row }) => {
-                return h(UButton, {
-                    color: 'neutral',
-                    variant: 'subtle',
-                    label: row.original.meeting_host_email,
-                    onClick: () => navigateTo('/zoom-meetings/' + row.original.meeting_uuid),
-                    class: 'text-center cursor-pointer',
-                })
-            }
-        },
-        {
-            accessorKey: 'meeting_topic',
-            header: 'Meeting Details',
-            cell: ({ row }) => {
-                const summary_details = row.original.detail.summary_details
-                console.log('Summary details:', summary_details)
-                return summary_details?.map((detail: any) => detail.label).join(' ') || '-'
-            }
-        },
-        {
-            accessorKey: 'detail.summary_overview',
-            header: 'Meeting Overview',
-            cell: ({ row }) => {
-                const summary_overview = row.original.detail.summary_overview
-                console.log('Summary overview:', summary_overview)
-                return summary_overview?.length > 50 ? summary_overview?.slice(0, 50) + "…" : summary_overview
-            }
-        },
-        {
-            accessorKey: 'summary_created_time',
-            header: 'Meeting Created',
+            },
             cell: ({ row }) => {
                 return new Date(row.getValue('summary_created_time')).toLocaleString('en-US', {
                     year: "numeric",
                     day: 'numeric',
-                    month: 'long',
+                    month: 'short',
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: true

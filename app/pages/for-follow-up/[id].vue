@@ -174,8 +174,8 @@
         // console.log('Attachments:', attachments)
 
         try {
-            // const res = await sendEmail(attachments)
-            const res = {accepted: ['asdf@example.com']}
+            const res = await sendEmail(attachments)
+            // const res = {accepted: ['asdf@example.com']}
             // console.log('Email Send Response:', res)
 
             if (res?.accepted?.length > 0) {
@@ -538,7 +538,12 @@
         const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
         console.log('selected:', selected)
-        form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
+        if (selected?.html?.includes('{{name}}') && person.value?.name) {
+            form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
+        }
+        if (selected?.html?.includes('XXX') && person.value?.name) {
+            form.value.generated_email = selected?.html.replace('XXX', person.value?.name) || '';
+        }
     }
 
     async function removeAttachment(file: any) {
@@ -558,11 +563,7 @@
 </script>
 
 <template>
-    <UiAppLoading
-        v-if="isLoading"
-        class="w-full border rounded-md p-6 my-4 border-neutral-800"
-    />
-    <UDashboardPanel v-if="!isLoading" id="person-details" :ui="{ body: 'gap-2 sm:gap-2 h-full' }">
+    <UDashboardPanel  id="person-details" :ui="{ body: 'gap-2 sm:gap-2 h-full' }">
         <template #header>
             <UDashboardNavbar title="Person Details">
                 <template #leading>
@@ -574,9 +575,13 @@
             </UDashboardNavbar>
         </template>
         <template #body>
-            <div class="p-6 space-y-8">
+            <UiAppLoading
+                v-if="isLoading"
+                class="w-full border rounded-md p-6 my-4 border-neutral-800"
+            />
+            <div v-if="!isLoading" class="p-6 space-y-8">
                 <UForm :state="form" :schema="schema" @submit="onSubmit" class="space-x-2 grid grid-cols-1 md:grid-cols-2">
-                    <div class="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div class="col-span-2 grid grid-cols-1 md:grid-cols-3 gap-2">
                         <div>
                             <UCard class="w-full">
                                 <template #header>
@@ -654,8 +659,8 @@
                                 </div>
                             </UCard>
                         </div>
-                        
-                        <UCard class="w-full">
+
+                        <UCard class="col-span-2 w-full">
                             <template #header>
                                 <h2 class="text-lg font-semibold">Auto-Generated Email</h2>
                             </template>

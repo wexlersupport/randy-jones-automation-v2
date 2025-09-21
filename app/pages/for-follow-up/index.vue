@@ -149,7 +149,7 @@
                     class: '-mx-2.5',
                     onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
                 })
-                },
+            },
             cell: ({ row }) => {
                 return h(UButton, {
                     color: 'neutral',
@@ -162,15 +162,60 @@
         },
         {
             accessorKey: 'primary_email',
-            header: 'Primary Email',
+            header: ({ column }) => {
+                const isSorted = column.getIsSorted()
+
+                return h(UButton, {
+                    color: 'neutral',
+                    variant: 'ghost',
+                    label: 'Primary Email',
+                    icon: isSorted
+                    ? isSorted === 'asc'
+                        ? 'i-lucide-arrow-up-narrow-wide'
+                        : 'i-lucide-arrow-down-wide-narrow'
+                    : 'i-lucide-arrow-up-down',
+                    class: '-mx-2.5',
+                    onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+                })
+            },
         },
         {
             accessorKey: 'org_name',
-            header: 'Organization Name',
+            header: ({ column }) => {
+                const isSorted = column.getIsSorted()
+
+                return h(UButton, {
+                    color: 'neutral',
+                    variant: 'ghost',
+                    label: 'Organization Name',
+                    icon: isSorted
+                    ? isSorted === 'asc'
+                        ? 'i-lucide-arrow-up-narrow-wide'
+                        : 'i-lucide-arrow-down-wide-narrow'
+                    : 'i-lucide-arrow-up-down',
+                    class: '-mx-2.5',
+                    onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+                })
+            },
         },
         {
             accessorKey: 'add_time',
-            header: 'Date Created',
+            header: ({ column }) => {
+                const isSorted = column.getIsSorted()
+
+                return h(UButton, {
+                    color: 'neutral',
+                    variant: 'ghost',
+                    label: 'Date Created',
+                    icon: isSorted
+                    ? isSorted === 'asc'
+                        ? 'i-lucide-arrow-up-narrow-wide'
+                        : 'i-lucide-arrow-down-wide-narrow'
+                    : 'i-lucide-arrow-up-down',
+                    class: '-mx-2.5',
+                    onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+                })
+            },
             cell: ({ row }) => {
                 return new Date(row.getValue('add_time')).toLocaleString('en-US', {
                     year: "numeric",
