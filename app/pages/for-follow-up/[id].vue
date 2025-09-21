@@ -152,7 +152,6 @@
                         content,
                         filename: foundFile.name,
                         type: "text/html",
-                        encoding: "base64",
                         disposition: "attachment"
                     })
                 }
@@ -165,7 +164,6 @@
                     content: (file.base64 as string).replace(/^data:.*;base64,/, ''),
                     filename: file.name,
                     type: "text/html",
-                    encoding: "base64",
                     disposition: "attachment"
                 })
             })
@@ -176,9 +174,9 @@
         try {
             const res = await sendEmail(attachments)
             // const res = {accepted: ['asdf@example.com']}
-            // console.log('Email Send Response:', res)
+            console.log('Email Send Response:', res)
 
-            if (res?.accepted?.length > 0) {
+            if (res) {
                 toast.add({
                     title: 'Email sent successfully',
                     description: 'The email has been sent successfully.',
