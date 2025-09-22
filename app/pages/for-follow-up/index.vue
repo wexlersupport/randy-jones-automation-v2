@@ -24,7 +24,7 @@
 
     onMounted(async () => {
         const {response} = await getPipedrivePerson()
-        persons.value = response?.data || []
+        persons.value = response || []
         // console.log(persons.value)
 
         isLoading.value = false
@@ -199,14 +199,14 @@
             },
         },
         {
-            accessorKey: 'add_time',
+            accessorKey: 'zoom_meetings',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
 
                 return h(UButton, {
                     color: 'neutral',
                     variant: 'ghost',
-                    label: 'Date Created',
+                    label: 'Last Meeting Date',
                     icon: isSorted
                     ? isSorted === 'asc'
                         ? 'i-lucide-arrow-up-narrow-wide'
@@ -217,7 +217,10 @@
                 })
             },
             cell: ({ row }) => {
-                return new Date(row.getValue('add_time')).toLocaleString('en-US', {
+                if (!row.getValue('zoom_meetings') || row.getValue('zoom_meetings').length === 0) {
+                    return '-'
+                }
+                return new Date(row.getValue('zoom_meetings')[0]?.created_at).toLocaleString('en-US', {
                     year: "numeric",
                     day: 'numeric',
                     month: 'long',

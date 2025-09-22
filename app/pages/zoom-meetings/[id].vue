@@ -10,7 +10,7 @@
 
     const { data }: any = await useFetch('/api/pipedrive/all_person')
     // console.log('all_person:', data.value)
-    const contactList = ref<any[]>(data.value?.response?.data || [])
+    const contactList = ref<any[]>(data.value?.response || [])
     const selectedContact = ref<any>(null);
     const meetingTypeList = ref<any[]>([])
     const selectedMeetingType = ref<any>(null);

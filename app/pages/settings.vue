@@ -8,6 +8,12 @@ const links = [[{
   exact: true
 },
 // {
+//   label: 'Signature List',
+//   icon: 'i-lucide-file-text',
+//   to: '/settings/signature-list',
+//   exact: true
+// }
+// {
 //   label: 'Field Service',
 //   icon: 'i-lucide-book-open',
 //   to: '/settings/field_service',

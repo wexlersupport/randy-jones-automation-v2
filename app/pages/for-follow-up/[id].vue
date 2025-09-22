@@ -119,7 +119,7 @@
         add_time: '',
         owner_name: '',
         generated_email: '',
-        from: 'francis.regala@strattonstudiogames.com',
+        from: 'francis@viacry.com',
         to: '',
         subject: '',
         next_meeting_date: '',
@@ -384,13 +384,13 @@
         console.log('actualMeetingInvite:', actualMeetingInvite) //{@odata.context: "https://graph.microsoft.com/v1.0/$metadata#users('…y%40automationpm.onmicrosoft.com')/events/$entity", @odata.etag: 'W/"MbPvhBte9Uu/e4THen7M7wAAAYXvrQ=="', id: 'AAMkADExNjcwN2FmLWY0MTQtNGEwYy1iNzJlLTY3OTRhMDIxNT…6fszvAAAAAAENAAAxs__EG171S797hMd6fszvAAABiA19AAA=', createdDateTime: '2025-09-19T03:00:00.6838407Z', lastModifiedDateTime: '2025-09-19T03:00:00.7558834Z', …}
         eventObject.value = actualMeetingInvite
 
-        const sunday_reminder_calendar = await setSundayReminderCalendar(startPreviousSunday)
-        console.log('sunday_reminder_calendar:', sunday_reminder_calendar) //Sunday, September 21, 2025
+        // const sunday_reminder_calendar = await setSundayReminderCalendar(startPreviousSunday)
+        // console.log('sunday_reminder_calendar:', sunday_reminder_calendar) //Sunday, September 21, 2025
 
         // const res_send_invites = await sendingMeetingInvites(actualMeetingStartDate) //Client Invites
         // console.log('Meeting Invite:', res_send_invites)
 
-        alert(`Email and Calendar Invite sent to ${form.value.to} for ${nextMeetingDate.value}. This will also send a Reminder Calendar Event for ${sunday_reminder_calendar}.`)
+        alert(`Email and Calendar Invite sent to ${form.value.to} for ${nextMeetingDate.value}.`)
 
         return {actualMeetingInvite}
     }
@@ -470,6 +470,9 @@
     async function updateAllAttachmentsToBase64String() {
         attachmentList.value.forEach(async(attachment: any, index: number) => {
             // console.log('attachment:', attachment)
+            // const test = await compressFiles(attachment)
+            // console.log('Compressed File:', test)
+
             const responseFiles = await fetch('/api/onedrive/base64_string', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -481,6 +484,17 @@
 
             attachmentList.value[index].base64String = base64String
         })
+    }
+
+    async function compressFiles(attachment: any) {
+        console.log('Compressing File:', attachment)
+        console.log('Compressing File:', attachment?.['@microsoft.graph.downloadUrl'])
+        const response = await fetch('/api/convertapi/compress', {
+            method: 'POST'
+        })
+        const res = await response.json()
+
+        return response
     }
 
     async function getOneDriveFiles() {

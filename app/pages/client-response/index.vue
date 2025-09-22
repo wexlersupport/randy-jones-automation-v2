@@ -146,7 +146,7 @@
             accessorKey: 'is_sent_reminder',
             header: 'Is Sent Reminder',
             cell: ({ row }) => {
-                return row.getValue('is_sent_reminder') ? 'Yes' : 'No'
+                return row.getValue('is_sent_reminder') ? 'Sent' : 'Pending'
             }
         },
         {
@@ -154,7 +154,7 @@
             header: 'Action/Date Sent',
             cell: ({ row }) => {
                 if (row.getValue('is_sent_reminder')) {
-                    console.log('Sent Reminder Date:', row.original.sent_reminder_date)
+                    console.log('Send Reminder Date:', row.original.sent_reminder_date)
                     return new Date(row.original.sent_reminder_date).toLocaleString('en-US', {
                         year: "numeric",
                         day: 'numeric',
@@ -162,9 +162,10 @@
                     })
                 }
                 return h(UButton, {
+                    icon: 'i-lucide-send',
                     color: 'primary',
                     variant: 'subtle',
-                    label: 'Sent Client Reminder',
+                    label: 'Send Client Reminder',
                     onClick: () => onSentClientReminder(row.original),
                     class: 'text-center cursor-pointer',
                 })
@@ -217,6 +218,22 @@
         })
         await refresh()
         clients.value = data.value?.data || []
+
+        const sunday_reminder_calendar = await setSundayReminderCalendar(row.next_meeting_date)
+
+        alert(`This will send the client a Reminder Calendar invite for ${sunday_reminder_calendar}.`)
+    }
+
+    async function setSundayReminderCalendar(startPreviousSunday: any) {
+        const _date = new Date(startPreviousSunday);
+        const sunday_reminder_calendar = new Intl.DateTimeFormat("en-US", {
+            weekday: "long",   // Sunday
+            year: "numeric",   // 2025
+            month: "long",     // October
+            day: "numeric"     // 5
+        }).format(_date);
+
+        return sunday_reminder_calendar
     }
 
     async function sendingSundayReminders(actualMeetingStartDate: any, row: any) {

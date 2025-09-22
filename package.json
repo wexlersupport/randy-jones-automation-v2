@@ -24,6 +24,7 @@
     "@vueup/vue-quill": "^1.2.0",
     "@vueuse/nuxt": "^13.3.0",
     "axios": "^1.10.0",
+    "convertapi": "^1.15.0",
     "date-fns": "^4.1.0",
     "fuse.js": "^7.1.0",
     "googleapis": "^159.0.0",

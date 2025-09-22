@@ -165,38 +165,29 @@
             })
         },
         {
-            accessorKey: 'meeting_topic',
-            header: 'Meeting Topic',
+            accessorKey: 'detail.summary_overview',
+            header: 'Meeting Overview',
             cell: ({ row }) => {
-                const summary_details = row.original.detail?.summary_details
-                // console.log('Summary details:', summary_details)
+                const summary_overview = row.original.detail?.summary_overview
+                // console.log('Summary overview:', summary_overview)
                 return h(UButton, {
                     color: 'neutral',
                     variant: 'subtle',
-                    label: summary_details?.map((detail: any) => detail.label).join(' ') || '-',
+                    label: summary_overview?.length > 50 ? summary_overview?.slice(0, 50) + "…" : summary_overview,
                     onClick: () => navigateTo('/zoom-meetings/' + row.original.meeting_uuid),
                     class: 'text-center cursor-pointer',
                 })
             }
         },
         {
-            accessorKey: 'meeting_process',
-            header: 'Meeting Type',
-            cell: ({ row }) => row.original.meeting_process || '-'
-        },
-        {
-            accessorKey: 'meeting_subject',
-            header: 'Meeting Subject',
+            accessorKey: 'meeting_topic',
+            header: 'Meeting Topic',
             cell: ({ row }) => row.original.meeting_subject || '-'
         },
         {
-            accessorKey: 'detail.summary_overview',
-            header: 'Meeting Overview',
-            cell: ({ row }) => {
-                const summary_overview = row.original.detail?.summary_overview
-                // console.log('Summary overview:', summary_overview)
-                return summary_overview?.length > 50 ? summary_overview?.slice(0, 50) + "…" : summary_overview
-            }
+            accessorKey: 'meeting_process',
+            header: 'Meeting Type',
+            cell: ({ row }) => row.original.meeting_process || '-'
         },
         {
             accessorKey: 'person.name',
