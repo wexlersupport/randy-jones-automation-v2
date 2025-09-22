@@ -31,26 +31,57 @@
     const selectedAttachment = ref<any[]>([]);
     // const { data: file }: any = await useFetch('/api/drive/get_files')
     // console.log('Drive File Data:', file.value)
+    
+    // Signatures
+    const signatureOptions = ref<any[]>([]);
+
+    async function fetchSignatures() {
+    try {
+        const { data: signaturesData } = await useFetch('/api/signatures/get_all_signatures');
+        // console.log('Fetched signatures:', signaturesData.value?.body);
+        return signaturesData.value?.body && 'data' in signaturesData.value.body ? signaturesData.value.body.data : [];
+    } catch (error) {
+        console.error('Error fetching signatures:', error);
+        toast.add({
+        title: 'Error',
+        description: 'Failed to load email signatures',
+        color: 'error'
+        });
+        return [];
+    }
+    }
 
 
     onMounted(async () => {
-        const { response } = await getPersonDetail()
-        person.value = response?.data || {}
-        console.log('Fetched data:', person.value)
-        items.value = signatureList({ name: person.value?.name })
-        form.value.id = person.value.id
-        form.value.name = person.value.name
-        form.value.org_name = person.value.org_name
-        form.value.primary_email = person.value.primary_email
-        form.value.add_time = person.value.add_time
-        form.value.owner_name = `Contact By ${person.value?.owner_name}`
-        form.value.generated_email = items.value[0]?.html || ''
-        form.value.to = person.value.primary_email
-        form.value.subject = items.value[0]?.label || ''
+        const { response } = await getPersonDetail();
+        person.value = response?.data || {};
+        console.log('Fetched data:', person.value);
+        
+        signatureOptions.value = await fetchSignatures();
+        items.value = signatureOptions.value.map(sig => ({
+            label: sig.name,
+            value: sig.code,
+            html: sig.html_template || ''
+        }));
+        
+        form.value.id = person.value.id;
+        form.value.name = person.value.name;
+        form.value.org_name = person.value.org_name;
+        form.value.primary_email = person.value.primary_email;
+        form.value.add_time = person.value.add_time;
+        form.value.owner_name = `Contact By ${person.value?.owner_name}`;
+        form.value.to = person.value.primary_email || '';
+
+        // Use the first signature if available
+        if (items.value.length > 0) {
+            form.value.generated_email = replaceTemplateParams(items.value[0]?.html || '');
+            form.value.subject = items.value[0]?.label || '';
+            selectedOption.value = items.value[0]?.value || '';
+        }
 
         setTimeout(() => {
-            isLoading.value = false
-        }, 1000)
+            isLoading.value = false;
+        }, 1000);
     })
 
     const form = ref({
@@ -136,10 +167,18 @@
     }
 
     async function handleChange(value: any) {
-        const _items = signatureList({ name: person.value?.name })
-        const selected = _items.find(item => item.value === value);
-        form.value.generated_email = selected?.html || '';
-        form.value.subject = selected?.label || '';
+        const selected = items.value.find(item => item.value === value);
+        if (selected?.html) {
+            form.value.generated_email = replaceTemplateParams(selected.html);
+            form.value.subject = selected?.label || '';
+        }
+    }
+
+    function replaceTemplateParams(htmlContent: string) {
+        // Replace ${params?.name} with the person's name
+        let processedHtml = htmlContent.replace(/\${params\?.name}/g, person.value.name || '');
+        
+        return processedHtml;
     }
 
     async function handleSelectAttachment(value: any) {

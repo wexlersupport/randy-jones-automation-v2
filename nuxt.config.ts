@@ -17,6 +17,8 @@ export default defineNuxtConfig({
       callback: "/",
       exclude: ["/*"],
     },
+    url: process.env.NUXT_PUBLIC_SUPABASE_URL,
+    key: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
   },
   pdfmake: {
     enabled: true, // Enable the module
