@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 const config = useRuntimeConfig();
 
-const supabaseUrl = config.supabase?.url as string;
-const supabaseKey = config.supabase?.key as string;
+const supabaseUrl = config.public.supabase?.url
+const supabaseKey = config.public.supabase?.key
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
