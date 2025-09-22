@@ -7,7 +7,17 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@formkit/nuxt',
     'nuxt-pdfmake',
+    '@nuxtjs/supabase',
   ],
+
+  supabase: {
+    redirect: false,
+    redirectOptions: {
+      login: '/',
+      callback: '/',
+      exclude: ['/*']
+    }
+  },
   pdfmake: {
     enabled: true, // Enable the module
     enableComposable: true, // Enable usePDFMake and useFontPresets composables
@@ -48,6 +58,10 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
+      supabase: {
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      },
       openrouterApiKey: process.env.NUXT_PUBLIC_OPENROUTER_API_KEY,
       zoomAccountId: process.env.NUXT_PUBLIC_ZOOM_ACCOUNT_ID,
       zoomClientId: process.env.NUXT_PUBLIC_ZOOM_CLIENT_ID,
