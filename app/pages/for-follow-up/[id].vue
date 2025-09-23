@@ -770,32 +770,31 @@
                                             placeholder="Choose one or more attachments"
                                             class="w-full"
                                             @change="handleChangeZoomMeeting"
-                                            disabled
                                         />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting List:</label>
-                                        <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" disabled />
+                                        <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
-                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full" disabled />
+                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full" />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
-                                        <UInput v-model="form.from" label="From" class="w-full" disabled />
+                                        <UInput v-model="form.from" label="From" class="w-full" />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
-                                        <UInput v-model="form.to" label="To" class="w-full" disabled />
+                                        <UInput v-model="form.to" label="To" class="w-full" />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
-                                        <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full" disabled />
+                                        <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full" />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
-                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full" disabled />
+                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full" />
                                     </div>
                                 </div>
                             </UCard>
