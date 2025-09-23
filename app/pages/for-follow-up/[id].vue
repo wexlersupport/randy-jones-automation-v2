@@ -39,10 +39,25 @@
     const meetingDetail = ref<any>(null);
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
-    const { data: _data } = await useFetch('/api/postgre', {
+
+    const { data: _data, refresh: refreshSignatures } = await useFetch('/api/postgre', {
         query: { table: 'for_follow_up_templates', isDesc: true },
     });
-    const itemsFollowup = ref<any[]>(_data.value?.data?.sort((a: any, b: any) => a?.label.localeCompare(b?.label)) || []);
+
+    // Function to reorder signatures
+    function reorderSignatures(signatures: any[]) {
+        const appointmentSignatures = signatures.filter((sig: any) =>
+            sig.label && sig.label.toLowerCase().includes('appointment')
+        );
+        const otherSignatures = signatures.filter((sig: any) =>
+            !sig.label || !sig.label.toLowerCase().includes('appointment')
+        );
+        return [...appointmentSignatures, ...otherSignatures];
+    }
+
+    // Initial load with reordering
+    const allSignatures = _data.value?.data || [];
+    const itemsFollowup = ref<any[]>(reorderSignatures(allSignatures));
     const selectedFollowUp = ref<any>(null);
 
     onMounted(async () => {
@@ -164,7 +179,7 @@
                     disposition: "attachment"
                 })
             })
-            
+
         }
 
         try {
@@ -271,7 +286,7 @@
 
     async function getPreviousSunday(formattedNextMeeting: any) {
         const pad = (n: any) => String(n).padStart(2, '0');
-        
+
         const meetingDate = new Date(formattedNextMeeting);
         console.log('meetingDate:', meetingDate) //Mon Sep 22 2025 00:00:00 GMT+0800 (Philippine Standard Time)
         const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
@@ -451,6 +466,7 @@
     async function handleForFollowUp() {
         const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
+        console.log('selected:', selected)
         if (selected?.html?.includes('{{name}}') && person.value?.name) {
             form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
         }
@@ -524,15 +540,16 @@
                                             placeholder="Choose one or more attachments"
                                             class="w-full"
                                             @change="handleChangeZoomMeeting"
+                                            disabled
                                         />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting List:</label>
-                                        <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" />
+                                        <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
-                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full"/>
+                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
@@ -540,17 +557,15 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
-                                        <UInput v-model="form.to" label="To" class="w-full"/>
+                                        <UInput v-model="form.to" label="To" class="w-full" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
-                                        <!-- <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/> -->
-                                        <VueDatePicker v-model="form.next_meeting_date" dark :is24="false"
-                                        />
+                                        <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
-                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full"/>
+                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full" disabled />
                                     </div>
                                 </div>
                             </UCard>
@@ -618,7 +633,7 @@
                                 <div v-if="(selectedAttachment.length || uploadedBase64Files.length) && !isLoadingSave" class="space-y-2">
                                     <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Selected Attachments:</label>
 
-                                    <ul class="divide-y divide-gray-200 dark:divide-gray-800 border rounded p-3 
+                                    <ul class="divide-y divide-gray-200 dark:divide-gray-800 border rounded p-3
                                                 bg-gray-50 dark:bg-gray-900">
                                         <li v-for="file in [...attachmentList.filter(f => selectedAttachment.includes(f.id)), ...uploadedBase64Files]" :key="file.id" class="py-2 flex items-center justify-between text-sm">
                                             <div class="flex items-center gap-2">
@@ -655,8 +670,8 @@
                                     </UButton>
                                 </div>
                                 <div v-if="!isLoadingSave" class="w-full space-y-1">
-                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Select Signature:</label>
-                                    <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="For Follow Up Signatures"/>
+                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Attach Signature:</label>
+                                    <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="Select Signature"/>
                                 </div>
                                 <div v-if="!isLoadingSave" class="mb-4 h-[360px]">
                                     <ClientOnly>
@@ -680,6 +695,18 @@
     </UDashboardPanel>
 
 </template>
+
+<style scoped>
+    .dp__theme_dark {
+        --dp-background-color: #18181B;
+        --dp-font-size: 0.875rem !important; /* ≈14px */
+        line-height: 1.25rem; /* ≈16px */
+        border-radius: 0.375rem; /* 6px */
+        border-width: 1px;
+        border-style: solid;
+        border-color: #3f3f47;
+    }
+</style>
 
 <style scoped>
     .dp__theme_dark {
