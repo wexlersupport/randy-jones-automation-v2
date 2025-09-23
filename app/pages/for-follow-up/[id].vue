@@ -43,6 +43,13 @@
     const { data: _data, refresh: refreshSignatures } = await useFetch('/api/postgre', {
         query: { table: 'for_follow_up_templates', isDesc: true },
     });
+    const itemsFollowup = ref<any[]>(_data.value?.data?.map((signature: any) => ({
+        label: signature.label,
+        value: signature.value || signature.label,
+        html: signature.html,
+        subject: signature.subject || '',
+        attachment_files: signature.attachment_files || []
+    })) || []);
 
     // Function to reorder signatures
     function reorderSignatures(signatures: any[]) {

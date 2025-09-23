@@ -38,16 +38,22 @@ async function onSave() {
   try {
     if (isCreating.value) {
       // 👉 CREATE
+      const baseValue = toSnakeCase(selectedItem.value.label || 'template')
+      const timestamp = Date.now()
+      const uniqueValue = `${baseValue}_${timestamp}`
+      
+      const bodyData = {
+        label: selectedItem.value.label,
+        html: selectedItem.value.html,
+        value: uniqueValue
+      }
+      
       const res = await $fetch('/api/postgre', {
         method: 'POST',
         query: {
           table: 'for_follow_up_templates'
         },
-        body: {
-          label: selectedItem.value.label,
-          html: selectedItem.value.html,
-          value: toSnakeCase(selectedItem.value.label || 'template')
-        }
+        body: bodyData
       })
       toast.add({
         description: 'Template created!',
@@ -92,6 +98,46 @@ async function onSave() {
     console.error('Error saving item:', error)
     toast.add({
       description: 'Error saving template.',
+      icon: 'i-lucide-alert-circle',
+      color: 'error'
+    })
+  }
+}
+
+async function onDelete() {
+  if (!selectedItem.value || !selectedItem.value.id || isCreating.value) return
+  
+  if (!confirm('Are you sure you want to delete this signature? This action cannot be undone.')) {
+    return
+  }
+
+  try {
+    await $fetch('/api/postgre/' + selectedItem.value.id, {
+      method: 'DELETE',
+      query: {
+        table: 'for_follow_up_templates',
+        dynamic_field: 'id',
+        dynamic_value: selectedItem.value.id
+      }
+    })
+
+    // Refresh the data to reflect changes
+    await refresh()
+    items.value = data.value?.data || []
+    
+    // Clear selection
+    selectedItem.value = null
+    isCreating.value = false
+
+    toast.add({
+      description: 'Signature deleted successfully!',
+      icon: 'i-lucide-check-circle',
+      color: 'success'
+    })
+  } catch (err) {
+    console.error('Error deleting item:', err)
+    toast.add({
+      description: 'Error deleting signature.',
       icon: 'i-lucide-alert-circle',
       color: 'error'
     })
@@ -156,12 +202,21 @@ async function onSave() {
           </ClientOnly>
         </div>
 
-        <button
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-400"
-          @click="onSave"
-        >
-          {{ isCreating ? 'Create' : 'Save' }}
-        </button>
+        <div class="flex gap-2">
+          <button
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-400"
+            @click="onSave"
+          >
+            {{ isCreating ? 'Create' : 'Save' }}
+          </button>
+          <button
+            v-if="!isCreating && selectedItem?.id"
+            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 dark:hover:bg-red-400"
+            @click="onDelete"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       <div v-else class="text-gray-500 dark:text-gray-400">

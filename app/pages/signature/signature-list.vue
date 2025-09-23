@@ -89,7 +89,9 @@ async function onSave() {
         query: { table: 'for_follow_up_templates' },
         body: {
           ...payload,
-          value: toSnakeCase(payload.label || 'template')
+          value: toSnakeCase(payload.label || 'template'),
+          created_by: 'admin',
+          updated_by: 'admin'
         }
       })
     } else {
@@ -100,7 +102,10 @@ async function onSave() {
           dynamic_field: 'id',
           dynamic_value: payload.id
         },
-        body: payload
+        body: {
+          ...payload,
+          updated_by: 'admin'
+        }
       })
     }
 
