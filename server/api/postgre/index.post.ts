@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
   const sql = neon(); // automatically uses env NETLIFY_DATABASE_URL
   try {
     const body = await readBody(event);
+
     const fields = Object.keys(body);
     const values = Object.values(body);
 
@@ -16,12 +17,14 @@ export default defineEventHandler(async (event) => {
         statusMessage: "Fields is required",
       });
     }
+
     const quotedFields = fields.map((field: string) => {
       if (field === "from" || field === "to") {
         return `"${field}"`;
       }
       return field;
     });
+
     const placeholders = fields
       .map((field: any, index: number) => `$${index + 1}`)
       .join(", ");

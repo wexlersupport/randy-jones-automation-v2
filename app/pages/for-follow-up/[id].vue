@@ -131,6 +131,9 @@
             if (items.value[0]?.html?.includes('XXX') && person.value?.name) {
                 form.value.generated_email = items.value[0]?.html.replace('XXX', person.value?.name) || '';
             }
+            else{
+                form.value.generated_email = items.value[0]?.html || '';
+            }
         }
         // form.value.generated_email = items.value[0]?.html || ''
         form.value.to = person.value.primary_email
@@ -635,6 +638,9 @@
         }
         if (selected?.html?.includes('XXX') && person.value?.name) {
             form.value.generated_email = selected?.html.replace('XXX', person.value?.name) || '';
+        }
+        else{
+            form.value.generated_email = selected?.html || '';
         }
     }
 

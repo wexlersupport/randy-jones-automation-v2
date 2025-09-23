@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 const toast = useToast()
 const { data, refresh } = await useFetch('/api/postgre', {
-  query: { table: 'for_follow_up_templates', isDesc: true },
+  query: { table: 'for_follow_up_templates' },
 });
 const items = ref<any[]>(data.value?.data || [])
 
