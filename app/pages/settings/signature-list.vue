@@ -5,7 +5,7 @@ const toast = useToast()
 
 // ✅ Load the data from Postgre
 const { data, refresh } = await useFetch('/api/postgre', {
-  query: { table: 'signature_lists', isDesc: true },
+  query: { table: 'for_follow_up_templates', isDesc: true },
 })
 const items = ref<any[]>(data.value?.data || [])
 
@@ -86,7 +86,7 @@ async function onSave() {
     if (isCreating.value) {
       await $fetch('/api/postgre', {
         method: 'POST',
-        query: { table: 'signature_lists' },
+        query: { table: 'for_follow_up_templates' },
         body: {
           ...payload,
           value: toSnakeCase(payload.label || 'template')
@@ -96,13 +96,17 @@ async function onSave() {
       await $fetch('/api/postgre/' + payload.id, {
         method: 'PUT',
         query: {
-          table: 'signature_lists',
+          table: 'for_follow_up_templates',
           dynamic_field: 'id',
           dynamic_value: payload.id
         },
         body: payload
       })
     }
+
+    // Refresh the data to reflect changes
+    await refresh()
+    items.value = data.value?.data || []
 
     toast.add({
       description: isCreating.value ? 'Template created!' : 'Successfully saved!',
@@ -120,6 +124,46 @@ async function onSave() {
   }
 }
 
+async function onDelete() {
+  if (!selectedItem.value || !selectedItem.value.id || isCreating.value) return
+  
+  if (!confirm('Are you sure you want to delete this signature? This action cannot be undone.')) {
+    return
+  }
+
+  try {
+    await $fetch('/api/postgre/' + selectedItem.value.id, {
+      method: 'DELETE',
+      query: {
+        table: 'for_follow_up_templates',
+        dynamic_field: 'id',
+        dynamic_value: selectedItem.value.id
+      }
+    })
+
+    // Refresh the data to reflect changes
+    await refresh()
+    items.value = data.value?.data || []
+    
+    // Clear selection
+    selectedItem.value = null
+    isCreating.value = false
+
+    toast.add({
+      description: 'Signature deleted successfully!',
+      icon: 'i-lucide-check-circle',
+      color: 'success'
+    })
+  } catch (err) {
+    console.error('Error deleting item:', err)
+    toast.add({
+      description: 'Error deleting signature.',
+      icon: 'i-lucide-alert-circle',
+      color: 'error'
+    })
+  }
+}
+
 </script>
 
 <template>
@@ -129,16 +173,14 @@ async function onSave() {
       class="w-72 border-r border-gray-700 dark:divide-gray-800 rounded-l p-3 bg-gray-50 dark:bg-gray-900 overflow-y-auto"
     >
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-bold">Signature Lists</h2>
-        <!-- Uncomment if you want a create button -->
-        <!--
+        <h2 class="text-lg font-bold">Signatures</h2>
         <button
-          class="px-2 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 dark:hover:bg-green-400"
+          class="px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 dark:hover:bg-green-400 flex items-center gap-1"
           @click="newItem"
         >
-          + New
+          <Icon name="i-lucide-plus" class="w-4 h-4" />
+          New
         </button>
-        -->
       </div>
 
       <ul class="space-y-2">
@@ -157,7 +199,7 @@ async function onSave() {
     <!-- RIGHT PANEL -->
     <div class="flex-1 p-6 overflow-y-auto bg-white dark:bg-gray-900">
       <h2 class="text-lg font-bold mb-4">
-        {{ isCreating ? 'Create Template' : 'Details' }}
+        {{ isCreating ? 'Create New Signature' : 'Signature Details' }}
       </h2>
 
       <div v-if="selectedItem" class="space-y-4">
@@ -222,12 +264,21 @@ async function onSave() {
           </ClientOnly>
         </div>
 
-        <button
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-400"
-          @click="onSave"
-        >
-          {{ isCreating ? 'Create' : 'Save' }}
-        </button>
+        <div class="flex gap-2">
+          <button
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-400"
+            @click="onSave"
+          >
+            {{ isCreating ? 'Create' : 'Save' }}
+          </button>
+          <button
+            v-if="!isCreating && selectedItem?.id"
+            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 dark:hover:bg-red-400"
+            @click="onDelete"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       <div v-else class="text-gray-500 dark:text-gray-400">

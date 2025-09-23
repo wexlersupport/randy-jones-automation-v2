@@ -46,11 +46,39 @@
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
 
-    const { data: _data } = await useFetch('/api/postgre', {
+    const { data: _data, refresh: refreshSignatures } = await useFetch('/api/postgre', {
         query: { table: 'for_follow_up_templates', isDesc: true },
     });
-    const itemsFollowup = ref<any[]>(_data.value?.data || []);
+    
+    // Function to reorder signatures
+    function reorderSignatures(signatures: any[]) {
+        const appointmentSignatures = signatures.filter((sig: any) => 
+            sig.label && sig.label.toLowerCase().includes('appointment')
+        );
+        const otherSignatures = signatures.filter((sig: any) => 
+            !sig.label || !sig.label.toLowerCase().includes('appointment')
+        );
+        return [...appointmentSignatures, ...otherSignatures];
+    }
+    
+    // Initial load with reordering
+    const allSignatures = _data.value?.data || [];
+    const itemsFollowup = ref<any[]>(reorderSignatures(allSignatures));
     const selectedFollowUp = ref<any>(null);
+    
+    // Function to refresh signatures list
+    async function refreshSignaturesList() {
+        await refreshSignatures();
+        const updatedSignatures = _data.value?.data || [];
+        itemsFollowup.value = reorderSignatures(updatedSignatures);
+    }
+    
+    // Watch for changes in signature data
+    watch(_data, (newData) => {
+        if (newData?.data) {
+            itemsFollowup.value = reorderSignatures(newData.data);
+        }
+    }, { deep: true });
 
     // const { data: customers } = await useFetch('/api/postgre', {
     //     query: { table: 'customers' }
@@ -629,11 +657,44 @@
         const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
         console.log('selected:', selected)
-        if (selected?.html?.includes('{{name}}') && person.value?.name) {
-            form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
-        }
-        if (selected?.html?.includes('XXX') && person.value?.name) {
-            form.value.generated_email = selected?.html.replace('XXX', person.value?.name) || '';
+        
+        if (selected?.html) {
+            let signatureHtml = selected.html;
+            
+            // Replace placeholders with actual values
+            if (signatureHtml.includes('{{name}}') && person.value?.name) {
+                signatureHtml = signatureHtml.replace(/\{\{name\}\}/g, person.value.name);
+            }
+            if (signatureHtml.includes('XXX') && person.value?.name) {
+                signatureHtml = signatureHtml.replace(/XXX/g, person.value.name);
+            }
+            
+            // Ensure proper formatting and white spacing
+            // Add proper line breaks and spacing if not already present
+            if (!signatureHtml.startsWith('<p>') && !signatureHtml.startsWith('<div>')) {
+                signatureHtml = `<p>${signatureHtml}</p>`;
+            }
+            
+            // Add spacing before and after the signature content
+            const currentContent = form.value.generated_email || '';
+            if (currentContent && !currentContent.endsWith('<br>') && !currentContent.endsWith('</p>')) {
+                form.value.generated_email = currentContent + '<br><br>' + signatureHtml;
+            } else {
+                form.value.generated_email = signatureHtml;
+            }
+            
+            // Update subject and folder selection if available
+            if (selected.subject) {
+                form.value.subject = selected.subject;
+            }
+            if (selected.folder_name) {
+                const matchingFolder = folderList.value?.find((folder: any) => folder.name === selected.folder_name);
+                if (matchingFolder) {
+                    selectedFolder.value = matchingFolder.id;
+                    await updateAttachmentList();
+                    await updateAllAttachmentsToBase64String();
+                }
+            }
         }
     }
 
@@ -709,15 +770,16 @@
                                             placeholder="Choose one or more attachments"
                                             class="w-full"
                                             @change="handleChangeZoomMeeting"
+                                            disabled
                                         />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting List:</label>
-                                        <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" />
+                                        <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
-                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full"/>
+                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
@@ -725,15 +787,15 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
-                                        <UInput v-model="form.to" label="To" class="w-full"/>
+                                        <UInput v-model="form.to" label="To" class="w-full" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
-                                        <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/>
+                                        <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
-                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full"/>
+                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full" disabled />
                                     </div>
                                 </div>
                             </UCard>
@@ -838,8 +900,8 @@
                                     </UButton>
                                 </div>
                                 <div v-if="!isLoadingSave" class="w-full space-y-1">
-                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Select Signature:</label>
-                                    <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="For Follow Up Signatures"/>
+                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Attach Signature:</label>
+                                    <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="Select Signature"/>
                                 </div>
                                 <div v-if="!isLoadingSave" class="mb-4 h-[360px]">
                                     <ClientOnly>
