@@ -26,8 +26,5 @@ logs
 # VSC
 .history
 
-# Visual Studio
-.vs/
-
 # Local Netlify folder
 .netlify
