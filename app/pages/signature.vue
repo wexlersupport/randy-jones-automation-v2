@@ -2,34 +2,34 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 const links = [[{
-  label: 'For Follow Up',
+  label: 'Signatures',
   icon: 'i-lucide-send',
-  to: '/settings',
+  to: '/signature',
   exact: true
-}, 
+},
 //{
 //  label: 'Signatures',
 //  icon: 'i-lucide-file-signature',
-//  to: '/settings/signature-list',
+//  to: '/signature/signature-list',
 //  exact: true
 //}
 // {
 //   label: 'Field Service',
 //   icon: 'i-lucide-book-open',
-//   to: '/settings/field_service',
+//   to: '/signature/field_service',
 //   exact: true
 // }, {
 //   label: 'Members',
 //   icon: 'i-lucide-users',
-//   to: '/settings/members'
+//   to: '/signature/members'
 // }, {
 //   label: 'Notifications',
 //   icon: 'i-lucide-bell',
-//   to: '/settings/notifications'
+//   to: '/signature/notifications'
 // }, {
 //   label: 'Security',
 //   icon: 'i-lucide-shield',
-//   to: '/settings/security'
+//   to: '/signature/security'
 // }], [{
 //   label: 'Documentation',
 //   icon: 'i-lucide-book-open',
@@ -46,7 +46,7 @@ const links = [[{
 <template>
   <UDashboardPanel id="settings" :ui="{ body: 'lg:py-12' }">
     <template #header>
-      <UDashboardNavbar title="Settings">
+      <UDashboardNavbar title="Signature">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

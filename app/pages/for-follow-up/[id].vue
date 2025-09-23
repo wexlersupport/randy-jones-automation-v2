@@ -49,36 +49,51 @@
     const { data: _data, refresh: refreshSignatures } = await useFetch('/api/postgre', {
         query: { table: 'for_follow_up_templates', isDesc: true },
     });
-    
-    // Function to reorder signatures
-    function reorderSignatures(signatures: any[]) {
-        const appointmentSignatures = signatures.filter((sig: any) => 
-            sig.label && sig.label.toLowerCase().includes('appointment')
-        );
-        const otherSignatures = signatures.filter((sig: any) => 
-            !sig.label || !sig.label.toLowerCase().includes('appointment')
-        );
-        return [...appointmentSignatures, ...otherSignatures];
-    }
-    
-    // Initial load with reordering
-    const allSignatures = _data.value?.data || [];
-    const itemsFollowup = ref<any[]>(reorderSignatures(allSignatures));
+    const itemsFollowup = ref<any[]>(_data.value?.data?.map((signature: any) => ({
+        label: signature.label,
+        value: signature.value || signature.label,
+        html: signature.html,
+        subject: signature.subject || '',
+        attachment_files: signature.attachment_files || []
+    })) || []);
     const selectedFollowUp = ref<any>(null);
     
     // Function to refresh signatures list
     async function refreshSignaturesList() {
         await refreshSignatures();
         const updatedSignatures = _data.value?.data || [];
-        itemsFollowup.value = reorderSignatures(updatedSignatures);
+        itemsFollowup.value = updatedSignatures.map((signature: any) => ({
+            label: signature.label,
+            value: signature.value || signature.label,
+            html: signature.html,
+            subject: signature.subject || '',
+            attachment_files: signature.attachment_files || []
+        }));
     }
     
     // Watch for changes in signature data
     watch(_data, (newData) => {
         if (newData?.data) {
-            itemsFollowup.value = reorderSignatures(newData.data);
+            itemsFollowup.value = newData.data.map((signature: any) => ({
+                label: signature.label,
+                value: signature.value || signature.label,
+                html: signature.html,
+                subject: signature.subject || '',
+                attachment_files: signature.attachment_files || []
+            }));
         }
     }, { deep: true });
+
+    // Initialize items array with database signatures for the main signature dropdown
+    if (_data.value?.data) {
+        items.value = _data.value.data.map((signature: any) => ({
+            label: signature.label,
+            html: signature.html,
+            value: signature.value || signature.label,
+            subject: signature.subject || '',
+            attachment_files: signature.attachment_files || []
+        }));
+    }
 
     // const { data: customers } = await useFetch('/api/postgre', {
     //     query: { table: 'customers' }
@@ -659,42 +674,17 @@
         console.log('selected:', selected)
         
         if (selected?.html) {
-            let signatureHtml = selected.html;
+            let emailContent = selected.html;
             
-            // Replace placeholders with actual values
-            if (signatureHtml.includes('{{name}}') && person.value?.name) {
-                signatureHtml = signatureHtml.replace(/\{\{name\}\}/g, person.value.name);
+            // Replace placeholders if they exist
+            if (emailContent.includes('{{name}}') && person.value?.name) {
+                emailContent = emailContent.replace('{{name}}', person.value?.name);
             }
-            if (signatureHtml.includes('XXX') && person.value?.name) {
-                signatureHtml = signatureHtml.replace(/XXX/g, person.value.name);
-            }
-            
-            // Ensure proper formatting and white spacing
-            // Add proper line breaks and spacing if not already present
-            if (!signatureHtml.startsWith('<p>') && !signatureHtml.startsWith('<div>')) {
-                signatureHtml = `<p>${signatureHtml}</p>`;
+            if (emailContent.includes('XXX') && person.value?.name) {
+                emailContent = emailContent.replace('XXX', person.value?.name);
             }
             
-            // Add spacing before and after the signature content
-            const currentContent = form.value.generated_email || '';
-            if (currentContent && !currentContent.endsWith('<br>') && !currentContent.endsWith('</p>')) {
-                form.value.generated_email = currentContent + '<br><br>' + signatureHtml;
-            } else {
-                form.value.generated_email = signatureHtml;
-            }
-            
-            // Update subject and folder selection if available
-            if (selected.subject) {
-                form.value.subject = selected.subject;
-            }
-            if (selected.folder_name) {
-                const matchingFolder = folderList.value?.find((folder: any) => folder.name === selected.folder_name);
-                if (matchingFolder) {
-                    selectedFolder.value = matchingFolder.id;
-                    await updateAttachmentList();
-                    await updateAllAttachmentsToBase64String();
-                }
-            }
+            form.value.generated_email = emailContent;
         }
     }
 
