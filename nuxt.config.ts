@@ -57,6 +57,7 @@ export default defineNuxtConfig({
       pipedriveApiKey: process.env.NUXT_PUBLIC_PIPEDRIVE_API_KEY,
       googlePrivateKey: process.env.NUXT_PUBLIC_GOOGLE_PRIVATE_KEY,
       sendgridApiKey: process.env.NUXT_PUBLIC_SENDGRID_API_KEY,
+      convertapiSecretKey: process.env.NUXT_PUBLIC_CONVERTAPI_SECRET_KEY,
     },
   }
 })

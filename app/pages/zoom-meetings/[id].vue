@@ -7,14 +7,12 @@
     const isLoading = ref(true)
     const isLoadingAi = ref(false)
     const notes = ref<any[]>([])
-
     const { data }: any = await useFetch('/api/pipedrive/all_person')
     // console.log('all_person:', data.value)
     const contactList = ref<any[]>(data.value?.response || [])
     const selectedContact = ref<any>(null);
     const meetingTypeList = ref<any[]>([])
     const selectedMeetingType = ref<any>(null);
-
     const ai_summary = ref<any>(null);
     const meetingDetail = ref<any>(null);
     const nextMeeting = ref<any>(null);
@@ -22,11 +20,11 @@
     const ai_summary_html = ref<string>('');
 
     const { data: _data } = await useFetch('/api/postgre/dynamic_field', {
-          query: {
-              table: 'zoom_meetings',
-              dynamic_field: 'meeting_uuid',
-              value: meetingId
-          }
+        query: {
+            table: 'zoom_meetings',
+            dynamic_field: 'meeting_uuid',
+            value: meetingId
+        }
     });
     console.log('_data:', _data.value)
     const postgreMeeting = ref<any>(_data.value?.data[0] || null);
@@ -84,26 +82,37 @@
         const { response } = await getMeetingDetail()
         console.log('Fetched data:', response)
         meetingDetail.value = response
-        const nextMeetingDate = getRandomDayFromNext7()
+
+        const { response: next_meeting } = await getNextMeeting(response.summary_overview)
+        console.log('next_meeting:', next_meeting)
+        if (next_meeting?.choices?.length) {
+            const _next_meeting = next_meeting?.choices[0]?.message?.content?.trim() || 'none';
+            console.log('_next_meeting:', _next_meeting)
+            if (_next_meeting?.length < 7 || _next_meeting.toLowerCase().includes('none')) {
+                // nextMeeting.value = formatJsDateToDatetime(new Date());
+            } else {
+                nextMeeting.value = _next_meeting;
+            }
+        }
+
+        // const nextMeetingDate = getRandomDayFromNext7()
+        const nextMeetingDate = parseDateLocal(nextMeeting.value)
         console.log('nextMeetingDate:', nextMeetingDate)
-        nextScheduleMeeting.value = postgreMeeting.value ? postgreMeeting.value.next_meeting_date.trim() : nextMeetingDate.trim()
+        nextScheduleMeeting.value = postgreMeeting.value ? postgreMeeting.value.next_meeting_date.trim() : nextMeetingDate;
         form.value.meeting_host_email = response.meeting_host_email;
         form.value.summary_title = response.summary_title;
-        form.value.summary_overview = response.summary_overview + ` Next meeting date is ${nextScheduleMeeting.value}`;
+        // form.value.summary_overview = response.summary_overview + ` Next meeting date is ${nextScheduleMeeting.value}`;
+        form.value.summary_overview = response.summary_overview;
         form.value.client_email = selectedContact.value ? contactList.value.find(item => item.id === selectedContact.value)?.primary_email || '' : '';
 
         const { response: summary_overview } = await generateSummary()
         console.log('Generated Summary:', summary_overview)
-        ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview?.choices[0].message.content
+        ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview?.choices[0]?.message?.content
         if (ai_summary.value.length < 10) {
             const { response: summary_overview } = await generateSummary()
-            ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview?.choices[0].message.content
+            ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview?.choices[0]?.message?.content
         }
         console.log('ai_summary.value:', ai_summary.value)
-        
-        // const { response: next_meeting } = await getNextMeeting(nextMeetingDate)
-        // console.log('next_meeting:', next_meeting)
-        // nextMeeting.value = next_meeting;
 
         await handleMeetingSummary()
 
@@ -146,8 +155,12 @@
         const next_meeting_type = meetingTypeList.value[current_meeting_index + 1]?.label || 'Intro';
         // let next_meeting_content = nextMeeting.value.choices[0].message.content?.length < 10 ? nextScheduleMeeting.value : nextMeeting.value.choices[0].message.content
         // console.log('Next Meeting Content Length:', next_meeting_content)
-        const next_meeting_date = convertToMMDD(nextScheduleMeeting.value)
-        // console.log('next_meeting_date:', next_meeting_date)
+        // const next_meeting_date = convertToMMDD(nextScheduleMeeting.value)
+        let next_meeting_date = ''
+        if (nextScheduleMeeting.value) {
+            next_meeting_date = new Date(nextScheduleMeeting.value).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })
+        }
+        console.log('next_meeting_date:', next_meeting_date)
 
         const current_meeting_date = meeting_end_time.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
         let add_note_date = `${current_meeting_date} - ${current_meeting_type}  -  ${next_meeting_type} - ${next_meeting_date} \n`
@@ -158,7 +171,9 @@
         let content = ai_summary.value?.trim()
         // console.log('Summary Content Length:', content)
         if (content.length < 10) {
-            content = form.value.summary_overview;
+            const { response: summary_overview } = await generateSummary()
+            console.log('Generated Summary:', summary_overview)
+            content = summary_overview?.choices[0]?.message?.content;
         }
         form.value.ai_summary_overview = postgreMeeting.value ? content : (add_note_date + content);
 
@@ -256,13 +271,14 @@
         return res
     }
 
-    async function getNextMeeting(nextMeetingDate: string) {
+    async function getNextMeeting(summary_overview: any = null) {
         
         const response = await fetch('/api/openrouterai/next_meeting', {
             method: 'POST',
             body: JSON.stringify({
                 filterObj: {
-                    summary_overview: form.value.summary_overview + ' Next meeting date is ' + nextMeetingDate
+                    // summary_overview: form.value.summary_overview + ' Next meeting date is ' + nextMeetingDate
+                    summary_overview
                 }
             })
         })
@@ -327,6 +343,19 @@
         // console.log('Selected Meeting Type ID:', selectedMeetingType.value);
         await handleMeetingSummary()
     }
+
+    watch (
+    () => form.value.ai_summary_overview,
+        async (newVal, oldVal) => {
+            console.log('ai_summary_overview changed:', { oldVal, newVal })
+            if (!newVal || newVal.length < 10) {
+                console.log('Summary is empty or too short, regenerating...')
+                setTimeout(async () => {
+                    await handleMeetingSummary()
+                }, 2000);
+            }
+        }
+    )
 </script>
 
 <template>

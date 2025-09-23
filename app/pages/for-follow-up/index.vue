@@ -140,7 +140,7 @@
                 return h(UButton, {
                     color: 'neutral',
                     variant: 'ghost',
-                    label: 'Host Email',
+                    label: 'Client',
                     icon: isSorted
                     ? isSorted === 'asc'
                         ? 'i-lucide-arrow-up-narrow-wide'
@@ -168,7 +168,7 @@
                 return h(UButton, {
                     color: 'neutral',
                     variant: 'ghost',
-                    label: 'Primary Email',
+                    label: 'Email',
                     icon: isSorted
                     ? isSorted === 'asc'
                         ? 'i-lucide-arrow-up-narrow-wide'
@@ -199,7 +199,7 @@
             },
         },
         {
-            accessorKey: 'zoom_meetings',
+            accessorKey: 'zoom_summary',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
 
@@ -217,10 +217,11 @@
                 })
             },
             cell: ({ row }) => {
-                if (!row.getValue('zoom_meetings') || row.getValue('zoom_meetings').length === 0) {
+                // console.log('Row zoom summary:', row.original?.zoom_summary)
+                if (!row.original?.zoom_summary?.meeting_end_time || row.original?.zoom_summary?.meeting_end_time?.length === 0) {
                     return '-'
                 }
-                return new Date(row.getValue('zoom_meetings')[0]?.created_at).toLocaleString('en-US', {
+                return new Date(row.original?.zoom_summary?.meeting_end_time).toLocaleString('en-US', {
                     year: "numeric",
                     day: 'numeric',
                     month: 'long',

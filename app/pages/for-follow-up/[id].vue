@@ -24,7 +24,9 @@
         from: z.string(),
         to: z.string(),
         subject: z.string(),
+        meeting_type: z.string(),
         next_meeting_date: z.string().optional(),
+        zoom_link: z.string().optional(),
     })
     const { data }: any = await useFetch('/api/onedrive/microsoft-drive')
     // console.log('OneDrive:', data.value)
@@ -36,9 +38,11 @@
     const eventObject = ref<any>(null);
 
     const { data: _zoom }: any = await useFetch('/api/zoom/meeting_summary')
-    // console.log('Zoom Meeting Summary:', _zoom.value)
+    console.log('Zoom Meeting Summary:', _zoom.value)
     const zoomMeetingDetails = ref<any>(_zoom.value?.response || {})
     const selectedZoomMeeting = ref<any>(zoomMeetingDetails.value[0]?.meeting_uuid || null);
+    const meetingDetail = ref<any>(null);
+    // console.log('selectedZoomMeeting:', selectedZoomMeeting.value)
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
 
@@ -59,36 +63,58 @@
         calendarObject.value = data.value?.response?.value.find((cal: any) => cal.name === 'Calendar')
         // console.log('Calendar:', calendarObject.value)
 
-        let res_next_meeting = await getNextMeetingDate();
-        console.log('res_next_meeting1:', res_next_meeting) // Mon Sep 22 2025
-        if (!res_next_meeting) {
-            res_next_meeting = await getNextMeetingDate();
-        }
-        formattedNextMeeting.value = res_next_meeting.formattedNextMeeting
-        nextMeetingDate.value = res_next_meeting.nextMeetingDate
-        console.log('res_next_meeting2:', res_next_meeting) // Mon Sep 22 2025
+        // let res_next_meeting = await getNextMeetingDate();
+        // console.log('res_next_meeting1:', res_next_meeting) // Mon Sep 22 2025
+        // if (!res_next_meeting) {
+        //     res_next_meeting = await getNextMeetingDate();
+        // }
+        // formattedNextMeeting.value = res_next_meeting.formattedNextMeeting
+        // nextMeetingDate.value = res_next_meeting.nextMeetingDate
+        // console.log('res_next_meeting2:', res_next_meeting) // Mon Sep 22 2025
 
-        if (!formattedNextMeeting.value) {
-            const today = new Date();
-            today.setDate(today.getDate() + 7);
-            const next_meeting_date = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0') + 'T15:00';
-            form.value.next_meeting_date = next_meeting_date;
-        } else {
-            const today = new Date(formattedNextMeeting.value);
-            console.log('today:', today)
-            const next_date = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-            let next_time = String(today.getHours()).padStart(2, '0') + ':' + String(today.getMinutes()).padStart(2, '0');
-            if (next_time === '00:00') {
-                const _today = new Date();
-                next_time = String(_today.getHours()).padStart(2, '0') + ':' + String(_today.getMinutes()).padStart(2, '0');
-            }
-            console.log('next_date:', next_date, next_time)
-            form.value.next_meeting_date = next_date + 'T' + next_time;
-        }
+        // if (!formattedNextMeeting.value) {
+        //     const today = new Date();
+        //     today.setDate(today.getDate() + 7);
+        //     const next_meeting_date = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0') + 'T15:00';
+        //     form.value.next_meeting_date = next_meeting_date;
+        // } else {
+        //     const today = new Date(formattedNextMeeting.value);
+        //     console.log('today:', today)
+        //     const next_date = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        //     let next_time = String(today.getHours()).padStart(2, '0') + ':' + String(today.getMinutes()).padStart(2, '0');
+        //     if (next_time === '00:00') {
+        //         const _today = new Date();
+        //         next_time = String(_today.getHours()).padStart(2, '0') + ':' + String(_today.getMinutes()).padStart(2, '0');
+        //     }
+        //     console.log('next_date:', next_date, next_time)
+        //     form.value.next_meeting_date = next_date + 'T' + next_time;
+        // }
 
         const { response } = await getPersonDetail()
         person.value = response?.data || {}
-        // console.log('Fetched data:', person.value)
+        console.log('person data:', person.value)
+        if (person.value?.zoom_meetings?.length) {
+            selectedZoomMeeting.value = person.value?.zoom_meetings?.[0]?.meeting_uuid || selectedZoomMeeting.value
+        }
+
+        const { response: meetingResponse } = await getMeetingDetail(selectedZoomMeeting.value)
+        meetingDetail.value = meetingResponse || {}
+        console.log('meetingDetail data:', meetingDetail.value)
+
+        const { data: postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
+        console.log('Postgre Zoom Meetings:', postgreZoomMeetings)
+
+        if (postgreZoomMeetings.length > 0 && postgreZoomMeetings[0]?.next_meeting_date) {
+            formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
+            nextMeetingDate.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
+        } else {
+            formattedNextMeeting.value = null
+            nextMeetingDate.value = null
+        }
+        console.log('formattedNextMeeting.value:', formattedNextMeeting.value)
+        console.log('nextMeetingDate.value:', nextMeetingDate.value)
+        form.value.next_meeting_date = formattedNextMeeting.value
+
         items.value = signatureList({ name: person.value?.name })
         // itemsFollowup.value = forFollowUp({ name: person.value?.name })
         form.value.id = person.value.id
@@ -97,9 +123,18 @@
         form.value.primary_email = person.value.primary_email
         form.value.add_time = person.value.add_time
         form.value.owner_name = `Contact By ${person.value?.owner_name}`
-        form.value.generated_email = items.value[0]?.html || ''
+        if (items.value) {
+            if (items.value[0]?.html?.includes('{{name}}') && person.value?.name) {
+                form.value.generated_email = items.value[0]?.html.replace('{{name}}', person.value?.name) || '';
+            }
+            if (items.value[0]?.html?.includes('XXX') && person.value?.name) {
+                form.value.generated_email = items.value[0]?.html.replace('XXX', person.value?.name) || '';
+            }
+        }
+        // form.value.generated_email = items.value[0]?.html || ''
         form.value.to = person.value.primary_email
         form.value.subject = items.value[0]?.subject || ''
+        form.value.meeting_type = items.value[0]?.subject || ''
         selectedOption.value = items.value[0]?.value || null
         selectedFolder.value = folderList.value?.find((folder: any) => folder.name === items.value[0]?.folder_name)?.id || null
 
@@ -122,10 +157,17 @@
         from: 'francis@viacry.com',
         to: '',
         subject: '',
+        meeting_type: '',
         next_meeting_date: '',
+        zoom_link: '',
     })
 
     async function onSubmit() {
+        if (form.value.next_meeting_date === '' || form.value.next_meeting_date === null) {
+            alert('Please select the next meeting date.')
+            return
+
+        }
         isLoadingSave.value = true
         console.log('Submitted Data:', form.value)
         // console.log('attachmentList.value:', attachmentList.value)
@@ -212,6 +254,31 @@
         setTimeout(() => {
             isLoadingSave.value = false
         }, 1000);
+    }
+
+    async function fetchPostgreZoomMeetings() {
+        const res = await $fetch('/api/postgre/dynamic_field', {
+            method: 'GET',
+            query: {
+                table: 'zoom_meetings',
+                // dynamic_field1: 'person_id',
+                // value1: personId,
+                dynamic_field: 'meeting_uuid',
+                value: meetingDetail.value?.meeting_uuid || ''
+            }
+        })
+
+        return res
+    }
+
+    async function getMeetingDetail(meetingId: any) {
+        const response = await fetch('/api/zoom/meeting_detail', {
+            method: 'POST',
+            body: JSON.stringify({meetingId})
+        })
+        const res = await response.json()
+
+        return res
     }
 
     async function saveClientResponse() {
@@ -415,6 +482,7 @@
                 start_date_time,
                 end_date_time,
                 attendees: [form.value.to],
+                zoom_link: form.value.zoom_link || '',
             })
         })
         const res = await response.json()
@@ -437,8 +505,17 @@
         uploadedBase64Files.value = []
         const _items = signatureList({ name: person.value?.name })
         const selected = _items.find(item => item.value === value);
-        form.value.generated_email = selected?.html || '';
+        if (selected) {
+            if (selected?.html?.includes('{{name}}') && person.value?.name) {
+                form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
+            }
+            if (selected?.html?.includes('XXX') && person.value?.name) {
+                form.value.generated_email = selected?.html.replace('XXX', person.value?.name) || '';
+            }
+        }
+        // form.value.generated_email = selected?.html || '';
         form.value.subject = selected?.subject || '';
+        form.value.meeting_type = selected?.subject || '';
         selectedFolder.value = folderList.value.find(item => item.name === selected?.folder_name)?.id || null;
         // console.log('handleChange selectedFolder.value:', selectedFolder.value);
 
@@ -470,8 +547,8 @@
     async function updateAllAttachmentsToBase64String() {
         attachmentList.value.forEach(async(attachment: any, index: number) => {
             // console.log('attachment:', attachment)
-            // const test = await compressFiles(attachment)
-            // console.log('Compressed File:', test)
+            // const { data } = await compressFiles(attachment)
+            // console.log('Compressed data:', data)
 
             const responseFiles = await fetch('/api/onedrive/base64_string', {
                 method: 'POST',
@@ -487,14 +564,16 @@
     }
 
     async function compressFiles(attachment: any) {
-        console.log('Compressing File:', attachment)
-        console.log('Compressing File:', attachment?.['@microsoft.graph.downloadUrl'])
         const response = await fetch('/api/convertapi/compress', {
-            method: 'POST'
+            method: 'POST',
+            body: JSON.stringify({
+                file_url: attachment?.['@microsoft.graph.downloadUrl'],
+                file_name: attachment?.name
+            })
         })
         const res = await response.json()
 
-        return response
+        return res
     }
 
     async function getOneDriveFiles() {
@@ -572,6 +651,28 @@
         }
     }
 
+    async function handleChangeZoomMeeting() {
+        console.log('Selected Zoom Meeting:', selectedZoomMeeting.value);
+        const { response: meetingResponse } = await getMeetingDetail(selectedZoomMeeting.value)
+        meetingDetail.value = meetingResponse || {}
+        console.log('meetingDetail data:', meetingDetail.value)
+
+        
+        const { data: postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
+        console.log('Postgre Zoom Meetings:', postgreZoomMeetings)
+
+        if (postgreZoomMeetings.length > 0 && postgreZoomMeetings[0]?.next_meeting_date) {
+            formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
+            nextMeetingDate.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
+        } else {
+            formattedNextMeeting.value = null
+            nextMeetingDate.value = null
+        }
+        console.log('formattedNextMeeting.value:', formattedNextMeeting.value)
+        console.log('nextMeetingDate.value:', nextMeetingDate.value)
+        form.value.next_meeting_date = formattedNextMeeting.value
+    }
+
 </script>
 
 <template>
@@ -601,53 +702,47 @@
                                 </template>
                                 <div class="grid grid-cols-1 gap-1">
                                     <div class="w-full space-y-1">
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Meeting:</label>
+                                        <USelect
+                                            v-model="selectedZoomMeeting"
+                                            :items="zoomMeetingDetails.map((item: any) => ({ value: item.meeting_uuid, label: item?.detail?.summary_overview || item.meeting_topic }))"
+                                            placeholder="Choose one or more attachments"
+                                            class="w-full"
+                                            @change="handleChangeZoomMeeting"
+                                        />
+                                    </div>
+                                    <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting List:</label>
                                         <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" />
                                     </div>
                                     <div class="w-full space-y-1">
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
+                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full"/>
+                                    </div>
+                                    <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
-                                        <UInput v-model="form.from" label="From" class="w-full"/>
+                                        <UInput v-model="form.from" label="From" class="w-full" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
                                         <UInput v-model="form.to" label="To" class="w-full"/>
                                     </div>
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Subject:</label>
-                                        <UInput v-model="form.subject" label="Subject" class="w-full"/>
-                                    </div>
-                                    <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
                                         <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/>
                                     </div>
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">OneDrive Folder:</label>
-                                        <USelect
-                                            v-model="selectedFolder"
-                                            :items="folderList.map(item => ({ value: item.id, label: item.name }))"
-                                            placeholder="Choose folder"
-                                            class="w-full"
-                                            @update:modelValue="handleSelectFolder"
-                                        />
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
+                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full"/>
                                     </div>
                                 </div>
                             </UCard>
 
                             <UCard class="w-full mt-6">
                                 <template #header>
-                                    <h2 class="text-lg font-semibold text-neutral-500">Person Details (view-only)</h2>
+                                    <h2 class="text-lg font-semibold text-neutral-500">Client Details (view-only)</h2>
                                 </template>
                                 <div class="grid grid-cols-1 gap-1">
-                                    <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom List:</label>
-                                        <USelect
-                                            v-model="selectedZoomMeeting"
-                                            multiple
-                                            :items="zoomMeetingDetails.map((item: any) => ({ value: item.meeting_uuid, label: item.meeting_topic }))"
-                                            placeholder="Choose one or more attachments"
-                                            class="w-full"
-                                        />
-                                    </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Name:</label>
                                         <UInput v-model="form.name" label="Person Name" disabled class="w-full"/>
@@ -655,10 +750,6 @@
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Email:</label>
                                         <UInput v-model="form.primary_email" label="Primary Email" disabled class="w-full"/>
-                                    </div>
-                                    <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Organization:</label>
-                                        <UInput v-model="form.org_name" label="Organization Name" disabled class="w-full"/>
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Organization:</label>
@@ -676,6 +767,10 @@
                             <template #header>
                                 <h2 class="text-lg font-semibold">Auto-Generated Email</h2>
                             </template>
+                            <div class="w-full space-y-1 mb-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Subject:</label>
+                                <UInput v-model="form.subject" label="Subject" class="w-full"/>
+                            </div>
                             <div class="grid grid-cols-1 gap-1">
                                 <div class="w-full space-y-1">
                                     <label class="block text-sm font-medium w-50 my-auto text-neutral-500">OneDrive Folder:</label>
@@ -743,7 +838,7 @@
                                     </UButton>
                                 </div>
                                 <div v-if="!isLoadingSave" class="w-full space-y-1">
-                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">For Follow-Up:</label>
+                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Select Signature:</label>
                                     <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="For Follow Up Signatures"/>
                                 </div>
                                 <div v-if="!isLoadingSave" class="mb-4 h-[360px]">

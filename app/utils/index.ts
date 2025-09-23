@@ -1,3 +1,7 @@
+import * as chrono from 'chrono-node'
+import dayjs from 'dayjs'
+const pad = (n) => n.toString().padStart(2, "0");
+
 export function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
@@ -157,13 +161,6 @@ export function getRandomDayFromNext7(_numberOfDays = 7, _startDate = new Date()
   const month = randomDate.toLocaleString('en-US', { month: 'long' });
   const day = randomDate.getDate();
 
-  // Format time in 12-hour format with AM/PM
-  // const time = randomDate.toLocaleString('en-US', {
-  //   hour: 'numeric',
-  //   minute: '2-digit',
-  //   hour12: true
-  // });
-
   return `${month} ${addOrdinal(day)}`;
 }
 
@@ -193,6 +190,44 @@ export function convertDateStamp(dateString: any, timeString: any): string {
     return utc.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""); // e.g. "20250920T050000Z"
 }
 
+export function covertToYYYYMMDDTHHMM(dateString: any = null): string {
+    let now = new Date();
+    if (dateString) {
+        now = new Date(dateString);
+    }
+
+    const formatted =
+        now.getFullYear() + "-" +
+        pad(now.getMonth() + 1) + "-" +   // Months are 0-based
+        pad(now.getDate()) + "T" +
+        pad(now.getHours()) + ":" +
+        pad(now.getMinutes()); //"2025-09-23T15:00"
+
+    return formatted;  //"2025-09-23T15:00"
+}
+
+export function parseDateLocal(input: string): string | null {
+  const now = new Date()
+  const results: any = chrono.parse(input, now)
+
+  if (!results || results.length === 0) return null
+
+  const result = results[0]
+  let date = result.start.date()
+
+  // ✅ If the parser didn't detect a specific time → copy current time
+  const hasTime =
+    result.start.isCertain('hour') ||
+    result.start.isCertain('minute') ||
+    result.start.isCertain('second')
+
+  if (!hasTime) {
+    date.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0)
+  }
+
+  // ✅ Convert to local ISO string
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+}
 
 export function convertHtmlEmail(body: any): string {
   // Enhanced HTML processing for better email client compatibility and minimal white space

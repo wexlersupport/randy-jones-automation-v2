@@ -1,4 +1,6 @@
 import axios from "axios";
+import { neon } from '@netlify/neon';
+const sql = neon(); // automatically uses env NETLIFY_DATABASE_URL
 
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig();
@@ -14,8 +16,15 @@ export default defineEventHandler(async (event) => {
         `${PIPEDRIVE_BASE_URL}/persons/${personId}?api_token=${pipedriveApiKey}`
       );
 
+      const dbPromise = await sql(`SELECT * FROM zoom_meetings WHERE person_id = $1 ORDER BY created_at DESC`, [personId]);
+
+      const new_response = {
+        data: { ...response.data?.data, zoom_meetings: dbPromise }
+      }
+      console.log('Pipedrive Person Detail with Zoom Meetings:', new_response);
+
       return {
-          response : response.data || null
+          response : new_response
       }
 
     } catch (error: any) {

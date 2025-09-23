@@ -11,12 +11,19 @@ export default defineEventHandler(async (event) => {
     let start_date_time = parseBody?.start_date_time // e.g. "2025-09-20T15:00:00"
     let end_date_time = parseBody?.end_date_time // e.g. "2025-09-20T16:00:00"
     let attendeesEmails =  parseBody?.attendees // Array of emails
+    let zoomLink = parseBody?.zoom_link || 'https://us02web.zoom.us/j/82361712152?pwd=7xFwWhvWAWZzw9taHdat1ImLa1BO6j.1#success'
 
     const newEvent = {
         subject,
         body: {
             contentType: 'HTML',
-            content: 'Meeting Invite'
+            content: `
+                <p>Join Zoom Meeting:
+                    <a href="${zoomLink}" target="_blank" rel="noopener noreferrer">
+                        ${zoomLink}
+                    </a>
+                </p>
+            `
         },
         start: {
             dateTime: start_date_time,
@@ -27,17 +34,17 @@ export default defineEventHandler(async (event) => {
             timeZone
         },
         location: {
-            displayName: 'Teams Meeting'
+            displayName: `Zoom Meeting Link: ${zoomLink}`
         },
-        attendees: attendeesEmails.map(email => ({
+        attendees: attendeesEmails.map((email: string) => ({
             emailAddress: { address: email },
             type: "required"
         })),
         isReminderOn: true,
         reminderMinutesBeforeStart: 60,
         allowNewTimeProposals: true,
-        isOnlineMeeting: true,
-        onlineMeetingProvider: 'teamsForBusiness',
+        // isOnlineMeeting: true,
+        // onlineMeetingProvider: 'teamsForBusiness',
         categories: ["Blue category"]
     };
 

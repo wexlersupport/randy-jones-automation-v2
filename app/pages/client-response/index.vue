@@ -154,7 +154,7 @@
             header: 'Action/Date Sent',
             cell: ({ row }) => {
                 if (row.getValue('is_sent_reminder')) {
-                    console.log('Send Reminder Date:', row.original.sent_reminder_date)
+                    // console.log('Send Reminder Date:', row.original.sent_reminder_date)
                     return new Date(row.original.sent_reminder_date).toLocaleString('en-US', {
                         year: "numeric",
                         day: 'numeric',

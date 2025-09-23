@@ -10,20 +10,24 @@ export default defineEventHandler(async (event) => {
 
     try {
         const { data } = await axios.post('https://openrouter.ai/api/v1/chat/completions',
-        {
-            model: "mistralai/mistral-7b-instruct",
-            messages: [
-                {
-                    role: "user",
-                    content: `
-                        when is next meeting based on this meeting summary, result is one sentence only and date only:
+            {
+                model: "mistralai/mistral-7b-instruct",
+                messages: [
+                    {
+                        role: "user",
+                        content: `
+                            Given this meeting summary:
 
-                        ${filterObj.summary_overview}
-                    `
-                }
-            ]
-        },
-        {
+                            "${filterObj.summary_overview}"
+
+                            If a next meeting date/time is mentioned, reply ONLY with the date and time (example: "December 2, 2025 1:00 PM").
+                            If there is NO next meeting scheduled, reply ONLY with the word "none".
+                            No extra text.
+                        `
+                    }
+                ]
+            },
+            {
             headers: {
                 Authorization: `Bearer ${openrouterApiKey}`,
                 'Content-Type': 'application/json',

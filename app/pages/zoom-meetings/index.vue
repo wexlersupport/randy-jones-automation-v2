@@ -140,7 +140,7 @@
         data.value = [...postgreMeetings.value, ...filteredZoomMeetings]
             .sort((a, b) => new Date(b.summary_created_time) - new Date(a.summary_created_time));
         
-        data.value = data.value.filter((meeting) => meeting.meeting_id);
+        data.value = data.value.filter((meeting) => meeting.meeting_id && meeting.detail?.summary_overview);
 
         console.log('Fetched Zoom meeting (sorted):', data.value);
     }
@@ -191,8 +191,13 @@
         },
         {
             accessorKey: 'person.name',
-            header: 'Client Email',
+            header: 'Client',
             cell: ({ row }) => row.original.person?.name || '-'
+        },
+        {
+            accessorKey: 'person.primary_email',
+            header: 'Client Email',
+            cell: ({ row }) => row.original.person?.primary_email || '-'
         },
         {
             accessorKey: 'summary_created_time',
