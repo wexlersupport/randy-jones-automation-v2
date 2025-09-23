@@ -202,8 +202,9 @@
         const { startPreviousSunday, endPreviousSunday } = await getPreviousSunday(row.next_meeting_date);
         // const { response: actualMeetingInvite } = await addCalendarEvent(startPreviousSunday, endPreviousSunday, row) // Outlook
         // console.log('actualMeetingInvite:', actualMeetingInvite)
-        const sunday_reminders = await sendingSundayReminders(startPreviousSunday, row) // Gmail
-        console.log('sendingMeetingInvites Result:', sunday_reminders)
+
+        // const sunday_reminders = await sendingSundayReminders(startPreviousSunday, row) // Gmail
+        // console.log('sendingMeetingInvites Result:', sunday_reminders)
 
         console.log('Sending Client Reminder for:', row)
         const client_response = await updateClientResponse(row)
@@ -243,16 +244,28 @@
         const dtEnd = convertDateStamp(send_meeting_date, '16:00')
         console.log('sendingMeetingReminders dtStart dtEnd:', dtStart, dtEnd) //20250922T070000Z 20250922T080000Z
 
-        const response = await fetch('/api/email/meeting-reminders', {
+        // const response = await fetch('/api/email/meeting-reminders', {
+        //     method: 'POST',
+        //     body: JSON.stringify({
+        //         emailObj: {
+        //             dt_start: dtStart,
+        //             dt_end: dtEnd,
+        //             from: 'francis.regala@strattonstudiogames.com',
+        //             to: row.person_email,
+        //             subject: 'Meeting Reminders',
+        //             next_meeting_date: row.next_meeting_date
+        //         }
+        //     })
+        // })
+
+        const response = await fetch('/api/calendar/send_meeting_reminder', {
             method: 'POST',
             body: JSON.stringify({
                 emailObj: {
-                    dt_start: dtStart,
-                    dt_end: dtEnd,
-                    from: 'francis.regala@strattonstudiogames.com',
+                    sunday_date: send_meeting_date,
                     to: row.person_email,
+                    name: row.person_name,
                     subject: 'Meeting Reminders',
-                    next_meeting_date: row.next_meeting_date
                 }
             })
         })
