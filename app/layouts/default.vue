@@ -25,27 +25,32 @@ const links = [[
     }
   },
   {
-    label: 'Inbox',
-    icon: 'i-lucide-inbox',
-    to: '/inbox',
+    label: 'Client Response',
+    icon: 'i-lucide-user-check',
+    to: '/client-response',
     onSelect: () => {
       open.value = false
     }
   },
 ],[],
-// [
-//   {
-//     label: 'Feedback',
-//     icon: 'i-lucide-message-circle',
-//     to: 'https://github.com/nuxt-ui-pro/dashboard',
-//     target: '_blank'
-//   }, {
-//     label: 'Help & Support',
-//     icon: 'i-lucide-info',
-//     to: 'https://github.com/nuxt/ui-pro',
-//     target: '_blank'
-//   }
-// ]
+[
+  {
+  label: 'Settings',
+  icon: 'i-lucide-settings',
+  to: '/settings'
+},
+  // {
+  //   label: 'Feedback',
+  //   icon: 'i-lucide-message-circle',
+  //   to: 'https://github.com/nuxt-ui-pro/dashboard',
+  //   target: '_blank'
+  // }, {
+  //   label: 'Help & Support',
+  //   icon: 'i-lucide-info',
+  //   to: 'https://github.com/nuxt/ui-pro',
+  //   target: '_blank'
+  // }
+]
 ] satisfies NavigationMenuItem[][]
 
 const groups = computed(() => [{

@@ -24,7 +24,7 @@
 
     onMounted(async () => {
         const {response} = await getPipedrivePerson()
-        persons.value = response?.data || []
+        persons.value = response || []
         // console.log(persons.value)
 
         isLoading.value = false
@@ -140,7 +140,7 @@
                 return h(UButton, {
                     color: 'neutral',
                     variant: 'ghost',
-                    label: 'Host Email',
+                    label: 'Client',
                     icon: isSorted
                     ? isSorted === 'asc'
                         ? 'i-lucide-arrow-up-narrow-wide'
@@ -149,7 +149,7 @@
                     class: '-mx-2.5',
                     onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
                 })
-                },
+            },
             cell: ({ row }) => {
                 return h(UButton, {
                     color: 'neutral',
@@ -162,17 +162,66 @@
         },
         {
             accessorKey: 'primary_email',
-            header: 'Primary Email',
+            header: ({ column }) => {
+                const isSorted = column.getIsSorted()
+
+                return h(UButton, {
+                    color: 'neutral',
+                    variant: 'ghost',
+                    label: 'Email',
+                    icon: isSorted
+                    ? isSorted === 'asc'
+                        ? 'i-lucide-arrow-up-narrow-wide'
+                        : 'i-lucide-arrow-down-wide-narrow'
+                    : 'i-lucide-arrow-up-down',
+                    class: '-mx-2.5',
+                    onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+                })
+            },
         },
         {
             accessorKey: 'org_name',
-            header: 'Organization Name',
+            header: ({ column }) => {
+                const isSorted = column.getIsSorted()
+
+                return h(UButton, {
+                    color: 'neutral',
+                    variant: 'ghost',
+                    label: 'Organization Name',
+                    icon: isSorted
+                    ? isSorted === 'asc'
+                        ? 'i-lucide-arrow-up-narrow-wide'
+                        : 'i-lucide-arrow-down-wide-narrow'
+                    : 'i-lucide-arrow-up-down',
+                    class: '-mx-2.5',
+                    onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+                })
+            },
         },
         {
-            accessorKey: 'add_time',
-            header: 'Date Created',
+            accessorKey: 'zoom_summary',
+            header: ({ column }) => {
+                const isSorted = column.getIsSorted()
+
+                return h(UButton, {
+                    color: 'neutral',
+                    variant: 'ghost',
+                    label: 'Last Meeting Date',
+                    icon: isSorted
+                    ? isSorted === 'asc'
+                        ? 'i-lucide-arrow-up-narrow-wide'
+                        : 'i-lucide-arrow-down-wide-narrow'
+                    : 'i-lucide-arrow-up-down',
+                    class: '-mx-2.5',
+                    onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+                })
+            },
             cell: ({ row }) => {
-                return new Date(row.getValue('add_time')).toLocaleString('en-US', {
+                // console.log('Row zoom summary:', row.original?.zoom_summary)
+                if (!row.original?.zoom_summary?.meeting_end_time || row.original?.zoom_summary?.meeting_end_time?.length === 0) {
+                    return '-'
+                }
+                return new Date(row.original?.zoom_summary?.meeting_end_time).toLocaleString('en-US', {
                     year: "numeric",
                     day: 'numeric',
                     month: 'long',

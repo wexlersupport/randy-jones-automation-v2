@@ -1,25 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
-    "@nuxt/eslint",
-    "@nuxt/ui",
-    "@nuxt/ui-pro",
-    "@vueuse/nuxt",
-    "@formkit/nuxt",
-    "nuxt-pdfmake",
-    "@nuxtjs/supabase",
+    '@nuxt/eslint',
+    '@nuxt/ui-pro',
+    '@vueuse/nuxt',
+    '@formkit/nuxt',
+    'nuxt-pdfmake',
   ],
-
-  supabase: {
-    redirect: false,
-    redirectOptions: {
-      login: "/",
-      callback: "/",
-      exclude: ["/*"],
-    },
-    url: process.env.NUXT_PUBLIC_SUPABASE_URL,
-    key: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
-  },
   pdfmake: {
     enabled: true, // Enable the module
     enableComposable: true, // Enable usePDFMake and useFontPresets composables
@@ -27,42 +14,38 @@ export default defineNuxtConfig({
   },
 
   devtools: {
-    enabled: true,
+    enabled: true
   },
 
-  css: ["~/assets/css/main.css"],
+  css: ['~/assets/css/main.css'],
 
   routeRules: {
-    "/api/**": {
-      cors: true,
-    },
+    '/api/**': {
+      cors: true
+    }
   },
 
   future: {
-    compatibilityVersion: 4,
+    compatibilityVersion: 4
   },
 
-  compatibilityDate: "2024-07-11",
+  compatibilityDate: '2024-07-11',
 
   formkit: {
     // Experimental support for auto loading (see note):
-    autoImport: true,
+    autoImport: true
   },
 
   eslint: {
     config: {
       stylistic: {
-        commaDangle: "never",
-        braceStyle: "1tbs",
-      },
-    },
+        commaDangle: 'never',
+        braceStyle: '1tbs'
+      }
+    }
   },
 
   runtimeConfig: {
-    supabase: {
-      url: process.env.NUXT_PUBLIC_SUPABASE_URL,
-      key: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
-    },
     public: {
       openrouterApiKey: process.env.NUXT_PUBLIC_OPENROUTER_API_KEY,
       zoomAccountId: process.env.NUXT_PUBLIC_ZOOM_ACCOUNT_ID,
@@ -73,6 +56,8 @@ export default defineNuxtConfig({
       onedriveClientSecret: process.env.NUXT_PUBLIC_ONEDRIVE_CLIENT_SECRET,
       pipedriveApiKey: process.env.NUXT_PUBLIC_PIPEDRIVE_API_KEY,
       googlePrivateKey: process.env.NUXT_PUBLIC_GOOGLE_PRIVATE_KEY,
+      sendgridApiKey: process.env.NUXT_PUBLIC_SENDGRID_API_KEY,
+      convertapiSecretKey: process.env.NUXT_PUBLIC_CONVERTAPI_SECRET_KEY,
     },
-  },
-});
+  }
+})

@@ -18,8 +18,25 @@ export default defineEventHandler(async (event) => {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
+     const detailedMeetings = await Promise.all(
+      summaryRes.data?.summaries.map(async (m: any) => {
+        try {
+          // Zoom UUIDs require *double* encoding
+          const encodedUuid = encodeURIComponent(encodeURIComponent(m.meeting_uuid));
+          const detailUrl = `${ZOOM_BASE_URL}/meetings/${encodedUuid}/meeting_summary`;
+          const detailRes = await axios.get(detailUrl, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          return { ...m, detail: detailRes.data || null };
+        } catch (err: any) {
+          console.warn(`Failed to fetch detail for ${m.id}:`, err.response?.data || err.message);
+          return { ...m, detail: null };
+        }
+      })
+    );
+
     return {
-      response: summaryRes.data,
+      response: detailedMeetings,
     };
   } catch (error: any) {
     console.error("Zoom Meeting Summary Error:", error.response?.data || error.message);
