@@ -6,12 +6,13 @@ const links = [[{
   icon: 'i-lucide-send',
   to: '/settings',
   exact: true
-}, {
-  label: 'Signatures',
-  icon: 'i-lucide-file-signature',
-  to: '/settings/signature-list',
-  exact: true
-}
+}, 
+//{
+//  label: 'Signatures',
+//  icon: 'i-lucide-file-signature',
+//  to: '/settings/signature-list',
+//  exact: true
+//}
 // {
 //   label: 'Field Service',
 //   icon: 'i-lucide-book-open',
