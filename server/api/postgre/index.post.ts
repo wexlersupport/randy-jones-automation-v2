@@ -7,7 +7,6 @@ export default defineEventHandler(async (event) => {
     try {
         const body = await readBody(event)
         // const { description } = body
-
         // Remove id field to prevent primary key conflicts when creating new records
         const { id, ...bodyWithoutId } = body;
 
@@ -33,7 +32,6 @@ export default defineEventHandler(async (event) => {
         // For tables with auto-incrementing IDs, we need to handle sequence issues
         let query;
         let queryValues;
-
         if (table === 'for_follow_up_templates') {
             // Get the next available ID to avoid sequence issues
             const maxIdResult = await sql(`SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM ${table}`);
@@ -52,7 +50,6 @@ export default defineEventHandler(async (event) => {
                     VALUES (${placeholders}) RETURNING *`;
             queryValues = values;
         }
-
 
         const [data] = await sql(query, queryValues);
 

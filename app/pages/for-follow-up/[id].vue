@@ -50,22 +50,44 @@
         subject: signature.subject || '',
         attachment_files: signature.attachment_files || []
     })) || []);
+    const selectedFollowUp = ref<any>(null);
 
-    // Function to reorder signatures
-    function reorderSignatures(signatures: any[]) {
-        const appointmentSignatures = signatures.filter((sig: any) =>
-            sig.label && sig.label.toLowerCase().includes('appointment')
-        );
-        const otherSignatures = signatures.filter((sig: any) =>
-            !sig.label || !sig.label.toLowerCase().includes('appointment')
-        );
-        return [...appointmentSignatures, ...otherSignatures];
+    // Function to refresh signatures list
+    async function refreshSignaturesList() {
+        await refreshSignatures();
+        const updatedSignatures = _data.value?.data || [];
+        itemsFollowup.value = updatedSignatures.map((signature: any) => ({
+            label: signature.label,
+            value: signature.value || signature.label,
+            html: signature.html,
+            subject: signature.subject || '',
+            attachment_files: signature.attachment_files || []
+        }));
     }
 
-    // Initial load with reordering
-    const allSignatures = _data.value?.data || [];
-    const itemsFollowup = ref<any[]>(reorderSignatures(allSignatures));
-    const selectedFollowUp = ref<any>(null);
+    // Watch for changes in signature data
+    watch(_data, (newData) => {
+        if (newData?.data) {
+            itemsFollowup.value = newData.data.map((signature: any) => ({
+                label: signature.label,
+                value: signature.value || signature.label,
+                html: signature.html,
+                subject: signature.subject || '',
+                attachment_files: signature.attachment_files || []
+            }));
+        }
+    }, { deep: true });
+
+    // Initialize items array with database signatures for the main signature dropdown
+    if (_data.value?.data) {
+        items.value = _data.value.data.map((signature: any) => ({
+            label: signature.label,
+            html: signature.html,
+            value: signature.value || signature.label,
+            subject: signature.subject || '',
+            attachment_files: signature.attachment_files || []
+        }));
+    }
 
     onMounted(async () => {
         const leaf_process = ['']
@@ -474,11 +496,19 @@
         const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
         console.log('selected:', selected)
-        if (selected?.html?.includes('{{name}}') && person.value?.name) {
-            form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
-        }
-        if (selected?.html?.includes('XXX') && person.value?.name) {
-            form.value.generated_email = selected?.html.replace('XXX', person.value?.name) || '';
+
+        if (selected?.html) {
+            let emailContent = selected.html;
+
+            // Replace placeholders if they exist
+            if (emailContent.includes('{{name}}') && person.value?.name) {
+                emailContent = emailContent.replace('{{name}}', person.value?.name);
+            }
+            if (emailContent.includes('XXX') && person.value?.name) {
+                emailContent = emailContent.replace('XXX', person.value?.name);
+            }
+
+            form.value.generated_email = emailContent;
         }
     }
 
