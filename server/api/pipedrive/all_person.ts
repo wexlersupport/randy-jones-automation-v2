@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
         const rows = await sql(query, [person.id]);
 
         let detailRes: any = null;
-        if (rows.length ===0 ) throw new Error("No Zoom meetings found for this person.");
+        // if (rows.length === 0 ) throw new Error("No Zoom meetings found for this person.");
         if (rows.length > 0) {
           const meeting_uuid = rows.length > 0 ? rows[0]?.meeting_uuid : null;
           const encodedUuid = encodeURIComponent(encodeURIComponent(meeting_uuid || ''));

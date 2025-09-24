@@ -1,4 +1,4 @@
-import { getOnedriveAccessToken } from './auth';
+import getOnedriveAccessToken from './auth';
 
 interface DriveResponse {
   success: boolean;
