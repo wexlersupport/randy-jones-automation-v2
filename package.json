@@ -43,6 +43,7 @@
     "@iconify-json/material-symbols": "^1.2.30",
     "@nuxt/eslint": "^1.4.1",
     "@types/fuse": "^2.6.2",
+    "@types/nodemailer": "^7.0.1",
     "@types/pdfjs-dist": "^2.10.377",
     "eslint": "^9.28.0",
     "nuxt-pdfmake": "^0.0.46",
