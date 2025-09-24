@@ -1,11 +1,4 @@
-import { defineEventHandler } from 'h3'
-
-// Export both the event handler and a utility function
-export default defineEventHandler(async () => {
-  return await getOnedriveAccessToken();
-});
-
-export async function getOnedriveAccessToken(): Promise<string> {
+export default async function getOnedriveAccessToken(): Promise<string> {
   const config = useRuntimeConfig();
   const onedriveTenantId = config.public.onedriveTenantId
   const onedriveAccountId = config.public.onedriveAccountId
