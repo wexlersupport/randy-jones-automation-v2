@@ -23,7 +23,7 @@ function newItem() {
   isCreating.value = true
 }
 
-function toSnakeCase(str) {
+function toSnakeCase(str: string): string {
   return str
     .replace(/([a-z])([A-Z])/g, '$1_$2') // handle camelCase → camel_Case
     .replace(/\s+/g, '_')                // spaces → _
@@ -97,7 +97,7 @@ async function onSave() {
   } catch (error) {
     console.error('Error saving item:', error)
     toast.add({
-      description: 'Error saving template.',
+      description: 'Error saving signature.',
       icon: 'i-lucide-alert-circle',
       color: 'error'
     })
@@ -177,7 +177,7 @@ async function onDelete() {
     <!-- RIGHT PANEL -->
     <div class="flex-1 p-6 overflow-y-auto bg-white dark:bg-gray-900">
       <h2 class="text-lg font-bold mb-4">
-        {{ isCreating ? 'Create Template' : 'Details' }}
+        {{ isCreating ? 'Create Signature' : 'Details' }}
       </h2>
 
       <div v-if="selectedItem" class="space-y-4">
@@ -194,6 +194,7 @@ async function onDelete() {
           <label class="block text-sm font-medium text-gray-600 dark:text-gray-300">Description</label>
           <ClientOnly>
             <QuillEditor
+              :key="isCreating ? 'new' : selectedItem?.id || 'edit'"
               contentType="html"
               v-model:content="selectedItem.html"
               theme="snow"
