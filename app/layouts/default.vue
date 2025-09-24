@@ -35,7 +35,7 @@ const links = [[
 ],[],
 [
   {
-  label: 'Signature',
+  label: 'Signatures',
   icon: 'i-lucide-settings',
   to: '/signature'
 },
