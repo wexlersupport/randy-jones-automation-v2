@@ -1,10 +1,16 @@
-import getOnedriveAccessToken from './auth';
+import { getOnedriveAccessToken } from './auth';
 
-export default defineEventHandler(async () => {
-  const accessToken = await getOnedriveAccessToken()
+interface DriveResponse {
+  success: boolean;
+  response?: any;
+  error?: string;
+}
+
+export default defineEventHandler(async (): Promise<DriveResponse> => {
+  const accessToken: string = await getOnedriveAccessToken()
   try {
 
-    const graphRes = await $fetch<any>(
+    const graphRes: any = await $fetch<any>(
       `https://graph.microsoft.com/v1.0/users/viacry@automationpm.onmicrosoft.com/drive/root/children`,
       {
         headers: {

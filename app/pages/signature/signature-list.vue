@@ -62,7 +62,7 @@ const attachmentFilesString = computed({
 const attachmentTags = computed<string[]>({
   get() {
     const str = selectedItem.value?.attachment_files || ''
-    return str ? str.split('|').map(s => s.trim()) : []
+    return str ? str.split('|').map((s: any) => s.trim()) : []
   },
   set(arr: string[]) {
     if (selectedItem.value) {
@@ -131,7 +131,7 @@ async function onSave() {
 
 async function onDelete() {
   if (!selectedItem.value || !selectedItem.value.id || isCreating.value) return
-  
+
   if (!confirm('Are you sure you want to delete this signature? This action cannot be undone.')) {
     return
   }
@@ -149,7 +149,7 @@ async function onDelete() {
     // Refresh the data to reflect changes
     await refresh()
     items.value = data.value?.data || []
-    
+
     // Clear selection
     selectedItem.value = null
     isCreating.value = false

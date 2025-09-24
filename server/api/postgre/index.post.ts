@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
         if (table === 'for_follow_up_templates') {
             // Get the next available ID to avoid sequence issues
             const maxIdResult = await sql(`SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM ${table}`);
-            const nextId = maxIdResult[0].next_id;
+            const nextId = maxIdResult[0]?.next_id;
 
             // Add the ID to the fields and values
             const fieldsWithId = ['id', ...quotedFields];

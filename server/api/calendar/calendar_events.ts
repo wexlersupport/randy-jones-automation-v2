@@ -1,5 +1,5 @@
 import axios from "axios";
-import getOnedriveAccessToken from './auth';
+import { getOnedriveAccessToken } from './auth';
 
 export default defineEventHandler(async (event) => {
     const accessToken = await getOnedriveAccessToken()

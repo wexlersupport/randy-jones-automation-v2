@@ -1,6 +1,11 @@
 import { defineEventHandler } from 'h3'
 
+// Export both the event handler and a utility function
 export default defineEventHandler(async () => {
+  return await getOnedriveAccessToken();
+});
+
+export async function getOnedriveAccessToken(): Promise<string> {
   const config = useRuntimeConfig();
   const onedriveTenantId = config.public.onedriveTenantId
   const onedriveAccountId = config.public.onedriveAccountId
@@ -24,11 +29,11 @@ export default defineEventHandler(async () => {
       }
     )
 
-    const accessToken = tokenRes.access_token
+    const accessToken: string = tokenRes.access_token
 
     return accessToken
   } catch (error: any) {
     console.error(error)
-    return { success: false, error: error.message || 'Unknown error' }
+    throw new Error(error.message || 'Failed to get access token')
   }
-})
+}

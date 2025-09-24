@@ -128,7 +128,7 @@
 
         // ✅ Merge and sort DESC by summary_created_time
         data.value = [...postgreMeetings.value, ...filteredZoomMeetings]
-            .sort((a: any, b: any) => new Date(b?.summary_created_time) - new Date(a?.summary_created_time));
+            .sort((a: any, b: any) => new Date(b?.summary_created_time).getTime() - new Date(a?.summary_created_time).getTime());
         
         data.value = data.value.filter((meeting) => meeting.meeting_id && meeting.detail?.summary_overview);
     }

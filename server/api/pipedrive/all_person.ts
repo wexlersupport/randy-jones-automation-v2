@@ -30,8 +30,8 @@ export default defineEventHandler(async (event) => {
 
         let detailRes: any = null;
         if (rows.length > 0) {
-          const meeting_uuid = rows.length > 0 ? rows[0].meeting_uuid : null;
-          const encodedUuid = encodeURIComponent(encodeURIComponent(meeting_uuid));
+          const meeting_uuid = rows.length > 0 ? rows[0]?.meeting_uuid : null;
+          const encodedUuid = encodeURIComponent(encodeURIComponent(meeting_uuid || ''));
           const detailUrl = `${ZOOM_BASE_URL}/meetings/${encodedUuid}/meeting_summary`;
           detailRes = await axios.get(detailUrl, {
             headers: { Authorization: `Bearer ${accessToken}` },
