@@ -16,8 +16,6 @@
         query: { table: 'zoom_meetings' }
     });
     const postgreMeetings = ref<any[]>(_data.value?.data || [])
-    // console.log('Initial Postgre meetings:', postgreMeetings.value)
-
     const toast = useToast()
     const table = useTemplateRef('table')
     const columnVisibility = ref()
@@ -34,8 +32,6 @@
     })
     
     const filteredRows = computed(() => {
-        // console.log('Filtered rows search:', search.value)
-
         if (!search.value) {
             isLoading.value = true
             setTimeout(() => {
@@ -69,7 +65,6 @@
                 label: 'Copy Meeting Host Email',
                 icon: 'i-lucide-copy',
                 onSelect() {
-                    console.log('Copying Meeting Host Email:', row)
                     if (!navigator.clipboard) {
                         toast.add({
                             title: 'Clipboard not supported',
@@ -96,7 +91,6 @@
                 label: 'View Summary Details',
                 icon: 'i-lucide-list',
                 onSelect() {
-                    console.log('Viewing details:', row)
                     navigateTo('/zoom-meetings/' + row.original.meeting_uuid)
                 }
             },
@@ -112,7 +106,6 @@
         data.value = response || []
 
         const existingMeetingIds = new Set(postgreMeetings.value.map(m => m.meeting_uuid));
-        // console.log('existingMeetingIds:', existingMeetingIds);
 
         const filteredZoomMeetings = data.value.filter((m) => {
             const postgre_meeting_index = postgreMeetings.value.findIndex(
@@ -133,16 +126,11 @@
             return !existingMeetingIds.has(m.meeting_uuid);
         });
 
-        // console.log('Filtered meeting summaries:', filteredZoomMeetings);
-        // console.log('postgreMeetings.value:', postgreMeetings.value);
-
         // ✅ Merge and sort DESC by summary_created_time
         data.value = [...postgreMeetings.value, ...filteredZoomMeetings]
-            .sort((a, b) => new Date(b.summary_created_time) - new Date(a.summary_created_time));
+            .sort((a: any, b: any) => new Date(b?.summary_created_time) - new Date(a?.summary_created_time));
         
         data.value = data.value.filter((meeting) => meeting.meeting_id && meeting.detail?.summary_overview);
-
-        console.log('Fetched Zoom meeting (sorted):', data.value);
     }
 
     const columns: TableColumn<any>[] = [
@@ -169,7 +157,6 @@
             header: 'Meeting Overview',
             cell: ({ row }) => {
                 const summary_overview = row.original.detail?.summary_overview
-                // console.log('Summary overview:', summary_overview)
                 return h(UButton, {
                     color: 'neutral',
                     variant: 'subtle',
@@ -256,15 +243,11 @@
     ]
 
     watch(() => statusFilter.value, (newVal) => {
-        console.log('Status filter changed:', newVal, filteredRows.value)
         search.value = 'FilteredByStatus:' + newVal
     })
 
     function select(row: TableRow<any>, e?: Event) {
-        console.log('Row selected:', row)
-
         row.toggleSelected(!row.getIsSelected())
-        console.log(e)
     }
 
     async function getAllZoomMeetings() {

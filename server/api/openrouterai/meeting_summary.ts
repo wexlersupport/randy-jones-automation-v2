@@ -3,7 +3,6 @@ import axios from 'axios'
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig()
     const openrouterApiKey = config.public.openrouterApiKey
-
     const body = await readBody(event)
     const parseBody = JSON.parse(body)
     const filterObj = parseBody.filterObj

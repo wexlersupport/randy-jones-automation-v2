@@ -9,10 +9,8 @@ export default defineEventHandler(async (event) => {
         if (!id || isNaN(Number(id))) {
             throw createError({ statusCode: 400, statusMessage: 'Invalid item ID' })
         }
-
         const query = `SELECT * FROM ${table} WHERE id = $1`
         const rows = await sql(query, [id]);
-        // console.log('rows ', rows)
 
         if (rows.length === 0) {
             throw createError({ statusCode: 404, statusMessage: 'Item not found' })

@@ -5,10 +5,8 @@ import { defineEventHandler } from 'h3'
 export default defineEventHandler(async () => {
   try {
     const config = useRuntimeConfig();
-    // console.log('Runtime Config loaded', config)
     const googlePrivateKey: any = config.public.googlePrivateKey
     const privateKey = googlePrivateKey.replace(/\\n/g, '\n') // important!
-    // console.log('Service Account Key loaded', googlePrivateKey)
 
     // 2️⃣ Create a JWT Client
     const auth = new google.auth.JWT({
@@ -28,8 +26,6 @@ export default defineEventHandler(async () => {
     const res = await drive.files.list({
         q: `'${folderId}' in parents and trashed=false`,
         fields: 'files(id, name, mimeType, webViewLink)',
-        // q: "sharedWithMe and mimeType='application/vnd.google-apps.folder' and trashed=false",
-        // fields: 'files(id, name, owners, webViewLink, sharedWithMeTime), nextPageToken',
         pageSize: 100,
     })
 

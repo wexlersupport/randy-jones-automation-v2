@@ -11,7 +11,6 @@
     const search = ref('')
     const statusFilter = ref('all')
     const isLoading = ref<boolean>(true)
-
     const toast = useToast()
     const table = useTemplateRef('table')
     const columnVisibility = ref()
@@ -24,15 +23,12 @@
         query: { table: 'client_response', isDesc: true },
     });
     const clients = ref<any[]>(data.value?.data || [])
-    const persons = ref<any[]>([])
 
     onMounted(async () => {
         isLoading.value = false
     })
     
     const filteredRows = computed(() => {
-        // console.log('Filtered rows search:', search.value)
-
         if (!search.value) {
             isLoading.value = true
             setTimeout(() => {
@@ -66,7 +62,6 @@
                 label: 'Copy Email',
                 icon: 'i-lucide-copy',
                 onSelect() {
-                    console.log('Copying Email:', row)
                     if (!navigator.clipboard) {
                         toast.add({
                             title: 'Clipboard not supported',
@@ -122,7 +117,7 @@
         {
             accessorKey: 'signature_id',
             header: 'Meeting Type',
-            cell: ({ row }) => {``
+            cell: ({ row }) => {
                 const _items = signatureList({ name: row.getValue('person_name') })
                 const selected = _items.find(item => item.value === row.getValue('signature_id'));
                 return selected ? selected.subject : row.getValue('signature_id')
@@ -154,7 +149,6 @@
             header: 'Action/Date Sent',
             cell: ({ row }) => {
                 if (row.getValue('is_sent_reminder')) {
-                    // console.log('Send Reminder Date:', row.original.sent_reminder_date)
                     return new Date(row.original.sent_reminder_date).toLocaleString('en-US', {
                         year: "numeric",
                         day: 'numeric',
@@ -199,19 +193,8 @@
     ]
 
     async function onSentClientReminder(row: any) {
-        const { startPreviousSunday, endPreviousSunday } = await getPreviousSunday(row.next_meeting_date);
-        // const { response: actualMeetingInvite } = await addCalendarEvent(startPreviousSunday, endPreviousSunday, row) // Outlook
-        // console.log('actualMeetingInvite:', actualMeetingInvite)
-
-        // const sunday_reminders = await sendingSundayReminders(startPreviousSunday, row) // Gmail
-        // console.log('sendingMeetingInvites Result:', sunday_reminders)
-
-        console.log('Sending Client Reminder for:', row)
         const client_response = await updateClientResponse(row)
-        console.log('Update Client Response Result:', client_response)
-
         const calendar_event = await updateCalendarEvent(row?.event_id)
-        console.log('Update Calendar Event Result:', calendar_event)
 
         toast.add({
             title: 'Success',
@@ -235,79 +218,6 @@
         }).format(_date);
 
         return sunday_reminder_calendar
-    }
-
-    async function sendingSundayReminders(actualMeetingStartDate: any, row: any) {
-        const send_meeting_date = actualMeetingStartDate.split("T")[0];
-        console.log('send_reminders_date:', send_meeting_date) // 2025-09-22
-        const dtStart = convertDateStamp(send_meeting_date, '15:00')
-        const dtEnd = convertDateStamp(send_meeting_date, '16:00')
-        console.log('sendingMeetingReminders dtStart dtEnd:', dtStart, dtEnd) //20250922T070000Z 20250922T080000Z
-
-        // const response = await fetch('/api/email/meeting-reminders', {
-        //     method: 'POST',
-        //     body: JSON.stringify({
-        //         emailObj: {
-        //             dt_start: dtStart,
-        //             dt_end: dtEnd,
-        //             from: 'francis.regala@strattonstudiogames.com',
-        //             to: row.person_email,
-        //             subject: 'Meeting Reminders',
-        //             next_meeting_date: row.next_meeting_date
-        //         }
-        //     })
-        // })
-
-        const response = await fetch('/api/calendar/send_meeting_reminder', {
-            method: 'POST',
-            body: JSON.stringify({
-                emailObj: {
-                    sunday_date: send_meeting_date,
-                    to: row.person_email,
-                    name: row.person_name,
-                    subject: 'Meeting Reminders',
-                }
-            })
-        })
-        const res = await response.json()
-
-        return res
-    }
-
-    async function addCalendarEvent(start_date_time: any, end_date_time: any, row: any) {
-        const response = await fetch('/api/calendar/add_meeting_invite', {
-            method: 'POST',
-            body: JSON.stringify({
-                subject: 'Client Reminder',
-                start_date_time,
-                end_date_time,
-                attendees: [row.person_email],
-            })
-        })
-        const res = await response.json()
-
-        return res
-    }
-
-    async function getPreviousSunday(formattedNextMeeting: any) {
-        const pad = (n: any) => String(n).padStart(2, '0');
-        
-        const meetingDate = new Date(formattedNextMeeting);
-        console.log('meetingDate:', meetingDate) //Mon Sep 22 2025 00:00:00 GMT+0800 (Philippine Standard Time)
-        const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
-        const previousSunday = new Date(meetingDate);
-        previousSunday.setDate(meetingDate.getDate() - dayOfWeek);
-        // Set the desired time (15:00:00)
-        // previousSunday.setHours(15, 0, 0, 0);
-        const startPreviousSunday = previousSunday.getFullYear() + '-' +
-            pad(previousSunday.getMonth() + 1) + '-' +
-            pad(previousSunday.getDate()) + 'T15:00'
-
-        const endPreviousSunday = previousSunday.getFullYear() + '-' +
-            pad(previousSunday.getMonth() + 1) + '-' +
-            pad(previousSunday.getDate()) + 'T16:00'
-
-        return { startPreviousSunday, endPreviousSunday }
     }
 
     async function updateCalendarEvent(eventId: string) {
@@ -338,15 +248,11 @@
     }
 
     watch(() => statusFilter.value, (newVal) => {
-        console.log('Status filter changed:', newVal, filteredRows.value)
         search.value = 'FilteredByStatus:' + newVal
     })
 
     function select(row: TableRow<any>, e?: Event) {
-        console.log('Row selected:', row)
-
         row.toggleSelected(!row.getIsSelected())
-        console.log(e)
     }
 </script>
 

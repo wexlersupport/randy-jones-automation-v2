@@ -1,20 +1,19 @@
 <script setup lang="ts">
-    import { is } from 'valibot'
     import { ref } from 'vue'
     import { z } from 'zod'
+    import VueDatePicker from '@vuepic/vue-datepicker';
+    import '@vuepic/vue-datepicker/dist/main.css'
 
     const toast = useToast()
     const route = useRoute()
-    const router = useRouter()
     const personId = route.params.id as string
-    // console.log('Person ID:', personId)
     const isLoading = ref(true)
     const isLoadingSave = ref(false)
     const person = ref<any>({})
     const selectedOption = ref<any>(null);
     const items = ref<any[]>([]);
     const schema = z.object({
-        id: z.number(),
+        id: z.number() || z.string(),
         name: z.string(),
         org_name: z.string(),
         primary_email: z.string().email(),
@@ -28,82 +27,48 @@
         next_meeting_date: z.string().optional(),
         zoom_link: z.string().optional(),
     })
-    const { data }: any = await useFetch('/api/onedrive/microsoft-drive')
-    // console.log('OneDrive:', data.value)
     const attachmentList = ref<any[]>([])
     const selectedAttachment = ref<any[]>([]);
+    const { data }: any = await useFetch('/api/onedrive/microsoft-drive')
     const folderList = ref<any[]>(data.value?.response || []);
     const selectedFolder = ref<any>(null);
-    const calendarObject = ref<any>(null);
     const eventObject = ref<any>(null);
-
     const { data: _zoom }: any = await useFetch('/api/zoom/meeting_summary')
-    console.log('Zoom Meeting Summary:', _zoom.value)
     const zoomMeetingDetails = ref<any>(_zoom.value?.response || {})
     const selectedZoomMeeting = ref<any>(zoomMeetingDetails.value[0]?.meeting_uuid || null);
     const meetingDetail = ref<any>(null);
-    // console.log('selectedZoomMeeting:', selectedZoomMeeting.value)
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
-
     const { data: _data } = await useFetch('/api/postgre', {
         query: { table: 'for_follow_up_templates', isDesc: true },
     });
-    const itemsFollowup = ref<any[]>(_data.value?.data?.sort((a, b) => a.label.localeCompare(b.label)) || []);
+    const itemsFollowup = ref<any[]>(_data.value?.data?.sort((a: any, b: any) => a?.label.localeCompare(b?.label)) || []);
     const selectedFollowUp = ref<any>(null);
-    // console.log('itemsFollowup:', itemsFollowup.value)
-
-    // const { data: customers } = await useFetch('/api/postgre', {
-    //     query: { table: 'customers' }
-    // });
-    // console.log('PostgreSQL Customers:', customers.value);
 
     onMounted(async () => {
-        const { data }: any = await useFetch('/api/calendar/all_calendar')
-        // console.log('Calendar:', data.value)
-        calendarObject.value = data.value?.response?.value.find((cal: any) => cal.name === 'Calendar')
-        // console.log('Calendar:', calendarObject.value)
-
-        // let res_next_meeting = await getNextMeetingDate();
-        // console.log('res_next_meeting1:', res_next_meeting) // Mon Sep 22 2025
-        // if (!res_next_meeting) {
-        //     res_next_meeting = await getNextMeetingDate();
-        // }
-        // formattedNextMeeting.value = res_next_meeting.formattedNextMeeting
-        // nextMeetingDate.value = res_next_meeting.nextMeetingDate
-        // console.log('res_next_meeting2:', res_next_meeting) // Mon Sep 22 2025
-
-        // if (!formattedNextMeeting.value) {
-        //     const today = new Date();
-        //     today.setDate(today.getDate() + 7);
-        //     const next_meeting_date = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0') + 'T15:00';
-        //     form.value.next_meeting_date = next_meeting_date;
-        // } else {
-        //     const today = new Date(formattedNextMeeting.value);
-        //     console.log('today:', today)
-        //     const next_date = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-        //     let next_time = String(today.getHours()).padStart(2, '0') + ':' + String(today.getMinutes()).padStart(2, '0');
-        //     if (next_time === '00:00') {
-        //         const _today = new Date();
-        //         next_time = String(_today.getHours()).padStart(2, '0') + ':' + String(_today.getMinutes()).padStart(2, '0');
-        //     }
-        //     console.log('next_date:', next_date, next_time)
-        //     form.value.next_meeting_date = next_date + 'T' + next_time;
-        // }
+        const leaf_process = ['']
+        // const { data }: any = await useFetch('/api/calendar/all_calendar')
 
         const { response } = await getPersonDetail()
         person.value = response?.data || {}
-        console.log('person data:', person.value)
+        items.value = signatureList({ name: person.value?.name })
+        const signatureSort = items.value.reduce((map, sig, index) => {
+            map[sig.folder_name] = index;
+            return map;
+        }, {});
+
+        folderList.value = folderList.value.filter((folder: any) => !folder.name.includes('Attachment'))
+            .slice().sort((a, b) => {
+                const orderA = signatureSort[a.name] ?? Infinity; // use Infinity if not found
+                const orderB = signatureSort[b.name] ?? Infinity;
+                return orderA - orderB;
+            });
         if (person.value?.zoom_meetings?.length) {
             selectedZoomMeeting.value = person.value?.zoom_meetings?.[0]?.meeting_uuid || selectedZoomMeeting.value
         }
-
         const { response: meetingResponse } = await getMeetingDetail(selectedZoomMeeting.value)
         meetingDetail.value = meetingResponse || {}
-        console.log('meetingDetail data:', meetingDetail.value)
-
         const { data: postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
-        console.log('Postgre Zoom Meetings:', postgreZoomMeetings)
 
         if (postgreZoomMeetings.length > 0 && postgreZoomMeetings[0]?.next_meeting_date) {
             formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
@@ -112,13 +77,8 @@
             formattedNextMeeting.value = null
             nextMeetingDate.value = null
         }
-        console.log('formattedNextMeeting.value:', formattedNextMeeting.value)
-        console.log('nextMeetingDate.value:', nextMeetingDate.value)
         form.value.next_meeting_date = formattedNextMeeting.value
-
-        items.value = signatureList({ name: person.value?.name })
-        // itemsFollowup.value = forFollowUp({ name: person.value?.name })
-        form.value.id = person.value.id
+        form.value.id = typeof person.value.id === 'number' ? person.value.id : Number(person.value.id)
         form.value.name = person.value.name
         form.value.org_name = person.value.org_name
         form.value.primary_email = person.value.primary_email
@@ -132,7 +92,6 @@
                 form.value.generated_email = items.value[0]?.html.replace('XXX', person.value?.name) || '';
             }
         }
-        // form.value.generated_email = items.value[0]?.html || ''
         form.value.to = person.value.primary_email
         form.value.subject = items.value[0]?.subject || ''
         form.value.meeting_type = items.value[0]?.subject || ''
@@ -148,7 +107,7 @@
     })
 
     const form = ref({
-        id: '',
+        id: undefined as number | undefined,
         name: '',
         org_name: '',
         primary_email: '',
@@ -166,22 +125,18 @@
     async function onSubmit() {
         if (form.value.next_meeting_date === '' || form.value.next_meeting_date === null) {
             alert('Please select the next meeting date.')
-            return
 
+            return
         }
         isLoadingSave.value = true
-        console.log('Submitted Data:', form.value)
-        // console.log('attachmentList.value:', attachmentList.value)
 
         let attachments: any[] = []
         if (selectedAttachment.value.length) {
             await Promise.all(selectedAttachment.value.map(async (file_id: any) => {
                 const foundFile = attachmentList.value.find((file: any) => file.id === file_id)
-                // console.log('foundFile:', foundFile)
                 if (foundFile) {
                     let content = foundFile.base64String
                     if (foundFile?.base64String === undefined || !foundFile?.base64String) {
-                        console.log('base64String :', foundFile?.name, content)
                         const responseFiles = await fetch('/api/onedrive/base64_string', {
                             method: 'POST',
                             body: JSON.stringify({
@@ -200,7 +155,6 @@
                 }
             }))
         }
-        // console.log('uploadedBase64Files.value:', uploadedBase64Files.value)
         if (uploadedBase64Files.value.length) {
             uploadedBase64Files.value.forEach(file => {
                 attachments.push({
@@ -212,12 +166,10 @@
             })
             
         }
-        // console.log('Attachments:', attachments)
 
         try {
             const res = await sendEmail(attachments)
             // const res = {accepted: ['asdf@example.com']}
-            console.log('Email Send Response:', res)
 
             if (res) {
                 toast.add({
@@ -228,7 +180,6 @@
 
                 const new_event= await handleAddCalendarEvent()
                 const save_response = await saveClientResponse()
-                console.log('save_response:', save_response)
 
                 if (new_event) {
                     toast.add({
@@ -262,8 +213,6 @@
             method: 'GET',
             query: {
                 table: 'zoom_meetings',
-                // dynamic_field1: 'person_id',
-                // value1: personId,
                 dynamic_field: 'meeting_uuid',
                 value: meetingDetail.value?.meeting_uuid || ''
             }
@@ -302,61 +251,7 @@
         return response
     }
 
-    async function sendingMeetingInvites(actualMeetingStartDate: any) {
-        const send_meeting_date = actualMeetingStartDate.split("T")[0];
-        const send_meeting_time = actualMeetingStartDate.split("T")[1];
-        const [hours, minutes] = send_meeting_time.split(":").map(Number);
-        const pad = (n: any) => String(n).padStart(2, '0');
-        const send_meeting_time_end = pad(hours + 1) + ':' + pad(minutes);
-        console.log('send_meeting_date:', send_meeting_date, send_meeting_time_end)
-        const dtStart = convertDateStamp(send_meeting_date, send_meeting_time)
-        const dtEnd = convertDateStamp(send_meeting_date, send_meeting_time_end)
-        console.log('dtStart dtEnd:', dtStart, dtEnd) //20250922T070000Z 20250922T080000Z
-
-        const response = await fetch('/api/email/meeting-invites', {
-            method: 'POST',
-            body: JSON.stringify({
-                emailObj: {
-                    dt_start: dtStart,
-                    dt_end: dtEnd,
-                    from: form.value.from,
-                    to: form.value.to,
-                    subject: form.value.subject,
-                }
-            })
-        })
-        const res = await response.json()
-
-        return res
-    }
-
-    async function sendingMeetingReminders(actualMeetingStartDate: any, next_meeting_date: any) {
-        const send_meeting_date = actualMeetingStartDate.split("T")[0];
-        console.log('send_reminders_date:', send_meeting_date) // 2025-09-22
-        const dtStart = convertDateStamp(send_meeting_date, '15:00')
-        const dtEnd = convertDateStamp(send_meeting_date, '16:00')
-        console.log('sendingMeetingReminders dtStart dtEnd:', dtStart, dtEnd) //20250922T070000Z 20250922T080000Z
-
-        const response = await fetch('/api/email/meeting-reminders', {
-            method: 'POST',
-            body: JSON.stringify({
-                emailObj: {
-                    dt_start: dtStart,
-                    dt_end: dtEnd,
-                    from: form.value.from,
-                    to: form.value.to,
-                    subject: 'Meeting Reminders',
-                    next_meeting_date
-                }
-            })
-        })
-        const res = await response.json()
-
-        return res
-    }
-
     async function sendEmail(attachments: any[]) {
-        // This function is now integrated into onSubmit
         const response = await fetch('/api/email/send', {
             method: 'POST',
             body: JSON.stringify({
@@ -374,20 +269,6 @@
         return res
     }
 
-    async function getNextMeetingDate() {
-        const nextMeetingDate = getRandomDayFromNext7(30)
-        console.log('nextMeetingDate:', nextMeetingDate) //September 22nd
-
-        const cleanDate = nextMeetingDate.replace(/(\d+)(st|nd|rd|th)/, "$1");
-        const year = new Date().getFullYear();
-        const fullDate = `${cleanDate} ${year}`;
-        const date = new Date(fullDate);
-        const formattedNextMeeting: any = date.toDateString().split("T")[0];
-        console.log('formattedNextMeeting:', formattedNextMeeting)
-
-        return { nextMeetingDate, formattedNextMeeting }
-    }
-
     async function getPreviousSunday(formattedNextMeeting: any) {
         const pad = (n: any) => String(n).padStart(2, '0');
         
@@ -396,8 +277,6 @@
         const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
         const previousSunday = new Date(meetingDate);
         previousSunday.setDate(meetingDate.getDate() - dayOfWeek);
-        // Set the desired time (15:00:00)
-        // previousSunday.setHours(15, 0, 0, 0);
         const startPreviousSunday = previousSunday.getFullYear() + '-' +
             pad(previousSunday.getMonth() + 1) + '-' +
             pad(previousSunday.getDate()) + 'T15:00'
@@ -412,67 +291,34 @@
     async function calenderEventFormatDate(formattedNextMeeting: any) {
         const pad = (n: any) => String(n).padStart(2, '0');
         const _nextMeeting = new Date(formattedNextMeeting);
-        // let actualMeetingStartDate = _nextMeeting.getFullYear() + '-' +
-        //     pad(_nextMeeting.getMonth() + 1) + '-' +
-        //     pad(_nextMeeting.getDate()) + 'T09:00'
-        let actualMeetingStartDate = formattedNextMeeting
+        let actualMeetingStartDate = formattedNextMeeting // 2025-09-22T09:00
         let actualMeetingEndDate = _nextMeeting.getFullYear() + '-' +
             pad(_nextMeeting.getMonth() + 1) + '-' +
-            pad(_nextMeeting.getDate()) + 'T' + String(_nextMeeting.getHours() + 1).padStart(2, '0') + ':' + pad(_nextMeeting.getMinutes())
-        console.log('actualMeetingStartDate:', actualMeetingStartDate, 'actualMeetingEndDate:', actualMeetingEndDate) //actualMeetingStartDate: 2025-09-22T09:00 actualMeetingEndDate: 2025-09-22T16:00
+            pad(_nextMeeting.getDate()) + 'T' +
+            String(_nextMeeting.getHours() + 1).padStart(2, '0') + ':' +
+            pad(_nextMeeting.getMinutes()) // 2025-09-22T16:00
 
         return { actualMeetingStartDate, actualMeetingEndDate }
     }
 
     async function handleAddCalendarEvent() {
-        // const { nextMeetingDate, formattedNextMeeting } = await getNextMeetingDate();
-        // console.log('formattedNextMeeting:', formattedNextMeeting) //Mon Sep 22 2025
         formattedNextMeeting.value = form.value.next_meeting_date
-        console.log('formattedNextMeeting.value:', formattedNextMeeting.value)
-
         const _date = new Date(form.value.next_meeting_date);
         nextMeetingDate.value = new Intl.DateTimeFormat("en-US", {
             year: "numeric",   // 2025
             month: "long",     // October
             day: "numeric"     // 5
         }).format(_date);
-        console.log('nextMeetingDate.value:', nextMeetingDate.value)
 
-        const { startPreviousSunday, endPreviousSunday } = await getPreviousSunday(formattedNextMeeting.value);
-        // console.log('startPreviousSunday:', startPreviousSunday, 'endPreviousSunday:', endPreviousSunday) //startPreviousSunday: 2025-09-21T15:00 endPreviousSunday: 2025-09-21T16:00
-        // const { response: sundayReminder } = await addCalendarEvent(startPreviousSunday, endPreviousSunday)
-
-        const { actualMeetingStartDate, actualMeetingEndDate } = await calenderEventFormatDate(formattedNextMeeting.value);
-        console.log('actualMeetingStartDate:', actualMeetingStartDate, 'actualMeetingEndDate:', actualMeetingEndDate) //actualMeetingStartDate: 2025-09-22T09:00 actualMeetingEndDate: 2025-09-22T16:00
-        
-        // const res_send_reminders = await sendingMeetingReminders(startPreviousSunday, nextMeetingDate.value) // Google
-        // console.log('Meeting Reminder:', res_send_reminders)
+        const { actualMeetingStartDate, actualMeetingEndDate } = await calenderEventFormatDate(formattedNextMeeting.value); //actualMeetingStartDate: 2025-09-22T09:00 actualMeetingEndDate: 2025-09-22T16:00
 
         const { response: actualMeetingInvite } = await addCalendarEvent(actualMeetingStartDate, actualMeetingEndDate) // Outlook
-        console.log('actualMeetingInvite:', actualMeetingInvite) //{@odata.context: "https://graph.microsoft.com/v1.0/$metadata#users('…y%40automationpm.onmicrosoft.com')/events/$entity", @odata.etag: 'W/"MbPvhBte9Uu/e4THen7M7wAAAYXvrQ=="', id: 'AAMkADExNjcwN2FmLWY0MTQtNGEwYy1iNzJlLTY3OTRhMDIxNT…6fszvAAAAAAENAAAxs__EG171S797hMd6fszvAAABiA19AAA=', createdDateTime: '2025-09-19T03:00:00.6838407Z', lastModifiedDateTime: '2025-09-19T03:00:00.7558834Z', …}
+        //{@odata.context: "https://graph.microsoft.com/v1.0/$metadata#users('…y%40automationpm.onmicrosoft.com')/events/$entity", @odata.etag: 'W/"MbPvhBte9Uu/e4THen7M7wAAAYXvrQ=="', id: 'AAMkADExNjcwN2FmLWY0MTQtNGEwYy1iNzJlLTY3OTRhMDIxNT…6fszvAAAAAAENAAAxs__EG171S797hMd6fszvAAABiA19AAA=', createdDateTime: '2025-09-19T03:00:00.6838407Z', lastModifiedDateTime: '2025-09-19T03:00:00.7558834Z', …}
         eventObject.value = actualMeetingInvite
-
-        // const sunday_reminder_calendar = await setSundayReminderCalendar(startPreviousSunday)
-        // console.log('sunday_reminder_calendar:', sunday_reminder_calendar) //Sunday, September 21, 2025
-
-        // const res_send_invites = await sendingMeetingInvites(actualMeetingStartDate) //Client Invites
-        // console.log('Meeting Invite:', res_send_invites)
 
         alert(`Email and Calendar Invite sent to ${form.value.to} for ${nextMeetingDate.value}.`)
 
         return {actualMeetingInvite}
-    }
-
-    async function setSundayReminderCalendar(startPreviousSunday: any) {
-        const _date = new Date(startPreviousSunday);
-        const sunday_reminder_calendar = new Intl.DateTimeFormat("en-US", {
-            weekday: "long",   // Sunday
-            year: "numeric",   // 2025
-            month: "long",     // October
-            day: "numeric"     // 5
-        }).format(_date);
-
-        return sunday_reminder_calendar
     }
 
     async function addCalendarEvent(start_date_time: any, end_date_time: any) {
@@ -514,11 +360,9 @@
                 form.value.generated_email = selected?.html.replace('XXX', person.value?.name) || '';
             }
         }
-        // form.value.generated_email = selected?.html || '';
         form.value.subject = selected?.subject || '';
         form.value.meeting_type = selected?.subject || '';
         selectedFolder.value = folderList.value.find(item => item.name === selected?.folder_name)?.id || null;
-        // console.log('handleChange selectedFolder.value:', selectedFolder.value);
 
         await updateAttachmentList()
         await updateAllAttachmentsToBase64String()
@@ -529,7 +373,7 @@
     }
 
     async function handleSelectAttachment(value: any) {
-        // console.log('Selected Attachments:', value)
+        console.log('Selected Attachments:', value)
     }
 
     async function handleSelectFolder(value: any) {
@@ -547,10 +391,6 @@
 
     async function updateAllAttachmentsToBase64String() {
         attachmentList.value.forEach(async(attachment: any, index: number) => {
-            // console.log('attachment:', attachment)
-            // const { data } = await compressFiles(attachment)
-            // console.log('Compressed data:', data)
-
             const responseFiles = await fetch('/api/onedrive/base64_string', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -558,23 +398,9 @@
                 })
             })
             const {response: base64String} = await responseFiles.json()
-            // console.log('Base64 String:', base64String)
 
             attachmentList.value[index].base64String = base64String
         })
-    }
-
-    async function compressFiles(attachment: any) {
-        const response = await fetch('/api/convertapi/compress', {
-            method: 'POST',
-            body: JSON.stringify({
-                file_url: attachment?.['@microsoft.graph.downloadUrl'],
-                file_name: attachment?.name
-            })
-        })
-        const res = await response.json()
-
-        return res
     }
 
     async function getOneDriveFiles() {
@@ -616,20 +442,15 @@
         )
 
         uploadedBase64Files.value = [...uploadedBase64Files.value, ...newUploadedFiles]
-        // console.log('Uploaded Base64 Files:', uploadedBase64Files.value)
     }
 
-    // Trigger hidden file input
     function openFilePicker() {
         uploadedFiles.value?.click()
     }
 
     async function handleForFollowUp() {
-        console.log('Selected For Follow Up:', selectedFollowUp.value)
-
         const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
-        console.log('selected:', selected)
         if (selected?.html?.includes('{{name}}') && person.value?.name) {
             form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
         }
@@ -653,14 +474,9 @@
     }
 
     async function handleChangeZoomMeeting() {
-        console.log('Selected Zoom Meeting:', selectedZoomMeeting.value);
         const { response: meetingResponse } = await getMeetingDetail(selectedZoomMeeting.value)
         meetingDetail.value = meetingResponse || {}
-        console.log('meetingDetail data:', meetingDetail.value)
-
-        
         const { data: postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
-        console.log('Postgre Zoom Meetings:', postgreZoomMeetings)
 
         if (postgreZoomMeetings.length > 0 && postgreZoomMeetings[0]?.next_meeting_date) {
             formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
@@ -669,8 +485,6 @@
             formattedNextMeeting.value = null
             nextMeetingDate.value = null
         }
-        console.log('formattedNextMeeting.value:', formattedNextMeeting.value)
-        console.log('nextMeetingDate.value:', nextMeetingDate.value)
         form.value.next_meeting_date = formattedNextMeeting.value
     }
 
@@ -730,7 +544,9 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
-                                        <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/>
+                                        <!-- <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/> -->
+                                        <VueDatePicker v-model="form.next_meeting_date" dark :is24="false"
+                                        />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
@@ -864,3 +680,15 @@
     </UDashboardPanel>
 
 </template>
+
+<style scoped>
+    .dp__theme_dark {
+        --dp-background-color: #18181B;
+        --dp-font-size: 0.875rem !important; /* ≈14px */
+        line-height: 1.25rem; /* ≈16px */
+        border-radius: 0.375rem; /* 6px */
+        border-width: 1px;
+        border-style: solid;
+        border-color: #3f3f47;
+    }
+</style>

@@ -13,10 +13,8 @@ export default defineEventHandler(async (event) => {
   }
 
     const config = useRuntimeConfig();
-    // console.log('Runtime Config loaded', config)
     const googlePrivateKey: any = config.public.googlePrivateKey
     const privateKey = googlePrivateKey.replace(/\\n/g, '\n') // important!
-    // console.log('Service Account Key loaded', googlePrivateKey)
 
   try {
     // 🔑 Authenticate with service account

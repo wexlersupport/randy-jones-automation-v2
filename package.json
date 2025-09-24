@@ -21,6 +21,7 @@
     "@sendgrid/mail": "^8.1.5",
     "@unovis/ts": "^1.5.2",
     "@unovis/vue": "^1.5.2",
+    "@vuepic/vue-datepicker": "^11.0.2",
     "@vueup/vue-quill": "^1.2.0",
     "@vueuse/nuxt": "^13.3.0",
     "axios": "^1.10.0",

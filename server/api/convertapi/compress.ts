@@ -37,11 +37,10 @@ export default defineEventHandler(async (event) => {
       inputFormat
     )
 
-    // ConvertAPI gives you a direct URL for the new file
-    // const compressedUrl = response.Files[0].Url
     return { success: true, data: response?.Files[0] }
   } catch (err: any) {
     console.error(err)
+
     return { success: false, error: err.message }
   }
 })

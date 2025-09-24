@@ -17,8 +17,6 @@ export default defineEventHandler(async (event) => {
           }
         }
       );
-      // console.log("Calendar API Response:", response.data);
-
 
       return {
           response : response.data || null

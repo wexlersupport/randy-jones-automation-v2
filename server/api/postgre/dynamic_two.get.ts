@@ -5,14 +5,12 @@ const sql = neon() // automatically uses env NETLIFY_DATABASE_URL
 
 export default defineEventHandler(async (event) => {
   const { table, dynamic_field1, value1, dynamic_field2, value2 } = getQuery(event)
-  // console.log('Query Parameters:', { table, dynamic_field1, value1, dynamic_field2, value2 })
 
   try {
     if (!table || !dynamic_field1 || !value1 || !dynamic_field2 || !value2) {
       throw createError({ statusCode: 400, statusMessage: 'Invalid request parameters' })
     }
 
-    // ✅ Parameterized query to prevent SQL injection
     const query = `
         SELECT * FROM ${table}
         WHERE ${dynamic_field1} = $1

@@ -7,11 +7,9 @@
     const UBadge = resolveComponent('UBadge')
     const UDropdownMenu = resolveComponent('UDropdownMenu')
     const UCheckbox = resolveComponent('UCheckbox')
-
     const search = ref('')
     const statusFilter = ref('all')
     const isLoading = ref<boolean>(true)
-
     const toast = useToast()
     const table = useTemplateRef('table')
     const columnVisibility = ref()
@@ -25,7 +23,6 @@
     onMounted(async () => {
         const {response} = await getPipedrivePerson()
         persons.value = response || []
-        // console.log(persons.value)
 
         isLoading.value = false
     })
@@ -41,8 +38,6 @@
 
     
     const filteredRows = computed(() => {
-        // console.log('Filtered rows search:', search.value)
-
         if (!search.value) {
             isLoading.value = true
             setTimeout(() => {
@@ -76,7 +71,6 @@
                 label: 'Copy Email',
                 icon: 'i-lucide-copy',
                 onSelect() {
-                    console.log('Copying Email:', row)
                     if (!navigator.clipboard) {
                         toast.add({
                             title: 'Clipboard not supported',
@@ -103,7 +97,6 @@
                 label: 'View Contact Details',
                 icon: 'i-lucide-list',
                 onSelect() {
-                    console.log('Viewing details:', row)
                     navigateTo('/for-follow-up/' + row.original.id)
                 }
             },
@@ -217,7 +210,6 @@
                 })
             },
             cell: ({ row }) => {
-                // console.log('Row zoom summary:', row.original?.zoom_summary)
                 if (!row.original?.zoom_summary?.meeting_end_time || row.original?.zoom_summary?.meeting_end_time?.length === 0) {
                     return '-'
                 }
@@ -259,15 +251,11 @@
     ]
 
     watch(() => statusFilter.value, (newVal) => {
-        console.log('Status filter changed:', newVal, filteredRows.value)
         search.value = 'FilteredByStatus:' + newVal
     })
 
     function select(row: TableRow<any>, e?: Event) {
-        console.log('Row selected:', row)
-
         row.toggleSelected(!row.getIsSelected())
-        console.log(e)
     }
 </script>
 

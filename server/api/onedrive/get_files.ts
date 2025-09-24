@@ -17,16 +17,14 @@ export default defineEventHandler(async (event) => {
         }
       );
 
-
       return {
           response : response.data || null
       }
-
     } catch (error: any) {
-      console.error("Zoom API Auth Error:", error.response?.data || error.message);
+      console.error("OneDrive API Auth Error:", error.response?.data || error.message);
       throw createError({
         statusCode: error.response?.status || 500,
-        statusMessage: "Failed to communicate with Zoom API",
+        statusMessage: "Failed to communicate with OneDrive API",
         data: error.response?.data || error.message,
       });
     }

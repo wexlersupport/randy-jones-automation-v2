@@ -2,9 +2,9 @@ import { defineEventHandler } from 'h3'
 
 export default defineEventHandler(async () => {
   const config = useRuntimeConfig();
-    const onedriveTenantId = config.public.onedriveTenantId
-    const onedriveAccountId = config.public.onedriveAccountId
-    const onedriveClientSecret = config.public.onedriveClientSecret
+  const onedriveTenantId = config.public.onedriveTenantId
+  const onedriveAccountId = config.public.onedriveAccountId
+  const onedriveClientSecret = config.public.onedriveClientSecret
 
   try {
     // 1️⃣ Get Access Token

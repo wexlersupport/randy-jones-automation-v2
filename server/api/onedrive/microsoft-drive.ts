@@ -4,7 +4,6 @@ export default defineEventHandler(async () => {
   const accessToken = await getOnedriveAccessToken()
   try {
 
-    // 2️⃣ Call Graph API
     const graphRes = await $fetch<any>(
       `https://graph.microsoft.com/v1.0/users/viacry@automationpm.onmicrosoft.com/drive/root/children`,
       {

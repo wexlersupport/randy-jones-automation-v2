@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
             throw createError({ statusCode: 400, statusMessage: 'Invalid item ID' })
         }
         const value = dynamic_value ?? id
-
         const body = await readBody(event)
         const values = Object.values(body);
         if (values.length < 1) {
@@ -23,7 +22,6 @@ export default defineEventHandler(async (event) => {
         const setClauses = Object.keys(body)
             .map((key, i) => `${key} = $${i+1}`)
             .join(", "); // e.g., "name = $1, email = $2, age = $3"
-        // console.log('setClauses ', setClauses)
         const query = `
           UPDATE ${table}
           SET ${setClauses}
@@ -31,7 +29,6 @@ export default defineEventHandler(async (event) => {
           RETURNING *
         `;
         const result = await sql(query, values);
-        // console.log('result ', result)
 
         if (result.length === 0) {
           return { error: 'Entry not found', statusCode: 404 };

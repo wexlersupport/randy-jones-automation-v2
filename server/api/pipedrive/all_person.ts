@@ -21,11 +21,8 @@ export default defineEventHandler(async (event) => {
     const response = await axios.get(
       `${PIPEDRIVE_BASE_URL}/persons?api_token=${pipedriveApiKey}`
     );
-    // console.log("Pipedrive Persons Response:", response.data?.data);
     const persons = response.data?.data || [];
 
-    // 2️⃣ For each person, fetch PostgreSQL data by person.id
-    //    (assuming your PostgreSQL table has a column like person_id)
     const results = await Promise.all(
       persons.map(async (person: any) => {
         const query = `SELECT * FROM zoom_meetings WHERE person_id = $1 ORDER BY created_at DESC`;
@@ -34,7 +31,6 @@ export default defineEventHandler(async (event) => {
         let detailRes: any = null;
         if (rows.length > 0) {
           const meeting_uuid = rows.length > 0 ? rows[0].meeting_uuid : null;
-          // Zoom UUIDs require *double* encoding
           const encodedUuid = encodeURIComponent(encodeURIComponent(meeting_uuid));
           const detailUrl = `${ZOOM_BASE_URL}/meetings/${encodedUuid}/meeting_summary`;
           detailRes = await axios.get(detailUrl, {
@@ -49,17 +45,15 @@ export default defineEventHandler(async (event) => {
         };
       })
     );
-    // console.log("Combined Results:", results);
 
     return {
         response: results || null
     }
-
   } catch (error: any) {
-    console.error("Zoom API Auth Error:", error.response?.data || error.message);
+    console.error("Pipedrive API Auth Error:", error.response?.data || error.message);
     throw createError({
       statusCode: error.response?.status || 500,
-      statusMessage: "Failed to communicate with Zoom API",
+      statusMessage: "Failed to communicate with Pipedrive API",
       data: error.response?.data || error.message,
     });
   }

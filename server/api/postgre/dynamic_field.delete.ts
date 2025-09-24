@@ -15,7 +15,6 @@ export default defineEventHandler(async (event) => {
           RETURNING *
         `;
         const deletedItem = await sql(query);
-        // console.log('deletedItem ', deletedItem)
 
         if (!deletedItem) {
           return { error: 'ID not found', statusCode: 404 };

@@ -15,19 +15,9 @@ export default defineEventHandler(async (event) => {
         if (sendContent.html) {
             sendContent.html = convertHtmlEmail(html)
         }
-
-        // const attachments = [
-        //     {
-        //         content,
-        //         filename,
-        //         type: "text/html",
-        //         disposition: "attachment"
-        //     }
-        // ]
         sendContent.attachments = attachments
 
         const data = sgMail
-            // .send({...sendContent, template_id: 'd-9ea9297503204eab95b081340ee70691'})
             .send(sendContent)
             .then((res: any) => {
                 console.log('Email sent')

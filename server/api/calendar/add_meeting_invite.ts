@@ -3,7 +3,7 @@ import getOnedriveAccessToken from './auth';
 export default defineEventHandler(async (event) => {
     const accessToken = await getOnedriveAccessToken();
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    console.log('timeZone:', timeZone); // e.g. "America/Los_Angeles"
+    // console.log('timeZone:', timeZone); // e.g. "America/Los_Angeles"
 
     const body = await readBody(event)
     const parseBody = JSON.parse(body)
