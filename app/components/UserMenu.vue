@@ -30,7 +30,7 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
   label: 'Billing',
   icon: 'i-lucide-credit-card'
 }, {
-  label: 'Signature',
+  label: 'Signatures',
   icon: 'i-lucide-settings',
   to: '/signature'
 }], [{
