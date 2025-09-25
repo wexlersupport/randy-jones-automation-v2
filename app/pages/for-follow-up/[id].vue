@@ -462,19 +462,22 @@
 
     async function removeAttachment(file: any) {
         console.log('Remove Attachment:', file)
-        const findIndex = attachmentList.value.findIndex(f => f.id === file?.id)
-        console.log('findIndex Attachment:', findIndex)
-        if (findIndex !== -1) {
-            attachmentList.value.splice(findIndex, 1)
-        } else {
-            const findIndex2 = uploadedBase64Files.value.findIndex((f: any) => f.name === file.name)
-            console.log('findIndex2:', findIndex2)
-            if (findIndex2 !== -1) {
-                uploadedBase64Files.value.splice(findIndex2, 1)
-            }
+        const idx = attachmentList.value.findIndex(f => f.id === file?.id)
+        console.log('idx:', idx)
+        if (idx !== -1) {
+            attachmentList.value.splice(idx, 1)
+            // 🔑 remove id from selectedAttachment
+            const selIdx = selectedAttachment.value.indexOf(file.id)
+            console.log('selIdx:', selIdx)
+            if (selIdx !== -1) selectedAttachment.value.splice(selIdx, 1)
+            return
         }
-        console.log('attachmentList.value:', attachmentList.value)
-        console.log('uploadedBase64Files.value:', uploadedBase64Files.value)
+
+        const idx2 = uploadedBase64Files.value.findIndex((f: any) => f.name === file.name)
+        console.log('idx2:', idx2)
+        if (idx2 !== -1) {
+            uploadedBase64Files.value.splice(idx2, 1)
+        }
     }
 
     async function handleChangeZoomMeeting() {
