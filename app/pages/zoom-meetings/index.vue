@@ -153,6 +153,7 @@
             })
         },
         {
+            id: 'Meeting Overview',
             accessorKey: 'detail.summary_overview',
             header: 'Meeting Overview',
             cell: ({ row }) => {
@@ -167,26 +168,31 @@
             }
         },
         {
+            id: "Meeting Topic",
             accessorKey: 'meeting_topic',
             header: 'Meeting Topic',
             cell: ({ row }) => row.original.meeting_subject || '-'
         },
         {
+            id: "Meeting Type",
             accessorKey: 'meeting_process',
             header: 'Meeting Type',
             cell: ({ row }) => row.original.meeting_process || '-'
         },
         {
+            id: "Client name",
             accessorKey: 'person.name',
             header: 'Client',
             cell: ({ row }) => row.original.person?.name || '-'
         },
         {
+            id: "Client Email",
             accessorKey: 'person.primary_email',
             header: 'Client Email',
             cell: ({ row }) => row.original.person?.primary_email || '-'
         },
         {
+            id: "Last Meeting Date",
             accessorKey: 'summary_created_time',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
@@ -205,7 +211,7 @@
                 })
             },
             cell: ({ row }) => {
-                return new Date(row.getValue('summary_created_time')).toLocaleString('en-US', {
+                return new Date(row.getValue('Last Meeting Date')).toLocaleString('en-US', {
                     year: "numeric",
                     day: 'numeric',
                     month: 'short',
