@@ -202,10 +202,33 @@
         })
         await refresh()
         clients.value = data.value?.data || []
-
-        const sunday_reminder_calendar = await setSundayReminderCalendar(row.next_meeting_date)
+        const { startPreviousSunday, endPreviousSunday } = await getPreviousSunday(row.next_meeting_date);
+        console.log('startPreviousSunday:', startPreviousSunday) //2025-09-21T15:00
+        const sunday_reminder_calendar = await setSundayReminderCalendar(startPreviousSunday);
+        console.log('sunday_reminder_calendar:', sunday_reminder_calendar) //Sunday, September 21, 2025
 
         alert(`This will send the client a Reminder Calendar invite for ${sunday_reminder_calendar}.`)
+    }
+
+    async function getPreviousSunday(formattedNextMeeting: any) {
+        const pad = (n: any) => String(n).padStart(2, '0');
+        
+        const meetingDate = new Date(formattedNextMeeting);
+        console.log('meetingDate:', meetingDate) //Mon Sep 22 2025 00:00:00 GMT+0800 (Philippine Standard Time)
+        const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
+        const previousSunday = new Date(meetingDate);
+        previousSunday.setDate(meetingDate.getDate() - dayOfWeek);
+        // Set the desired time (15:00:00)
+        // previousSunday.setHours(15, 0, 0, 0);
+        const startPreviousSunday = previousSunday.getFullYear() + '-' +
+            pad(previousSunday.getMonth() + 1) + '-' +
+            pad(previousSunday.getDate()) + 'T15:00'
+
+        const endPreviousSunday = previousSunday.getFullYear() + '-' +
+            pad(previousSunday.getMonth() + 1) + '-' +
+            pad(previousSunday.getDate()) + 'T16:00'
+
+        return { startPreviousSunday, endPreviousSunday }
     }
 
     async function setSundayReminderCalendar(startPreviousSunday: any) {

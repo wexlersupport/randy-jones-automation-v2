@@ -633,17 +633,17 @@
                                                 <UIcon name="i-lucide-files" class="size-5 text-red-400" />
                                                 <span class="text-sm text-gray-700 dark:text-gray-200">{{ file.name }}</span>
                                             </div>
-                                            <!-- <span class="text-gray-500 dark:text-gray-400 text-xs">
+                                            <span class="text-gray-500 dark:text-gray-400 text-xs">
                                                 <UIcon name="i-lucide-check-circle" class="size-3 text-green-600" />
-                                            </span> -->
-                                            <UButton
+                                            </span>
+                                            <!-- <UButton
                                                 icon="i-heroicons-x-mark"
                                                 size="xs"
                                                 color="neutral"
                                                 variant="ghost"
                                                 class="ml-1"
                                                 @click="removeAttachment(file)"
-                                            />
+                                            /> -->
                                         </li>
                                     </ul>
                                 </div>
