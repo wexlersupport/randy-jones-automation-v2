@@ -3,6 +3,7 @@
     import { getPaginationRowModel, type Row } from '@tanstack/table-core'
     import type { TableColumn, TableRow } from '@nuxt/ui/runtime/components/Table.vue.js';
 
+    const { call } = useApi()
     const UButton = resolveComponent('UButton')
     const UBadge = resolveComponent('UBadge')
     const UDropdownMenu = resolveComponent('UDropdownMenu')
@@ -144,7 +145,8 @@
 
     async function mergeMeetings() {
         const leaf_process = leafProcess()
-        const { response } = await getAllZoomMeetings()
+        // const { response } = await getAllZoomMeetings()
+        const { response } = await call('/api/zoom/meeting_summary')
         data.value = response || []
 
         const existingMeetingIds = new Set(postgreMeetings.value.map(m => m.meeting_uuid));
@@ -298,14 +300,14 @@
         row.toggleSelected(!row.getIsSelected())
     }
 
-    async function getAllZoomMeetings() {
-        const response = await fetch('/api/zoom/meeting_summary', {
-            method: 'POST'
-        })
-        const res = await response.json()
+    // async function getAllZoomMeetings() {
+    //     const response = await fetch('/api/zoom/meeting_summary', {
+    //         method: 'POST'
+    //     })
+    //     const res = await response.json()
 
-        return res
-    }
+    //     return res
+    // }
 
 </script>
 

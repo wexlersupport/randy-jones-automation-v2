@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     let start_date_time = parseBody?.start_date_time // e.g. "2025-09-20T15:00:00"
     let end_date_time = parseBody?.end_date_time // e.g. "2025-09-20T16:00:00"
     let attendeesEmails =  parseBody?.attendees // Array of emails
-    let zoomLink = parseBody?.zoom_link || 'https://us02web.zoom.us/j/82361712152?pwd=7xFwWhvWAWZzw9taHdat1ImLa1BO6j.1#success'
+    let zoomLink = parseBody?.zoom_link || ''
 
     const newEvent = {
         subject,

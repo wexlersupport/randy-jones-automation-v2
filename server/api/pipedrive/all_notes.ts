@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   //   const query = getQuery(event)
   const PIPEDRIVE_BASE_URL = "https://api.pipedrive.com/v1";
   const body = await readBody(event)
-  const parseBody = JSON.parse(body)
+  const parseBody = body
   // console.log('Parsed Body:', parseBody)
 
   // ✅ Always required

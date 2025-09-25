@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const ZOOM_BASE_URL = "https://api.zoom.us/v2";
 
   const body = await readBody(event)
-  const parseBody = JSON.parse(body)
+  const parseBody = body
   const meetingId = parseBody.meetingId
 
   try {

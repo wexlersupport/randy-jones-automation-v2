@@ -2,6 +2,7 @@
     import { ref } from 'vue'
     import { z } from 'zod'
 
+    const { call } = useApi()
     const toast = useToast()
     const route = useRoute()
     const router = useRouter()
@@ -60,12 +61,14 @@
         const _selectedContactId = postgreMeeting.value ? Number(postgreMeeting.value.person_id) : contactList.value[0].id;
         selectedContact.value = _selectedContactId && contactList.value.find(item => item.id === _selectedContactId) ? _selectedContactId : contactList.value[0].id;
 
-        const { response: _notes } = await getNotes()
+        const { response: _notes } = await call('/api/pipedrive/all_notes', 'POST', {
+            person_id: selectedContact.value, pinned_to_person_flag: 1,
+        })
         if (_notes?.data?.length) {
             notes.value = _notes.data.filter((note: any) => note.content?.includes('************************************')) || []
         }
 
-        const { response } = await getMeetingDetail()
+        const { response } = await call('/api/zoom/meeting_detail', 'POST', { meetingId })
         meetingDetail.value = response
 
         const { response: next_meeting } = await getNextMeeting(response.summary_overview)
@@ -266,14 +269,18 @@
     }
 
     async function getNotes() {
-        const response = await fetch('/api/pipedrive/all_notes', {
-            method: 'POST',
-            body: JSON.stringify({
-                person_id: selectedContact.value,
-                pinned_to_person_flag: 1,
-            })
+        const res = await call('/api/pipedrive/all_notes', 'POST', {
+            person_id: selectedContact.value,
+            pinned_to_person_flag: 1,
         })
-        const res = await response.json()
+        // const response = await fetch('/api/pipedrive/all_notes', {
+        //     method: 'POST',
+        //     body: JSON.stringify({
+        //         person_id: selectedContact.value,
+        //         pinned_to_person_flag: 1,
+        //     })
+        // })
+        // const res = await response.json()
 
         return res
     }
