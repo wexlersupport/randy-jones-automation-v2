@@ -4,6 +4,7 @@
     import VueDatePicker from '@vuepic/vue-datepicker';
     import '@vuepic/vue-datepicker/dist/main.css'
 
+    const { call } = useApi()
     const toast = useToast()
     const route = useRoute()
     const personId = route.params.id as string
@@ -34,7 +35,7 @@
     const selectedFolder = ref<any>(null);
     const eventObject = ref<any>(null);
     const { data: _zoom }: any = await useFetch('/api/zoom/meeting_summary')
-    const zoomMeetingDetails = ref<any>(_zoom.value?.response || {})
+    const zoomMeetingDetails = ref<any>(_zoom.value?.response?.filter((data: any) => data.detail.summary_overview) || {})
     const selectedZoomMeeting = ref<any>(zoomMeetingDetails.value[0]?.meeting_uuid || null);
     const meetingDetail = ref<any>(null);
     const formattedNextMeeting = ref<any>('');
@@ -67,7 +68,7 @@
         if (person.value?.zoom_meetings?.length) {
             selectedZoomMeeting.value = person.value?.zoom_meetings?.[0]?.meeting_uuid || selectedZoomMeeting.value
         }
-        const { response: meetingResponse } = await getMeetingDetail(selectedZoomMeeting.value)
+        const { response: meetingResponse } = await call('/api/zoom/meeting_detail', 'POST', { meetingId: selectedZoomMeeting.value })
         meetingDetail.value = meetingResponse || {}
         const { data: postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
 
@@ -222,15 +223,15 @@
         return res
     }
 
-    async function getMeetingDetail(meetingId: any) {
-        const response = await fetch('/api/zoom/meeting_detail', {
-            method: 'POST',
-            body: JSON.stringify({meetingId})
-        })
-        const res = await response.json()
+    // async function getMeetingDetail(meetingId: any) {
+    //     const response = await fetch('/api/zoom/meeting_detail', {
+    //         method: 'POST',
+    //         body: JSON.stringify({meetingId})
+    //     })
+    //     const res = await response.json()
 
-        return res
-    }
+    //     return res
+    // }
 
     async function saveClientResponse() {
         const response = await $fetch('/api/postgre', {
@@ -481,7 +482,7 @@
     }
 
     async function handleChangeZoomMeeting() {
-        const { response: meetingResponse } = await getMeetingDetail(selectedZoomMeeting.value)
+        const { response: meetingResponse } = await call('/api/zoom/meeting_detail', 'POST', { meetingId: selectedZoomMeeting.value })
         meetingDetail.value = meetingResponse || {}
         const { data: postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
 
