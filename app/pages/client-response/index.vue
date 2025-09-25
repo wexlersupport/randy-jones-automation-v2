@@ -12,7 +12,7 @@
     const statusFilter = ref('all')
     const isLoading = ref<boolean>(true)
     const toast = useToast()
-    const table = ref<any>(null)
+    const table = useTemplateRef<any>('table')
     const columnVisibility = ref()
     const rowSelection = ref({})
     const pagination = ref({

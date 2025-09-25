@@ -17,7 +17,7 @@
     });
     const postgreMeetings = ref<any[]>(_data.value?.data || [])
     const toast = useToast()
-    const table = ref()
+    const table = useTemplateRef<any>('table')
     const columnVisibility = ref()
     const rowSelection = ref({})
     const pagination = ref({
