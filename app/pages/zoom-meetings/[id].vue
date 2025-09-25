@@ -185,7 +185,7 @@
         const response = await handleApiResponse($fetch('/api/postgre', {
             query: { table: 'zoom_meetings' },
             method: 'POST',
-            body: { 
+            body: {
                 note_id: notes.value.length ? notes.value[0].id : null,
                 person_id: selectedContact.value,
                 signature_id: selectedMeetingType.value,
@@ -325,7 +325,7 @@
             <div v-if="!form.summary_overview && !isLoading" class="p-6">
                 <div class="w-full border rounded-md p-6 my-4 border-neutral-800">
                     No summary overview available for this meeting.
-                </div>                
+                </div>
             </div>
             <div v-if="form.summary_overview && !isLoading" class="p-6 space-y-8">
                 <UForm :state="form" :schema="schema" @submit="onSubmit" class="space-x-6 flex">

@@ -1,11 +1,23 @@
 import getOnedriveAccessToken from './auth';
 
-export default defineEventHandler(async (event) => {
-    const accessToken = await getOnedriveAccessToken();
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+interface CalendarEventBody {
+    subject: string;
+    start_date_time: string;
+    end_date_time: string;
+}
 
-    const body = await readBody(event)
-    const parseBody = JSON.parse(body)
+interface GraphResponse {
+    success?: boolean;
+    error?: any;
+    [key: string]: any;
+}
+
+export default defineEventHandler(async (event): Promise<{ success: boolean; response?: any; error?: any }> => {
+    const accessToken: string = await getOnedriveAccessToken();
+    const timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const body: string = await readBody(event)
+    const parseBody: CalendarEventBody = JSON.parse(body)
     let subject = parseBody?.subject
     let start_date_time = parseBody?.start_date_time
     let end_date_time = parseBody?.end_date_time
@@ -25,7 +37,7 @@ export default defineEventHandler(async (event) => {
   };
 
   try {
-    const graphRes = await fetch(
+    const graphRes: Response = await fetch(
         `https://graph.microsoft.com/v1.0/users/viacry@automationpm.onmicrosoft.com/events`,
         {
         method: 'POST',
@@ -37,7 +49,7 @@ export default defineEventHandler(async (event) => {
         }
     )
 
-    const result = await graphRes.json()
+    const result: GraphResponse = await graphRes.json()
 
     return { success: true, response: result }
   } catch (err) {

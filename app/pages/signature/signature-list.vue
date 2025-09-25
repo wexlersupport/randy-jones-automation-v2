@@ -62,7 +62,7 @@ const attachmentFilesString = computed({
 const attachmentTags = computed<string[]>({
   get() {
     const str = selectedItem.value?.attachment_files || ''
-    return str ? str.split('|').map(s => s.trim()) : []
+    return str ? str.split('|').map((s: any) => s.trim()) : []
   },
   set(arr: string[]) {
     if (selectedItem.value) {
@@ -89,7 +89,9 @@ async function onSave() {
         query: { table: 'for_follow_up_templates' },
         body: {
           ...payload,
-          value: toSnakeCase(payload.label || 'template')
+          value: toSnakeCase(payload.label || 'template'),
+          created_by: 'admin',
+          updated_by: 'admin'
         }
       })
     } else {
@@ -100,7 +102,10 @@ async function onSave() {
           dynamic_field: 'id',
           dynamic_value: payload.id
         },
-        body: payload
+        body: {
+          ...payload,
+          updated_by: 'admin'
+        }
       })
     }
 
@@ -126,7 +131,7 @@ async function onSave() {
 
 async function onDelete() {
   if (!selectedItem.value || !selectedItem.value.id || isCreating.value) return
-  
+
   if (!confirm('Are you sure you want to delete this signature? This action cannot be undone.')) {
     return
   }
@@ -144,7 +149,7 @@ async function onDelete() {
     // Refresh the data to reflect changes
     await refresh()
     items.value = data.value?.data || []
-    
+
     // Clear selection
     selectedItem.value = null
     isCreating.value = false

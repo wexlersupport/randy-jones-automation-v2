@@ -1,6 +1,6 @@
 import * as chrono from 'chrono-node'
 import dayjs from 'dayjs'
-const pad = (n) => n.toString().padStart(2, "0");
+const pad = (n: any) => n.toString().padStart(2, "0");
 
 export function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
@@ -52,26 +52,26 @@ export function convertDate(date: any) {
 
 export function convertDateFormat(dateString: any) {
   const date = new Date(dateString);
-  
+
   const options: any = {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   };
-  
+
   return date.toLocaleDateString('en-US', options);
 }
 
 export function convertTimeFormat(dateString: any) {
   const date = new Date(dateString);
-  
+
   const options: any = {
     hour: 'numeric',
     minute: 'numeric',
     second: 'numeric',
     hours12: true // Use 12-hour format
   };
-  
+
   return date.toLocaleTimeString('en-US', options);
 }
 
@@ -152,10 +152,10 @@ export function getRandomDayFromNext7(_numberOfDays = 7, _startDate = new Date()
   randomDate.setHours(randomHour, randomMinute, 0, 0);
 
   // Add English ordinal suffix (st, nd, rd, th)
-  function addOrdinal(n) {
+  function addOrdinal(n: number): string {
     const s = ["th", "st", "nd", "rd"];
     const v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    return n + (s[(v - 20) % 10] || s[v] || s[0] || "th");
   }
 
   const month = randomDate.toLocaleString('en-US', { month: 'long' });
@@ -172,7 +172,7 @@ export function convertToMMDD(dateString: any) {
   const date = new Date(cleaned + " 2025"); // Add a year to make it valid
 
   // 3️⃣ Format to MM/DD
-  const formatted = String(date.getMonth() + 1).padStart(2, '0') + '/' + 
+  const formatted = String(date.getMonth() + 1).padStart(2, '0') + '/' +
                     String(date.getDate()).padStart(2, '0');
 
   return formatted;
@@ -238,35 +238,35 @@ export function convertHtmlEmail(body: any): string {
     .replace(/contenteditable="[^"]*"/g, '')
     .replace(/spellcheck="[^"]*"/g, '')
     .replace(/style="[^"]*"/g, '') // Remove inline styles to apply our own
-    
+
     // Advanced white space normalization
     .replace(/\r\n/g, '\n') // Normalize line endings
     .replace(/\r/g, '\n')   // Normalize line endings
     .replace(/\n\s*\n/g, '\n') // Remove multiple consecutive newlines
     .replace(/[ \t]+/g, ' ') // Normalize spaces and tabs
-    
+
     // Handle empty paragraphs with minimal spacing - use simple divs
     .replace(/<p><br\s*\/?><\/p>/g, '<div style="height: 6px; line-height: 6px; font-size: 1px;">&nbsp;</div>')
     .replace(/<p><\/p>/g, '<div style="height: 4px; line-height: 4px; font-size: 1px;">&nbsp;</div>')
     .replace(/<p>\s*<\/p>/g, '<div style="height: 4px; line-height: 4px; font-size: 1px;">&nbsp;</div>')
-    
+
     // Convert paragraphs to table-based layout with minimal spacing
     .replace(/<p>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 6px 0; border-collapse: collapse;"><tr><td style="font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, Arial, sans-serif; font-size: 16px; line-height: 1.4; color: #333333; padding: 0; mso-line-height-rule: exactly;">')
     .replace(/<\/p>/g, '</td></tr></table>')
-    
+
     // Handle lists with minimal spacing and Outlook compatibility
     .replace(/<ul>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 4px 0; border-collapse: collapse;"><tr><td style="padding: 0;"><ul style="margin: 0; padding: 0 0 0 20px; font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, Arial, sans-serif; font-size: 16px; line-height: 1.4; color: #333333; mso-line-height-rule: exactly;">')
     .replace(/<\/ul>/g, '</ul></td></tr></table>')
     .replace(/<ol>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 4px 0; border-collapse: collapse;"><tr><td style="padding: 0;"><ol style="margin: 0; padding: 0 0 0 20px; font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, Arial, sans-serif; font-size: 16px; line-height: 1.4; color: #333333; mso-line-height-rule: exactly;">')
     .replace(/<\/ol>/g, '</ol></td></tr></table>')
-    
+
     // Improve list items with minimal spacing
     .replace(/<li>/g, '<li style="margin: 0 0 2px 0; line-height: 1.4; mso-line-height-rule: exactly;">')
-    
+
     // Handle line breaks with minimal spacing - use simple approach to avoid extra spacing
     .replace(/<br\s*\/?>\s*<br\s*\/?>/g, '<div style="height: 8px; line-height: 8px; font-size: 1px;">&nbsp;</div>')
     .replace(/<br\s*\/?>/g, '<div style="height: 4px; line-height: 4px; font-size: 1px;">&nbsp;</div>')
-    
+
     // Enhanced text formatting with better email client support
     .replace(/<strong>/g, '<strong style="font-weight: 600; color: #333333; mso-bidi-font-weight: bold;">')
     .replace(/<b>/g, '<strong style="font-weight: 600; color: #333333; mso-bidi-font-weight: bold;">')
@@ -274,14 +274,14 @@ export function convertHtmlEmail(body: any): string {
     .replace(/<em>/g, '<em style="font-style: italic; color: #333333; mso-bidi-font-style: italic;">')
     .replace(/<i>/g, '<em style="font-style: italic; color: #333333; mso-bidi-font-style: italic;">')
     .replace(/<\/i>/g, '</em>')
-    
+
     // Improve links with better accessibility and styling
     .replace(/<a\s+href="([^"]*)"[^>]*>/g, '<a href="$1" style="color: #007bff; text-decoration: underline; font-weight: 500; mso-line-height-rule: exactly;" target="_blank">')
-    
+
     // Handle headings with minimal spacing
     .replace(/<h([1-6])>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 6px 0 4px 0; border-collapse: collapse;"><tr><td style="font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, Arial, sans-serif; font-weight: 600; color: #333333; mso-line-height-rule: exactly; font-size: $1" data-heading="$1">')
     .replace(/<\/h[1-6]>/g, '</td></tr></table>')
-    
+
     // Apply heading sizes with tighter line heights
     .replace(/font-size: 1" data-heading="1"/g, 'font-size: 28px; line-height: 1.2"')
     .replace(/font-size: 2" data-heading="2"/g, 'font-size: 24px; line-height: 1.2"')
@@ -289,7 +289,7 @@ export function convertHtmlEmail(body: any): string {
     .replace(/font-size: 4" data-heading="4"/g, 'font-size: 18px; line-height: 1.3"')
     .replace(/font-size: 5" data-heading="5"/g, 'font-size: 16px; line-height: 1.4"')
     .replace(/font-size: 6" data-heading="6"/g, 'font-size: 14px; line-height: 1.4"')
-    
+
     // Enhanced whitespace cleanup to eliminate all unnecessary spacing
     .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
     .replace(/>\s+</g, '><') // Remove all spaces between HTML tags
@@ -338,14 +338,14 @@ export function convertHtmlEmail(body: any): string {
                   outline: none !important;
                   text-decoration: none !important;
               }
-              
+
               /* Outlook specific fixes */
               .ReadMsgBody { width: 100%; }
               .ExternalClass { width: 100%; }
               .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
                   line-height: 100%;
               }
-              
+
               /* Base styles */
               body {
                   margin: 0 !important;
@@ -358,14 +358,14 @@ export function convertHtmlEmail(body: any): string {
                   width: 100% !important;
                   height: 100% !important;
               }
-              
+
               /* Container table */
               .email-wrapper {
                   width: 100% !important;
                   background-color: #f8f9fa !important;
                   padding: 20px 0 !important;
               }
-              
+
               .email-container {
                   max-width: 600px !important;
                   margin: 0 auto !important;
@@ -374,7 +374,7 @@ export function convertHtmlEmail(body: any): string {
                   box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
                   overflow: hidden !important;
               }
-              
+
               .email-content {
                   padding: 30px !important;
                   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif !important;
@@ -382,45 +382,45 @@ export function convertHtmlEmail(body: any): string {
                   line-height: 1.5 !important;
                   color: #333333 !important;
               }
-              
+
               /* Typography improvements */
               .email-content table {
                   width: 100% !important;
               }
-              
+
               .email-content td {
                   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif !important;
                   font-size: 16px !important;
                   line-height: 1.5 !important;
                   color: #333333 !important;
               }
-              
+
               .email-content strong {
                   font-weight: 600 !important;
                   color: #333333 !important;
               }
-              
+
               .email-content em {
                   font-style: italic !important;
                   color: #333333 !important;
               }
-              
+
               .email-content a {
                   color: #007bff !important;
                   text-decoration: underline !important;
                   font-weight: 500 !important;
               }
-              
+
               .email-content ul, .email-content ol {
                   margin: 0 !important;
                   padding-left: 20px !important;
               }
-              
+
               .email-content li {
                   margin: 8px 0 !important;
                   line-height: 1.5 !important;
               }
-              
+
               /* Responsive */
               @media only screen and (max-width: 600px) {
                   .email-container {
@@ -435,7 +435,7 @@ export function convertHtmlEmail(body: any): string {
                       font-size: 14px !important;
                   }
               }
-              
+
               /* Dark mode support */
               @media (prefers-color-scheme: dark) {
                   .email-wrapper {

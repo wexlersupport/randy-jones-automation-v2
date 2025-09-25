@@ -14,7 +14,17 @@ function formatCurrency(value: number): string {
   })
 }
 
-const baseStats = [{
+interface BaseStat {
+  title: string
+  icon: string
+  minValue: number
+  maxValue: number
+  minVariation: number
+  maxVariation: number
+  formatter?: (value: number) => string
+}
+
+const baseStats: BaseStat[] = [{
   title: 'Tech Inputs',
   icon: 'i-lucide-users',
   minValue: 400,
@@ -35,14 +45,15 @@ const baseStats = [{
   maxValue: 5000,
   minVariation: -20,
   maxVariation: 30,
-  // formatter: formatCurrency
+  formatter: formatCurrency
 }, {
   title: 'Completed',
   icon: 'i-lucide-shopping-cart',
   minValue: 100000,
   maxValue: 300000,
   minVariation: -5,
-  maxVariation: 15
+  maxVariation: 15,
+  formatter: formatCurrency
 }]
 
 const { data: stats } = await useAsyncData<Stat[]>('stats', async () => {

@@ -23,7 +23,7 @@ function newItem() {
   isCreating.value = true
 }
 
-function toSnakeCase(str) {
+function toSnakeCase(str: string): string {
   return str
     .replace(/([a-z])([A-Z])/g, '$1_$2') // handle camelCase → camel_Case
     .replace(/\s+/g, '_')                // spaces → _
@@ -38,16 +38,22 @@ async function onSave() {
   try {
     if (isCreating.value) {
       // 👉 CREATE
+      const baseValue = toSnakeCase(selectedItem.value.label || 'template')
+      const timestamp = Date.now()
+      const uniqueValue = `${baseValue}_${timestamp}`
+      
+      const bodyData = {
+        label: selectedItem.value.label,
+        html: selectedItem.value.html,
+        value: uniqueValue
+      }
+      
       const res = await $fetch('/api/postgre', {
         method: 'POST',
         query: {
           table: 'for_follow_up_templates'
         },
-        body: {
-          label: selectedItem.value.label,
-          html: selectedItem.value.html,
-          value: toSnakeCase(selectedItem.value.label || 'template')
-        }
+        body: bodyData
       })
       toast.add({
         description: 'Template created!',
@@ -91,7 +97,47 @@ async function onSave() {
   } catch (error) {
     console.error('Error saving item:', error)
     toast.add({
-      description: 'Error saving template.',
+      description: 'Error saving signature.',
+      icon: 'i-lucide-alert-circle',
+      color: 'error'
+    })
+  }
+}
+
+async function onDelete() {
+  if (!selectedItem.value || !selectedItem.value.id || isCreating.value) return
+  
+  if (!confirm('Are you sure you want to delete this signature? This action cannot be undone.')) {
+    return
+  }
+
+  try {
+    await $fetch('/api/postgre/' + selectedItem.value.id, {
+      method: 'DELETE',
+      query: {
+        table: 'for_follow_up_templates',
+        dynamic_field: 'id',
+        dynamic_value: selectedItem.value.id
+      }
+    })
+
+    // Refresh the data to reflect changes
+    await refresh()
+    items.value = data.value?.data || []
+    
+    // Clear selection
+    selectedItem.value = null
+    isCreating.value = false
+
+    toast.add({
+      description: 'Signature deleted successfully!',
+      icon: 'i-lucide-check-circle',
+      color: 'success'
+    })
+  } catch (err) {
+    console.error('Error deleting item:', err)
+    toast.add({
+      description: 'Error deleting signature.',
       icon: 'i-lucide-alert-circle',
       color: 'error'
     })
@@ -131,7 +177,7 @@ async function onSave() {
     <!-- RIGHT PANEL -->
     <div class="flex-1 p-6 overflow-y-auto bg-white dark:bg-gray-900">
       <h2 class="text-lg font-bold mb-4">
-        {{ isCreating ? 'Create Template' : 'Details' }}
+        {{ isCreating ? 'Create Signature' : 'Details' }}
       </h2>
 
       <div v-if="selectedItem" class="space-y-4">
@@ -148,6 +194,7 @@ async function onSave() {
           <label class="block text-sm font-medium text-gray-600 dark:text-gray-300">Description</label>
           <ClientOnly>
             <QuillEditor
+              :key="isCreating ? 'new' : selectedItem?.id || 'edit'"
               contentType="html"
               v-model:content="selectedItem.html"
               theme="snow"
@@ -156,12 +203,21 @@ async function onSave() {
           </ClientOnly>
         </div>
 
-        <button
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-400"
-          @click="onSave"
-        >
-          {{ isCreating ? 'Create' : 'Save' }}
-        </button>
+        <div class="flex gap-2">
+          <button
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-400"
+            @click="onSave"
+          >
+            {{ isCreating ? 'Create' : 'Save' }}
+          </button>
+          <button
+            v-if="!isCreating && selectedItem?.id"
+            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 dark:hover:bg-red-400"
+            @click="onDelete"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       <div v-else class="text-gray-500 dark:text-gray-400">

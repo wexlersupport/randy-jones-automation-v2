@@ -24,11 +24,11 @@ export default defineEventHandler(async () => {
       }
     )
 
-    const accessToken = tokenRes.access_token
+    const accessToken: string = tokenRes.access_token
 
     return accessToken
   } catch (error: any) {
     console.error(error)
-    return { success: false, error: error.message || 'Unknown error' }
+    throw new Error(error.message || 'Failed to get access token')
   }
 })

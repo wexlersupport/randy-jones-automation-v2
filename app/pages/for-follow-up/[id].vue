@@ -39,6 +39,7 @@
     const meetingDetail = ref<any>(null);
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
+
     const { data: _data } = await useFetch('/api/postgre', {
         query: { table: 'for_follow_up_templates', isDesc: true },
     });
@@ -164,7 +165,7 @@
                     disposition: "attachment"
                 })
             })
-            
+
         }
 
         try {
@@ -271,7 +272,7 @@
 
     async function getPreviousSunday(formattedNextMeeting: any) {
         const pad = (n: any) => String(n).padStart(2, '0');
-        
+
         const meetingDate = new Date(formattedNextMeeting);
         console.log('meetingDate:', meetingDate) //Mon Sep 22 2025 00:00:00 GMT+0800 (Philippine Standard Time)
         const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
@@ -467,10 +468,13 @@
             attachmentList.value.splice(findIndex, 1)
         } else {
             const findIndex2 = uploadedBase64Files.value.findIndex((f: any) => f.name === file.name)
+            console.log('findIndex2:', findIndex2)
             if (findIndex2 !== -1) {
                 uploadedBase64Files.value.splice(findIndex2, 1)
             }
         }
+        console.log('attachmentList.value:', attachmentList.value)
+        console.log('uploadedBase64Files.value:', uploadedBase64Files.value)
     }
 
     async function handleChangeZoomMeeting() {
@@ -532,7 +536,7 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
-                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full"/>
+                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full" />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
@@ -540,7 +544,7 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
-                                        <UInput v-model="form.to" label="To" class="w-full"/>
+                                        <UInput v-model="form.to" label="To" class="w-full" />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
@@ -550,7 +554,7 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
-                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full"/>
+                                        <UInput v-model="form.zoom_link" label="Zoom Link" class="w-full" />
                                     </div>
                                 </div>
                             </UCard>
@@ -618,24 +622,24 @@
                                 <div v-if="(selectedAttachment.length || uploadedBase64Files.length) && !isLoadingSave" class="space-y-2">
                                     <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Selected Attachments:</label>
 
-                                    <ul class="divide-y divide-gray-200 dark:divide-gray-800 border rounded p-3 
+                                    <ul class="divide-y divide-gray-200 dark:divide-gray-800 border rounded p-3
                                                 bg-gray-50 dark:bg-gray-900">
                                         <li v-for="file in [...attachmentList.filter(f => selectedAttachment.includes(f.id)), ...uploadedBase64Files]" :key="file.id" class="py-2 flex items-center justify-between text-sm">
                                             <div class="flex items-center gap-2">
                                                 <UIcon name="i-lucide-files" class="size-5 text-red-400" />
                                                 <span class="text-sm text-gray-700 dark:text-gray-200">{{ file.name }}</span>
                                             </div>
-                                            <span class="text-gray-500 dark:text-gray-400 text-xs">
+                                            <!-- <span class="text-gray-500 dark:text-gray-400 text-xs">
                                                 <UIcon name="i-lucide-check-circle" class="size-3 text-green-600" />
-                                            </span>
-                                            <!-- <UButton
+                                            </span> -->
+                                            <UButton
                                                 icon="i-heroicons-x-mark"
                                                 size="xs"
                                                 color="neutral"
                                                 variant="ghost"
                                                 class="ml-1"
                                                 @click="removeAttachment(file)"
-                                            /> -->
+                                            />
                                         </li>
                                     </ul>
                                 </div>
