@@ -11,7 +11,7 @@ const props = defineProps<{
 const UBadge = resolveComponent('UBadge')
 
 const sampleEmails = [
-  'francis.regala@strattonstudiogames.com',
+  'francis@viacry.com',
   'john.loveridge@strattonstudiogames.com',
   'blake@wexlerllc.com',
   'elyse@wexlerllc.com',

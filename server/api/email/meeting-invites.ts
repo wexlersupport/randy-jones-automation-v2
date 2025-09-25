@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
         `SUMMARY:${subject}`,
         'DESCRIPTION:Meeting Invites.',
         'LOCATION:Zoom Meeting',
-        `ORGANIZER;CN=Francis Regala:mailto:francis.regala@strattonstudiogames.com`,
+        `ORGANIZER;CN=Francis Regala:mailto:francis@viacry.com`,
         `ATTENDEE;CN=Francis ViaCry;RSVP=TRUE:mailto:francis@viacry.com`,
         'STATUS:CONFIRMED',
         'SEQUENCE:0',
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
         service: 'gmail',
         auth: {
             user: from,
-            pass: 'mizh igci lyma mtpx', // Gmail App Password
+            pass: 'jgtz swiq bxai dttu', // Gmail App Password
         },
     })
 

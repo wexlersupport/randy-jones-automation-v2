@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
         service: 'gmail',
         auth: {
             user: from,
-            pass: 'mizh igci lyma mtpx', // Gmail App Password
+            pass: 'jgtz swiq bxai dttu', // Gmail App Password
         },
     })
 

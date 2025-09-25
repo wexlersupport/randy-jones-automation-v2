@@ -698,4 +698,10 @@
         border-style: solid;
         border-color: #3f3f47;
     }
+
+    :deep(.dp__theme_dark .dp--menu-wrapper) {
+        position: sticky !important;
+        top: 0;                /* distance from top of the scrolling container */
+        z-index: 50;           /* keep above content */
+    }
 </style>

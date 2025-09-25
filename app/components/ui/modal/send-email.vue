@@ -15,7 +15,7 @@
         content?: string,
     }
     const emailObj = reactive<EmailObj>({
-        from: 'francis.regala@strattonstudiogames.com',
+        from: 'francis@viacry.com',
         to: '',
         subject: 'Test Subject',
         html: `<p>Thank you!</p>`,
