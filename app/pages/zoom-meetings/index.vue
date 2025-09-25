@@ -17,7 +17,7 @@
     });
     const postgreMeetings = ref<any[]>(_data.value?.data || [])
     const toast = useToast()
-    const table = useTemplateRef('table')
+    const table = ref()
     const columnVisibility = ref()
     const rowSelection = ref({})
     const pagination = ref({
@@ -28,27 +28,68 @@
     onMounted(async () => {
         await mergeMeetings()
 
+
+
         isLoading.value = false
     })
     
     const filteredRows = computed(() => {
+        if (search.value.startsWith('FilteredByStatus:')) {
+            const status = search.value.replace('FilteredByStatus:', '')
+            if (status === 'all') return data.value
+            
+            return data.value.filter((d: any) => {
+                return d.status === status
+            })
+        }
+        
         if (!search.value) {
-            isLoading.value = true
-            setTimeout(() => {
-                isLoading.value = false
-            }, 1000)
-
             return data.value
         }
-        // page.value = 1
-        setTimeout(() => {
-            isLoading.value = false
-        }, 1000)
-
-        return data.value.filter((d: any) => {
-            return Object.values(d).some((value) => {
-                return String(value).toLowerCase().includes(search.value.toLowerCase())
-            })
+        
+        const searchTerm = search.value.toLowerCase()
+        return data.value.filter((row: any) => {
+      
+            if (row.detail?.summary_overview && 
+                String(row.detail.summary_overview).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.meeting_topic && 
+                String(row.meeting_topic).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.meeting_process && 
+                String(row.meeting_process).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.person?.name && 
+                String(row.person.name).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.person?.primary_email && 
+                String(row.person.primary_email).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.summary_created_time) {
+                const dateStr = new Date(row.summary_created_time).toLocaleString('en-US', {
+                    year: "numeric",
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })
+                if (dateStr.toLowerCase().includes(searchTerm)) {
+                    return true
+                }
+            }
+            
+            return false
         })
     })
 
@@ -65,6 +106,7 @@
                 label: 'Copy Meeting Host Email',
                 icon: 'i-lucide-copy',
                 onSelect() {
+                    console.log('row.original', row.original)
                     if (!navigator.clipboard) {
                         toast.add({
                             title: 'Clipboard not supported',
@@ -72,7 +114,7 @@
                         })
                         return
                     }
-                    if (!row.original || !row.original.name) {
+                    if (!row.original || !row.original.meeting_topic) {
                         toast.add({
                             title: 'Error',
                             description: 'No found for this row.'
@@ -295,8 +337,8 @@
                         :items="
                         table?.tableApi
                             ?.getAllColumns()
-                            .filter((column) => column.getCanHide())
-                            .map((column) => ({
+                            .filter((column: any) => column.getCanHide())
+                            .map((column: any) => ({
                                 label: upperFirst(column.id),
                                 type: 'checkbox' as const,
                                 checked: column.getIsVisible(),
