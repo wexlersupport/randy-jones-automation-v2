@@ -20,13 +20,15 @@ const items = computed<DropdownMenuItem[][]>(() => {
     onSelect() {
       selectedTeam.value = team
     }
-  })), [{
-    label: 'Create team',
-    icon: 'i-lucide-circle-plus'
-  }, {
-    label: 'Manage teams',
-    icon: 'i-lucide-cog'
-  }]]
+  })), 
+  // [{
+  //   label: 'Create team',
+  //   icon: 'i-lucide-circle-plus'
+  // }, {
+  //   label: 'Manage teams',
+  //   icon: 'i-lucide-cog'
+  // }]
+]
 })
 </script>
 

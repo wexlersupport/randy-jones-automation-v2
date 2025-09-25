@@ -23,13 +23,15 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
   type: 'label',
   label: user.value.name,
   avatar: user.value.avatar
-}], [{
-  label: 'Profile',
-  icon: 'i-lucide-user'
-}, {
-  label: 'Billing',
-  icon: 'i-lucide-credit-card'
-}, {
+}], [
+//   {
+//   label: 'Profile',
+//   icon: 'i-lucide-user'
+// }, {
+//   label: 'Billing',
+//   icon: 'i-lucide-credit-card'
+// },
+ {
   label: 'Signatures',
   icon: 'i-lucide-settings',
   to: '/signature'
