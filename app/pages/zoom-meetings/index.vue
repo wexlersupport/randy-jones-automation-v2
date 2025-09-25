@@ -18,7 +18,7 @@
     });
     const postgreMeetings = ref<any[]>(_data.value?.data || [])
     const toast = useToast()
-    const table = useTemplateRef('table')
+    const table = useTemplateRef<any>('table')
     const columnVisibility = ref()
     const rowSelection = ref({})
     const pagination = ref({
@@ -29,27 +29,68 @@
     onMounted(async () => {
         await mergeMeetings()
 
+
+
         isLoading.value = false
     })
     
     const filteredRows = computed(() => {
+        if (search.value.startsWith('FilteredByStatus:')) {
+            const status = search.value.replace('FilteredByStatus:', '')
+            if (status === 'all') return data.value
+            
+            return data.value.filter((d: any) => {
+                return d.status === status
+            })
+        }
+        
         if (!search.value) {
-            isLoading.value = true
-            setTimeout(() => {
-                isLoading.value = false
-            }, 1000)
-
             return data.value
         }
-        // page.value = 1
-        setTimeout(() => {
-            isLoading.value = false
-        }, 1000)
-
-        return data.value.filter((d: any) => {
-            return Object.values(d).some((value) => {
-                return String(value).toLowerCase().includes(search.value.toLowerCase())
-            })
+        
+        const searchTerm = search.value.toLowerCase()
+        return data.value.filter((row: any) => {
+      
+            if (row.detail?.summary_overview && 
+                String(row.detail.summary_overview).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.meeting_topic && 
+                String(row.meeting_topic).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.meeting_process && 
+                String(row.meeting_process).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.person?.name && 
+                String(row.person.name).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.person?.primary_email && 
+                String(row.person.primary_email).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (row.summary_created_time) {
+                const dateStr = new Date(row.summary_created_time).toLocaleString('en-US', {
+                    year: "numeric",
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })
+                if (dateStr.toLowerCase().includes(searchTerm)) {
+                    return true
+                }
+            }
+            
+            return false
         })
     })
 
@@ -66,6 +107,7 @@
                 label: 'Copy Meeting Host Email',
                 icon: 'i-lucide-copy',
                 onSelect() {
+                    console.log('row.original', row.original)
                     if (!navigator.clipboard) {
                         toast.add({
                             title: 'Clipboard not supported',
@@ -73,7 +115,7 @@
                         })
                         return
                     }
-                    if (!row.original || !row.original.name) {
+                    if (!row.original || !row.original.meeting_topic) {
                         toast.add({
                             title: 'Error',
                             description: 'No found for this row.'
@@ -155,6 +197,7 @@
             })
         },
         {
+            id: 'Meeting Overview',
             accessorKey: 'detail.summary_overview',
             header: 'Meeting Overview',
             cell: ({ row }) => {
@@ -169,26 +212,31 @@
             }
         },
         {
+            id: "Meeting Topic",
             accessorKey: 'meeting_topic',
             header: 'Meeting Topic',
             cell: ({ row }) => row.original.meeting_subject || '-'
         },
         {
+            id: "Meeting Type",
             accessorKey: 'meeting_process',
             header: 'Meeting Type',
             cell: ({ row }) => row.original.meeting_process || '-'
         },
         {
+            id: "Client name",
             accessorKey: 'person.name',
             header: 'Client',
             cell: ({ row }) => row.original.person?.name || '-'
         },
         {
+            id: "Client Email",
             accessorKey: 'person.primary_email',
             header: 'Client Email',
             cell: ({ row }) => row.original.person?.primary_email || '-'
         },
         {
+            id: "Last Meeting Date",
             accessorKey: 'summary_created_time',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
@@ -207,7 +255,7 @@
                 })
             },
             cell: ({ row }) => {
-                return new Date(row.getValue('summary_created_time')).toLocaleString('en-US', {
+                return new Date(row.getValue('Last Meeting Date')).toLocaleString('en-US', {
                     year: "numeric",
                     day: 'numeric',
                     month: 'short',
@@ -291,8 +339,8 @@
                         :items="
                         table?.tableApi
                             ?.getAllColumns()
-                            .filter((column) => column.getCanHide())
-                            .map((column) => ({
+                            .filter((column: any) => column.getCanHide())
+                            .map((column: any) => ({
                                 label: upperFirst(column.id),
                                 type: 'checkbox' as const,
                                 checked: column.getIsVisible(),

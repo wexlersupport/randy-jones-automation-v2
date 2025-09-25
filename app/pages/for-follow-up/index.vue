@@ -11,7 +11,7 @@
     const statusFilter = ref('all')
     const isLoading = ref<boolean>(true)
     const toast = useToast()
-    const table = useTemplateRef('table')
+    const table = useTemplateRef<any>('table')
     const columnVisibility = ref()
     const rowSelection = ref({})
     const pagination = ref({
@@ -38,23 +38,42 @@
 
     
     const filteredRows = computed(() => {
+        if (search.value.startsWith('FilteredByStatus:')) {
+            const status = search.value.replace('FilteredByStatus:', '')
+            if (status === 'all') return persons.value
+            
+            return persons.value.filter((person: any) => {
+                return person.status === status
+            })
+        }
+        
         if (!search.value) {
-            isLoading.value = true
-            setTimeout(() => {
-                isLoading.value = false
-            }, 1000)
-
             return persons.value
         }
-        // page.value = 1
-        setTimeout(() => {
-            isLoading.value = false
-        }, 1000)
-
-        return persons.value.filter((d: any) => {
-            return Object.values(d).some((value) => {
-                return String(value).toLowerCase().includes(search.value.toLowerCase())
-            })
+        
+        const searchTerm = search.value.toLowerCase()
+        return persons.value.filter((person: any) => {
+            if (person.name && 
+                String(person.name).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (person.primary_email && 
+                String(person.primary_email).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (person.org_name && 
+                String(person.org_name).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            if (person.notes && 
+                String(person.notes).toLowerCase().includes(searchTerm)) {
+                return true
+            }
+            
+            return false
         })
     })
 
@@ -126,6 +145,7 @@
             })
         },
         {
+            id: "Client name",
             accessorKey: 'name',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
@@ -154,6 +174,7 @@
             }
         },
         {
+            id: "Client Email",
             accessorKey: 'primary_email',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
@@ -173,6 +194,7 @@
             },
         },
         {
+            id: "Organization Name",
             accessorKey: 'org_name',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
@@ -192,6 +214,7 @@
             },
         },
         {
+            id: 'Last Meeting Date',
             accessorKey: 'zoom_summary',
             header: ({ column }) => {
                 const isSorted = column.getIsSorted()
@@ -287,8 +310,8 @@
                         :items="
                         table?.tableApi
                             ?.getAllColumns()
-                            .filter((column) => column.getCanHide())
-                            .map((column) => ({
+                            .filter((column: any) => column.getCanHide())
+                            .map((column: any) => ({
                                 label: upperFirst(column.id),
                                 type: 'checkbox' as const,
                                 checked: column.getIsVisible(),
