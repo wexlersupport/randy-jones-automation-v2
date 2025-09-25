@@ -40,54 +40,11 @@
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
 
-    const { data: _data, refresh: refreshSignatures } = await useFetch('/api/postgre', {
+    const { data: _data } = await useFetch('/api/postgre', {
         query: { table: 'for_follow_up_templates', isDesc: true },
     });
-    const itemsFollowup = ref<any[]>(_data.value?.data?.map((signature: any) => ({
-        label: signature.label,
-        value: signature.value || signature.label,
-        html: signature.html,
-        subject: signature.subject || '',
-        attachment_files: signature.attachment_files || []
-    })) || []);
+    const itemsFollowup = ref<any[]>(_data.value?.data?.sort((a: any, b: any) => a?.label.localeCompare(b?.label)) || []);
     const selectedFollowUp = ref<any>(null);
-
-    // Function to refresh signatures list
-    async function refreshSignaturesList() {
-        await refreshSignatures();
-        const updatedSignatures = _data.value?.data || [];
-        itemsFollowup.value = updatedSignatures.map((signature: any) => ({
-            label: signature.label,
-            value: signature.value || signature.label,
-            html: signature.html,
-            subject: signature.subject || '',
-            attachment_files: signature.attachment_files || []
-        }));
-    }
-
-    // Watch for changes in signature data
-    watch(_data, (newData) => {
-        if (newData?.data) {
-            itemsFollowup.value = newData.data.map((signature: any) => ({
-                label: signature.label,
-                value: signature.value || signature.label,
-                html: signature.html,
-                subject: signature.subject || '',
-                attachment_files: signature.attachment_files || []
-            }));
-        }
-    }, { deep: true });
-
-    // Initialize items array with database signatures for the main signature dropdown
-    if (_data.value?.data) {
-        items.value = _data.value.data.map((signature: any) => ({
-            label: signature.label,
-            html: signature.html,
-            value: signature.value || signature.label,
-            subject: signature.subject || '',
-            attachment_files: signature.attachment_files || []
-        }));
-    }
 
     onMounted(async () => {
         const leaf_process = ['']
@@ -495,20 +452,11 @@
     async function handleForFollowUp() {
         const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
-        console.log('selected:', selected)
-
-        if (selected?.html) {
-            let emailContent = selected.html;
-
-            // Replace placeholders if they exist
-            if (emailContent.includes('{{name}}') && person.value?.name) {
-                emailContent = emailContent.replace('{{name}}', person.value?.name);
-            }
-            if (emailContent.includes('XXX') && person.value?.name) {
-                emailContent = emailContent.replace('XXX', person.value?.name);
-            }
-
-            form.value.generated_email = emailContent;
+        if (selected?.html?.includes('{{name}}') && person.value?.name) {
+            form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
+        }
+        if (selected?.html?.includes('XXX') && person.value?.name) {
+            form.value.generated_email = selected?.html.replace('XXX', person.value?.name) || '';
         }
     }
 
@@ -520,10 +468,13 @@
             attachmentList.value.splice(findIndex, 1)
         } else {
             const findIndex2 = uploadedBase64Files.value.findIndex((f: any) => f.name === file.name)
+            console.log('findIndex2:', findIndex2)
             if (findIndex2 !== -1) {
                 uploadedBase64Files.value.splice(findIndex2, 1)
             }
         }
+        console.log('attachmentList.value:', attachmentList.value)
+        console.log('uploadedBase64Files.value:', uploadedBase64Files.value)
     }
 
     async function handleChangeZoomMeeting() {
@@ -589,7 +540,7 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
-                                        <UInput v-model="form.from" label="From" class="w-full" />
+                                        <UInput v-model="form.from" label="From" class="w-full" disabled />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
@@ -597,7 +548,9 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
-                                        <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full" />
+                                        <!-- <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/> -->
+                                        <VueDatePicker v-model="form.next_meeting_date" dark :is24="false"
+                                        />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
@@ -676,17 +629,17 @@
                                                 <UIcon name="i-lucide-files" class="size-5 text-red-400" />
                                                 <span class="text-sm text-gray-700 dark:text-gray-200">{{ file.name }}</span>
                                             </div>
-                                            <span class="text-gray-500 dark:text-gray-400 text-xs">
+                                            <!-- <span class="text-gray-500 dark:text-gray-400 text-xs">
                                                 <UIcon name="i-lucide-check-circle" class="size-3 text-green-600" />
-                                            </span>
-                                            <!-- <UButton
+                                            </span> -->
+                                            <UButton
                                                 icon="i-heroicons-x-mark"
                                                 size="xs"
                                                 color="neutral"
                                                 variant="ghost"
                                                 class="ml-1"
                                                 @click="removeAttachment(file)"
-                                            /> -->
+                                            />
                                         </li>
                                     </ul>
                                 </div>
@@ -706,8 +659,8 @@
                                     </UButton>
                                 </div>
                                 <div v-if="!isLoadingSave" class="w-full space-y-1">
-                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Attach Signature:</label>
-                                    <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="Select Signature"/>
+                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Select Signature:</label>
+                                    <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="For Follow Up Signatures"/>
                                 </div>
                                 <div v-if="!isLoadingSave" class="mb-4 h-[360px]">
                                     <ClientOnly>
@@ -731,18 +684,6 @@
     </UDashboardPanel>
 
 </template>
-
-<style scoped>
-    .dp__theme_dark {
-        --dp-background-color: #18181B;
-        --dp-font-size: 0.875rem !important; /* ≈14px */
-        line-height: 1.25rem; /* ≈16px */
-        border-radius: 0.375rem; /* 6px */
-        border-width: 1px;
-        border-style: solid;
-        border-color: #3f3f47;
-    }
-</style>
 
 <style scoped>
     .dp__theme_dark {

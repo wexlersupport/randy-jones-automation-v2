@@ -53,35 +53,9 @@
         client_email: z.string().email().optional()
     })
 
-    // Function to reorder signatures to show Appointments at the top
-    function reorderSignatures(signatures: any[]) {
-        const appointmentSignatures = signatures.filter((sig: any) =>
-            sig.label && sig.label.toLowerCase().includes('appointment')
-        );
-        const otherSignatures = signatures.filter((sig: any) =>
-            !sig.label || !sig.label.toLowerCase().includes('appointment')
-        );
-        return [...appointmentSignatures, ...otherSignatures];
-    }
-
     onMounted(async () => {
-        // Get signature list and reorder to show appointments first
-        const { data: signatureData } = await useFetch('/api/postgre', {
-            query: { table: 'for_follow_up_templates', isDesc: true },
-        });
-
-        const allSignatures = signatureData.value?.data || [];
-        const reorderedSignatures = reorderSignatures(allSignatures);
-
-        // Convert to the format expected by the dropdown
-        meetingTypeList.value = reorderedSignatures.map((sig: any) => ({
-            label: sig.label,
-            value: sig.value,
-            subject: sig.subject || sig.label
-        }));
-
-        // console.log('meetingTypeList:', meetingTypeList.value)
-        selectedMeetingType.value = postgreMeeting.value ? postgreMeeting.value.signature_id : meetingTypeList.value[0]?.value;
+        meetingTypeList.value = leafProcess()
+        selectedMeetingType.value = postgreMeeting.value ? postgreMeeting.value.signature_id : meetingTypeList.value[0].value;
 
         const _selectedContactId = postgreMeeting.value ? Number(postgreMeeting.value.person_id) : contactList.value[0].id;
         selectedContact.value = _selectedContactId && contactList.value.find(item => item.id === _selectedContactId) ? _selectedContactId : contactList.value[0].id;
@@ -383,9 +357,9 @@
                         <template #header>
                             <h2 class="text-lg font-semibold">AI Generated Summary Details</h2>
                         </template>
-                        <div class="grid grid-cols-1 gap-4">
-                            <div class="w-full space-y-2">
-                                <label class="block text-sm font-medium text-neutral-500">Contacts:</label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Contacts:</label>
                                 <USelect
                                     v-model="selectedContact"
                                     :items="contactList.map(item => ({ value: item.id, label: item.name }))"
@@ -395,34 +369,23 @@
                                     @update:modelValue="handleSelectContact"
                                 />
                             </div>
-
                             <div class="w-full space-y-2">
-                                <label class="block text-sm font-medium text-neutral-500">Select Signature:</label>
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
                                 <USelect
                                     v-model="selectedMeetingType"
                                     :items="meetingTypeList"
-                                    placeholder="Choose a signature"
+                                    placeholder="Choose a meeting type"
                                     class="w-full"
                                     :disabled="postgreMeeting"
                                     @update:modelValue="handleSelectMeetingType"
                                 />
                             </div>
-
                             <UiAppLoading
                                 v-if="isLoadingAi"
                                 class="w-full border rounded-md p-6 my-4 border-neutral-800"
                             />
-
-                            <div v-if="!isLoadingAi" class="w-full space-y-2">
-                                <UTextarea
-                                    :disabled="postgreMeeting"
-                                    v-model="form.ai_summary_overview"
-                                    label="Overview"
-                                    :rows="20"
-                                    class="w-full"
-                                />
-                                <span class="text-sm text-gray-500 italic">*Please review and edit the AI-generated summary before adding it as a note.</span>
-                            </div>
+                            <UTextarea :disabled="postgreMeeting" v-if="!isLoadingAi" v-model="form.ai_summary_overview" label="Overview" :rows="20" />
+                            <span class="text-sm text-gray-500 italic">*Please review and edit the AI-generated summary before adding it as a note.</span>
                         </div>
                         <template #footer>
                             <div class="flex w-full justify-end">

@@ -1,4 +1,6 @@
-export default async function getOnedriveAccessToken(): Promise<string> {
+import { defineEventHandler } from 'h3'
+
+export default defineEventHandler(async () => {
   const config = useRuntimeConfig();
   const onedriveTenantId = config.public.onedriveTenantId
   const onedriveAccountId = config.public.onedriveAccountId
@@ -29,4 +31,4 @@ export default async function getOnedriveAccessToken(): Promise<string> {
     console.error(error)
     throw new Error(error.message || 'Failed to get access token')
   }
-}
+})
