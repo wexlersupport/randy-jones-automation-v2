@@ -12,7 +12,7 @@
     const statusFilter = ref('all')
     const isLoading = ref<boolean>(true)
     const toast = useToast()
-    const table = useTemplateRef('table')
+    const table = ref<any>(null)
     const columnVisibility = ref()
     const rowSelection = ref({})
     const pagination = ref({
@@ -107,14 +107,17 @@
             })
         },
         {
+            id: 'Client Name',
             accessorKey: 'person_name',
             header: 'Name',
         },
         {
+            id: 'Client Email',
             accessorKey: 'person_email',
             header: 'Client Email',
         },
         {
+            id: 'Meeting Type',
             accessorKey: 'signature_id',
             header: 'Meeting Type',
             cell: ({ row }) => {
@@ -124,6 +127,7 @@
             }
         },
         {
+            id: 'Next Meeting Date',
             accessorKey: 'next_meeting_date',
             header: 'Next Meeting Date',
             cell: ({ row }) => {
@@ -138,6 +142,7 @@
             }
         },
         {
+            id: "Sent Reminder?",
             accessorKey: 'is_sent_reminder',
             header: 'Is Sent Reminder',
             cell: ({ row }) => {
@@ -145,7 +150,7 @@
             }
         },
         {
-            id: 'sent_reminder_date',
+            id: 'Reminder Action/Date',
             header: 'Action/Date Sent',
             cell: ({ row }) => {
                 if (row.getValue('is_sent_reminder')) {
@@ -280,8 +285,8 @@
                         :items="
                         table?.tableApi
                             ?.getAllColumns()
-                            .filter((column) => column.getCanHide())
-                            .map((column) => ({
+                            .filter((column: any) => column.getCanHide())
+                            .map((column: any) => ({
                                 label: upperFirst(column.id),
                                 type: 'checkbox' as const,
                                 checked: column.getIsVisible(),
