@@ -17,11 +17,16 @@ export default defineEventHandler(async (event) => {
                     content: `
                         You are an AI assistant. Summarize the following meeting overview into a clear, structured summary. 
                         Highlight key discussion points, decisions made, and next action items. 
-                        Keep it concise and easy to read.
+                        **Output Requirements:**  
+                        - Use Markdown headings and bullet points.  
+                        - Do **NOT** include any extra indentation, tabs, or leading spaces.  
+                        - The text must start at the very left margin.
 
-                        Meeting Overview: ${filterObj.summary_overview}
+                        Meeting Overview:
+                        ${filterObj.summary_overview}
 
-                        Meeting Next Steps: ${filterObj.next_steps || "No next steps available."}
+                        Meeting Next Steps:
+                        ${filterObj.next_steps || "No next steps available."}
                     `
                 }
             ]
@@ -38,7 +43,7 @@ export default defineEventHandler(async (event) => {
         }   
     } catch (error: any) {
         return {
-            error : error.response.data
+            error : error.response?.data || error.message
         }
     }
 })
