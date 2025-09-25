@@ -453,6 +453,7 @@
     async function handleForFollowUp() {
         const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
+        form.value.generated_email = selected?.html
         if (selected?.html?.includes('{{name}}') && person.value?.name) {
             form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
         }
