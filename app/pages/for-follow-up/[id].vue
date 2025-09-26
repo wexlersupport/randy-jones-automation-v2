@@ -4,6 +4,7 @@
     import VueDatePicker from '@vuepic/vue-datepicker';
     import '@vuepic/vue-datepicker/dist/main.css'
 
+    const colorMode = useColorMode()
     const { call } = useApi()
     const toast = useToast()
     const route = useRoute()
@@ -554,8 +555,7 @@
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
                                         <!-- <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/> -->
-                                        <VueDatePicker v-model="form.next_meeting_date" dark :is24="false"
-                                        />
+                                        <VueDatePicker v-model="form.next_meeting_date" :dark="colorMode.value === 'dark'" :is24="false" />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
@@ -693,7 +693,7 @@
 <style scoped>
     .dp__theme_dark {
         --dp-background-color: #18181B;
-        --dp-font-size: 0.875rem !important; /* ≈14px */
+        --dp-font-size: 0.85rem !important; /* ≈14px */
         line-height: 1.25rem; /* ≈16px */
         border-radius: 0.375rem; /* 6px */
         border-width: 1px;
@@ -701,9 +701,25 @@
         border-color: #3f3f47;
     }
 
-    :deep(.dp__theme_dark .dp--menu-wrapper) {
+    .dp__theme_light {
+        --dp-background-color: #FFFFFF;
+        --dp-font-size: 0.85rem !important; /* ≈14px */
+        line-height: 1.25rem; /* ≈16px */
+        border-radius: 0.375rem; /* 6px */
+        border-width: 1px;
+        border-style: solid;
+        border-color: #ddd;
+    }
+
+    :deep(.dp__theme_dark .dp--menu-wrapper),
+    :deep(.dp__theme_light .dp--menu-wrapper) {
         position: sticky !important;
-        top: 0;                /* distance from top of the scrolling container */
-        z-index: 50;           /* keep above content */
+        top: 0;      /* distance from top of the scrolling container */
+        z-index: 50; /* keep above content */
+    }
+
+    :deep(.dp__theme_dark .dp--tp-wrap),
+    :deep(.dp__theme_light .dp--tp-wrap) {
+        max-width: 100% !important;
     }
 </style>

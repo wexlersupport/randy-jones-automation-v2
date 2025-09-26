@@ -12,7 +12,7 @@
     const statusFilter = ref('all')
     const isLoading = ref<boolean>(true)
     const toast = useToast()
-    const table = useTemplateRef<any>('table')
+    const table = useTemplateRef('table')
     const columnVisibility = ref()
     const rowSelection = ref({})
     const pagination = ref({
@@ -107,17 +107,17 @@
             })
         },
         {
-            id: 'Client Name',
+            id: 'person_name',
             accessorKey: 'person_name',
             header: 'Name',
         },
         {
-            id: 'Client Email',
+            id: 'person_email',
             accessorKey: 'person_email',
             header: 'Client Email',
         },
         {
-            id: 'Meeting Type',
+            id: 'signature_id',
             accessorKey: 'signature_id',
             header: 'Meeting Type',
             cell: ({ row }) => {
@@ -127,7 +127,7 @@
             }
         },
         {
-            id: 'Next Meeting Date',
+            id: 'next_meeting_date',
             accessorKey: 'next_meeting_date',
             header: 'Next Meeting Date',
             cell: ({ row }) => {
@@ -142,18 +142,18 @@
             }
         },
         {
-            id: "Sent Reminder?",
+            id: "is_sent_reminder",
             accessorKey: 'is_sent_reminder',
             header: 'Is Sent Reminder',
             cell: ({ row }) => {
-                return row.getValue('is_sent_reminder') ? 'Sent' : 'Pending'
+                return row.original?.is_sent_reminder ? 'Sent' : 'Pending'
             }
         },
         {
-            id: 'Reminder Action/Date',
+            id: 'is_sent_reminder',
             header: 'Action/Date Sent',
             cell: ({ row }) => {
-                if (row.getValue('is_sent_reminder')) {
+                if (row.original?.is_sent_reminder) {
                     return new Date(row.original.sent_reminder_date).toLocaleString('en-US', {
                         year: "numeric",
                         day: 'numeric',
