@@ -137,6 +137,7 @@
         if (selectedAttachment.value.length) {
             await Promise.all(selectedAttachment.value.map(async (file_id: any) => {
                 const foundFile = attachmentList.value.find((file: any) => file.id === file_id)
+                // console.log('foundFile:', foundFile)
                 if (foundFile) {
                     let content = foundFile.base64String
                     if (foundFile?.base64String === undefined || !foundFile?.base64String) {
@@ -149,23 +150,43 @@
                         const {response: base64String} = await responseFiles.json()
                         content = base64String
                     }
+                    let contentType = 'application/octet-stream'
+                    if (foundFile?.file) {
+                        contentType = foundFile.file.mimeType
+                    }
+                    // console.log('contentType:', contentType)
+
                     attachments.push({
-                        content,
-                        filename: foundFile.name,
-                        type: "text/html",
-                        disposition: "attachment"
-                    })
+                        "@odata.type": "#microsoft.graph.fileAttachment",
+                        name: foundFile.name,
+                        contentType,
+                        contentBytes: content,
+                    });
+                    // attachments.push({
+                    //     content,
+                    //     filename: foundFile.name,
+                    //     type: "text/html",
+                    //     disposition: "attachment"
+                    // })
                 }
             }))
         }
         if (uploadedBase64Files.value.length) {
             uploadedBase64Files.value.forEach(file => {
+                // console.log('uploaded file:', file)
+                const cleanBase64 = (file.base64 as string).replace(/^data:.*;base64,/, '');
                 attachments.push({
-                    content: (file.base64 as string).replace(/^data:.*;base64,/, ''),
-                    filename: file.name,
-                    type: "text/html",
-                    disposition: "attachment"
-                })
+                    "@odata.type": "#microsoft.graph.fileAttachment",
+                    name: file.name,
+                    contentType: file.type,
+                    contentBytes: cleanBase64
+                });
+                // attachments.push({
+                //     content: (file.base64 as string).replace(/^data:.*;base64,/, ''),
+                //     filename: file.name,
+                //     type: "text/html",
+                //     disposition: "attachment"
+                // })
             })
 
         }
@@ -173,6 +194,7 @@
         try {
             const res = await sendEmail(attachments)
             // const res = {accepted: ['asdf@example.com']}
+            // console.log('res:', res)
 
             if (res) {
                 toast.add({
@@ -255,7 +277,7 @@
     }
 
     async function sendEmail(attachments: any[]) {
-        const response = await fetch('/api/email/send', {
+        const response = await fetch('/api/email/send-outlook', {
             method: 'POST',
             body: JSON.stringify({
                 emailObj: {
@@ -440,7 +462,7 @@
         const newUploadedFiles = await Promise.all(
             files.map(async (file: any) => {
                 const base64 = await toBase64(file)
-                return { name: file.name, base64 }
+                return { name: file.name, type: file.type, base64 }
             })
         )
 
