@@ -229,6 +229,21 @@ export function parseDateLocal(input: string): string | null {
   return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
 }
 
+export function plainTextToHtml(text: string): string {
+  return text
+    .split(/\r?\n{2,}/)                     // split on 2+ line breaks (paragraphs)
+    .map(block =>
+      block
+        .split(/\r?\n/)                     // split inside block on single line breaks
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join("<br>")                       // join single breaks as <br>
+    )
+    .filter(block => block.length > 0)      // drop empty blocks
+    .map(block => `<p>${block}</p>`)        // wrap each block in <p>
+    .join("\n");
+}
+
 export function convertHtmlEmail(body: any): string {
   // Enhanced HTML processing for better email client compatibility and minimal white space
   let cleanedBody = body
@@ -304,172 +319,136 @@ export function convertHtmlEmail(body: any): string {
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
-      <head>
-          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <meta http-equiv="X-UA-Compatible" content="IE=edge">
-          <meta name="format-detection" content="telephone=no">
-          <title>Email</title>
-          <!--[if mso]>
-          <noscript>
-              <xml>
-                  <o:OfficeDocumentSettings>
-                      <o:PixelsPerInch>96</o:PixelsPerInch>
-                  </o:OfficeDocumentSettings>
-              </xml>
-          </noscript>
-          <![endif]-->
-          <style type="text/css">
-              /* Email CSS Reset */
-              body, table, td, p, a, li, blockquote {
-                  -webkit-text-size-adjust: 100% !important;
-                  -ms-text-size-adjust: 100% !important;
-                  -webkit-font-smoothing: antialiased !important;
-              }
-              table, td {
-                  mso-table-lspace: 0pt !important;
-                  mso-table-rspace: 0pt !important;
-              }
-              img {
-                  -ms-interpolation-mode: bicubic !important;
-                  border: 0 !important;
-                  height: auto !important;
-                  line-height: 100% !important;
-                  outline: none !important;
-                  text-decoration: none !important;
-              }
-
-              /* Outlook specific fixes */
-              .ReadMsgBody { width: 100%; }
-              .ExternalClass { width: 100%; }
-              .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
-                  line-height: 100%;
-              }
-
-              /* Base styles */
-              body {
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  background-color: #f8f9fa !important;
-                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif !important;
-                  font-size: 16px !important;
-                  line-height: 1.5 !important;
-                  color: #333333 !important;
-                  width: 100% !important;
-                  height: 100% !important;
-              }
-
-              /* Container table */
-              .email-wrapper {
-                  width: 100% !important;
-                  background-color: #f8f9fa !important;
-                  padding: 20px 0 !important;
-              }
-
-              .email-container {
-                  max-width: 600px !important;
-                  margin: 0 auto !important;
-                  background-color: #ffffff !important;
-                  border-radius: 8px !important;
-                  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-                  overflow: hidden !important;
-              }
-
-              .email-content {
-                  padding: 30px !important;
-                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif !important;
-                  font-size: 16px !important;
-                  line-height: 1.5 !important;
-                  color: #333333 !important;
-              }
-
-              /* Typography improvements */
-              .email-content table {
-                  width: 100% !important;
-              }
-
-              .email-content td {
-                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif !important;
-                  font-size: 16px !important;
-                  line-height: 1.5 !important;
-                  color: #333333 !important;
-              }
-
-              .email-content strong {
-                  font-weight: 600 !important;
-                  color: #333333 !important;
-              }
-
-              .email-content em {
-                  font-style: italic !important;
-                  color: #333333 !important;
-              }
-
-              .email-content a {
-                  color: #007bff !important;
-                  text-decoration: underline !important;
-                  font-weight: 500 !important;
-              }
-
-              .email-content ul, .email-content ol {
-                  margin: 0 !important;
-                  padding-left: 20px !important;
-              }
-
-              .email-content li {
-                  margin: 8px 0 !important;
-                  line-height: 1.5 !important;
-              }
-
-              /* Responsive */
-              @media only screen and (max-width: 600px) {
-                  .email-container {
-                      max-width: 100% !important;
-                      margin: 0 10px !important;
-                      border-radius: 0 !important;
-                  }
-                  .email-content {
-                      padding: 20px !important;
-                  }
-                  .email-content td {
-                      font-size: 14px !important;
-                  }
-              }
-
-              /* Dark mode support */
-              @media (prefers-color-scheme: dark) {
-                  .email-wrapper {
-                      background-color: #1a1a1a !important;
-                  }
-                  .email-container {
-                      background-color: #2d2d2d !important;
-                  }
-                  .email-content td {
-                      color: #ffffff !important;
-                  }
-                  .email-content strong {
-                      color: #ffffff !important;
-                  }
-                  .email-content em {
-                      color: #ffffff !important;
-                  }
-              }
-          </style>
-      </head>
-      <body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; font-size: 16px; line-height: 1.5; color: #333333; width: 100%; height: 100%;">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="email-wrapper" style="width: 100%; background-color: #f8f9fa; padding: 20px 0;">
-              <tr>
-                  <td align="center" style="padding: 0;">
-                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
-                          <tr>
-                              <td class="email-content" style="padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; font-size: 16px; line-height: 1.5; color: #333333;">
-                                  ${cleanedBody}
-                              </td>
-                          </tr>
-                      </table>
-                  </td>
-              </tr>
-    </table>
-</body>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="format-detection" content="telephone=no">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
+            <title>Email</title>
+            <style type="text/css">
+                body, table, td, p, a, li, blockquote {
+                    -webkit-text-size-adjust: 100% !important;
+                    -ms-text-size-adjust: 100% !important;
+                    -webkit-font-smoothing: antialiased !important;
+                }
+                table, td {
+                    mso-table-lspace: 0pt !important;
+                    mso-table-rspace: 0pt !important;
+                }
+                img {
+                    -ms-interpolation-mode: bicubic !important;
+                    border: 0 !important;
+                    height: auto !important;
+                    line-height: 100% !important;
+                    outline: none !important;
+                    text-decoration: none !important;
+                }
+                body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background-color: #f8f9fa !important;
+                    font-family: Verdana, sans-serif !important;
+                    font-size: 10px !important;
+                    line-height: 1.5 !important;
+                    color: #333333 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+                .email-wrapper {
+                    width: 100% !important;
+                    background-color: #f8f9fa !important;
+                    padding: 20px 0 !important;
+                }
+                .email-container {
+                    max-width: 600px !important;
+                    margin: 0 auto !important;
+                    background-color: #ffffff !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+                    overflow: hidden !important;
+                }
+                .email-content {
+                    padding: 30px !important;
+                    font-family: Verdana, sans-serif !important;
+                    font-size: 10px !important;
+                    line-height: 1.5 !important;
+                    color: #333333 !important;
+                }
+                .email-content td {
+                    font-family: Verdana, sans-serif !important;
+                    font-size: 10px !important;
+                    line-height: 1.5 !important;
+                    color: #333333 !important;
+                }
+                .email-content strong {
+                    font-weight: 600 !important;
+                    color: #333333 !important;
+                }
+                .email-content em {
+                    font-style: italic !important;
+                    color: #333333 !important;
+                }
+                .email-content a {
+                    color: #007bff !important;
+                    text-decoration: underline !important;
+                    font-weight: 500 !important;
+                }
+                .email-content ul, .email-content ol {
+                    margin: 0 !important;
+                    padding-left: 20px !important;
+                }
+                .email-content li {
+                    margin: 8px 0 !important;
+                    line-height: 1.5 !important;
+                }
+                @media only screen and (max-width: 600px) {
+                    .email-container {
+                        max-width: 100% !important;
+                        margin: 0 10px !important;
+                        border-radius: 0 !important;
+                    }
+                    .email-content {
+                        padding: 20px !important;
+                    }
+                    .email-content td {
+                        font-size: 9px !important;
+                    }
+                }
+                // @media (prefers-color-scheme: dark) {
+                //     .email-wrapper {
+                //         background-color: #1a1a1a !important;
+                //     }
+                //     .email-container {
+                //         background-color: #2d2d2d !important;
+                //     }
+                //     .email-content td {
+                //         color: #ffffff !important;
+                //     }
+                //     .email-content strong {
+                //         color: #ffffff !important;
+                //     }
+                //     .email-content em {
+                //         color: #ffffff !important;
+                //     }
+                // }
+            </style>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: Verdana, sans-serif; font-size: 10px; line-height: 1.5; color: #333333; width: 100%; height: 100%;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="email-wrapper" style="width: 100%; background-color: #f8f9fa; padding: 20px 0;">
+                <tr>
+                    <td align="center" style="padding: 0;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+                            <tr>
+                                <td class="email-content" style="padding: 30px; font-family: Verdana, sans-serif; font-size: 10px; line-height: 1.5; color: #333333;">
+                                    ${cleanedBody}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+        </table>
+    </body>
 </html>`;
 }

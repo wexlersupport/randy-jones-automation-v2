@@ -58,6 +58,7 @@ export default defineNuxtConfig({
       googlePrivateKey: process.env.NUXT_PUBLIC_GOOGLE_PRIVATE_KEY,
       sendgridApiKey: process.env.NUXT_PUBLIC_SENDGRID_API_KEY,
       convertapiSecretKey: process.env.NUXT_PUBLIC_CONVERTAPI_SECRET_KEY,
+      openaiApiKey: process.env.NUXT_PUBLIC_OPENAI_API_KEY,
     },
   }
 })

@@ -12,18 +12,14 @@ export default defineEventHandler(async (event) => {
     let end_date_time = parseBody?.end_date_time // e.g. "2025-09-20T16:00:00"
     let attendeesEmails =  parseBody?.attendees // Array of emails
     let zoomLink = parseBody?.zoom_link || ''
+    let attachments = parseBody?.attachments || []
+    let content = parseBody?.content || ''
 
     const newEvent = {
         subject,
         body: {
             contentType: 'HTML',
-            content: `
-                <p>Join Zoom Meeting:
-                    <a href="${zoomLink}" target="_blank" rel="noopener noreferrer">
-                        ${zoomLink}
-                    </a>
-                </p>
-            `
+            content
         },
         start: {
             dateTime: start_date_time,
@@ -45,7 +41,8 @@ export default defineEventHandler(async (event) => {
         allowNewTimeProposals: true,
         // isOnlineMeeting: true,
         // onlineMeetingProvider: 'teamsForBusiness',
-        categories: ["Blue category"]
+        categories: ["Blue category"],
+        attachments
     };
 
     try {

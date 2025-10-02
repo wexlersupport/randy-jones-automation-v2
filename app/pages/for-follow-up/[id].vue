@@ -11,6 +11,7 @@
     const personId = route.params.id as string
     const isLoading = ref(true)
     const isLoadingSave = ref(false)
+    const isLoadingMerge = ref(false)
     const person = ref<any>({})
     const selectedOption = ref<any>(null);
     const items = ref<any[]>([]);
@@ -41,6 +42,9 @@
     const meetingDetail = ref<any>(null);
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
+    const isMergeZoomMeeting = ref(false);
+    const postgreZoomMeetings = ref<any[]>([]);
+    const quillRef = ref();
 
     const { data: _data } = await useFetch('/api/postgre', {
         query: { table: 'for_follow_up_templates', isDesc: true },
@@ -71,11 +75,12 @@
         }
         const { response: meetingResponse } = await call('/api/zoom/meeting_detail', 'POST', { meetingId: selectedZoomMeeting.value })
         meetingDetail.value = meetingResponse || {}
-        const { data: postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
+        const { data: zoomMeetings }: any = await fetchPostgreZoomMeetings();
+        postgreZoomMeetings.value = zoomMeetings
 
-        if (postgreZoomMeetings.length > 0 && postgreZoomMeetings[0]?.next_meeting_date) {
-            formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
-            nextMeetingDate.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
+        if (postgreZoomMeetings.value.length > 0 && postgreZoomMeetings.value[0]?.next_meeting_date) {
+            formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings.value[0]?.next_meeting_date)
+            nextMeetingDate.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings.value[0]?.next_meeting_date)
         } else {
             formattedNextMeeting.value = null
             nextMeetingDate.value = null
@@ -192,27 +197,26 @@
         }
 
         try {
-            const res = await sendEmail(attachments)
+            // const res = await sendEmail(attachments)
             // const res = {accepted: ['asdf@example.com']}
+            const res= await handleAddCalendarEvent(attachments)
             // console.log('res:', res)
 
             if (res) {
                 toast.add({
-                    title: 'Email sent successfully',
-                    description: 'The email has been sent successfully.',
+                    title: 'Calendar event created successfully',
+                    description: 'A calendar event has been created successfully.',
                     color: 'success'
                 })
-
-                const new_event= await handleAddCalendarEvent()
                 const save_response = await saveClientResponse()
 
-                if (new_event) {
-                    toast.add({
-                        title: 'Calendar event created successfully',
-                        description: 'A calendar event has been created successfully.',
-                        color: 'success'
-                    })
-                }
+                // if (res) {
+                //     toast.add({
+                //         title: 'Calendar event created successfully',
+                //         description: 'A calendar event has been created successfully.',
+                //         color: 'success'
+                //     })
+                // }
             } else {
                 toast.add({
                     title: 'Error',
@@ -326,7 +330,7 @@
         return { actualMeetingStartDate, actualMeetingEndDate }
     }
 
-    async function handleAddCalendarEvent() {
+    async function handleAddCalendarEvent(attachments: any[]) {
         formattedNextMeeting.value = form.value.next_meeting_date
         const _date = new Date(form.value.next_meeting_date);
         nextMeetingDate.value = new Intl.DateTimeFormat("en-US", {
@@ -337,7 +341,7 @@
 
         const { actualMeetingStartDate, actualMeetingEndDate } = await calenderEventFormatDate(formattedNextMeeting.value); //actualMeetingStartDate: 2025-09-22T09:00 actualMeetingEndDate: 2025-09-22T16:00
 
-        const { response: actualMeetingInvite } = await addCalendarEvent(actualMeetingStartDate, actualMeetingEndDate) // Outlook
+        const { response: actualMeetingInvite } = await addCalendarEvent(actualMeetingStartDate, actualMeetingEndDate, attachments) // Outlook
         //{@odata.context: "https://graph.microsoft.com/v1.0/$metadata#users('…y%40automationpm.onmicrosoft.com')/events/$entity", @odata.etag: 'W/"MbPvhBte9Uu/e4THen7M7wAAAYXvrQ=="', id: 'AAMkADExNjcwN2FmLWY0MTQtNGEwYy1iNzJlLTY3OTRhMDIxNT…6fszvAAAAAAENAAAxs__EG171S797hMd6fszvAAABiA19AAA=', createdDateTime: '2025-09-19T03:00:00.6838407Z', lastModifiedDateTime: '2025-09-19T03:00:00.7558834Z', …}
         eventObject.value = actualMeetingInvite
 
@@ -346,7 +350,8 @@
         return {actualMeetingInvite}
     }
 
-    async function addCalendarEvent(start_date_time: any, end_date_time: any) {
+    async function addCalendarEvent(start_date_time: any, end_date_time: any, attachments: any[]) {
+        const content = isMergeZoomMeeting.value ? plainTextToHtml(form.value.generated_email || '') : convertHtmlEmail(form.value.generated_email || '')
         const response = await fetch('/api/calendar/add_meeting_invite', {
             method: 'POST',
             body: JSON.stringify({
@@ -355,6 +360,8 @@
                 end_date_time,
                 attendees: [form.value.to],
                 zoom_link: form.value.zoom_link || '',
+                content,
+                attachments
             })
         })
         const res = await response.json()
@@ -474,6 +481,7 @@
     }
 
     async function handleForFollowUp() {
+        isMergeZoomMeeting.value = false
         const _items = itemsFollowup.value
         const selected = _items.find(item => item.value === selectedFollowUp.value);
         form.value.generated_email = selected?.html
@@ -508,16 +516,68 @@
     async function handleChangeZoomMeeting() {
         const { response: meetingResponse } = await call('/api/zoom/meeting_detail', 'POST', { meetingId: selectedZoomMeeting.value })
         meetingDetail.value = meetingResponse || {}
-        const { data: postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
+        const { data: _postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
 
-        if (postgreZoomMeetings.length > 0 && postgreZoomMeetings[0]?.next_meeting_date) {
-            formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
-            nextMeetingDate.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings[0]?.next_meeting_date)
+        if (_postgreZoomMeetings.length > 0 && _postgreZoomMeetings[0]?.next_meeting_date) {
+            formattedNextMeeting.value = covertToYYYYMMDDTHHMM(_postgreZoomMeetings[0]?.next_meeting_date)
+            nextMeetingDate.value = covertToYYYYMMDDTHHMM(_postgreZoomMeetings[0]?.next_meeting_date)
         } else {
             formattedNextMeeting.value = null
             nextMeetingDate.value = null
         }
         form.value.next_meeting_date = formattedNextMeeting.value
+    }
+
+    async function generateSignature(summary_overview: any, email_draft: any) {
+        const response = await fetch('/api/openrouterai/meeting_signature', {
+            method: 'POST',
+            body: JSON.stringify({
+                filterObj: {
+                    summary_overview,
+                    email_draft
+                }
+            })
+        })
+        const res = await response.json()
+
+        return res
+    }
+
+    async function handleMergeZoomMeeting() {
+        if (isMergeZoomMeeting.value) {
+            isLoadingMerge.value = true
+            const { data: _postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
+
+            if (_postgreZoomMeetings.length === 0) {
+                isMergeZoomMeeting.value = false
+                isLoadingMerge.value = false
+                alert('No meeting summary found for this Zoom meeting.')
+
+                return
+            }
+
+            const editor = quillRef.value?.getQuill()
+            const email_draft = editor.getText() // Get plain text
+            const { response: generated_signature } = await generateSignature(_postgreZoomMeetings[0]?.meeting_ai_summary, email_draft)
+            form.value.generated_email = generated_signature.choices[0]?.message?.content?.trim() || ''
+
+            isLoadingMerge.value = false
+        } else {
+            if (selectedFollowUp.value) {
+                await handleForFollowUp()
+            } else {
+                const _items = signatureList({ name: person.value?.name })
+                const selected = _items.find(item => item.value === selectedOption.value);
+                if (selected) {
+                    if (selected?.html?.includes('{{name}}') && person.value?.name) {
+                        form.value.generated_email = selected?.html.replace('{{name}}', person.value?.name) || '';
+                    }
+                    if (selected?.html?.includes('XXX') && person.value?.name) {
+                        form.value.generated_email = selected?.html.replace('XXX', person.value?.name) || '';
+                    }
+                }
+            }
+        }
     }
 
 </script>
@@ -689,9 +749,29 @@
                                     <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Select Signature:</label>
                                     <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="For Follow Up Signatures"/>
                                 </div>
+                                <div v-if="!isLoadingSave" class="w-full space-y-1">
+                                    <USwitch 
+                                        v-model="isMergeZoomMeeting"
+                                        name="myCheckbox"
+                                        label="AI will merge Zoom Meeting Summary"
+                                        description="AI can make mistakes. Check email content before sending."
+                                        @update:modelValue="handleMergeZoomMeeting"
+                                        :ui="{
+                                            label: 'text-neutral-500 font-medium text-sm',
+                                            wrapper: 'gap-2',
+                                            description: 'text-xs text-neutral-500 italic leading-snug'
+                                        }"
+                                    />
+                                    <div v-if="isLoadingMerge" class="w-full border rounded-md p-4 my-2 border-neutral-800">
+                                        <div class="grid text-center gap-3 text-sm">
+                                            <p>Merging and generating email. Please wait...</p>
+                                            <UProgress />
+                                        </div>
+                                    </div>
+                                </div>
                                 <div v-if="!isLoadingSave" class="mb-4 h-[360px]">
                                     <ClientOnly>
-                                        <QuillEditor contentType="html" v-model:content="form.generated_email"
+                                        <QuillEditor ref="quillRef" contentType="html" v-model:content="form.generated_email"
                                             theme="snow" placeholder="Write your message here..." />
                                     </ClientOnly>
                                     <span class="text-sm text-gray-500 italic">*Please review the email content before sending. No options to undo once sent.</span>
