@@ -422,17 +422,30 @@
     }
 
     async function updateAllAttachmentsToBase64String() {
-        attachmentList.value.forEach(async(attachment: any, index: number) => {
+        // attachmentList.value.forEach(async(attachment: any, index: number) => {
+        //     const responseFiles = await fetch('/api/onedrive/base64_string', {
+        //         method: 'POST',
+        //         body: JSON.stringify({
+        //             file_url: attachment?.['@microsoft.graph.downloadUrl']
+        //         })
+        //     })
+        //     const {response: base64String} = await responseFiles.json()
+
+        //     attachmentList.value[index].base64String = base64String
+        // })
+        const updated = await Promise.all(
+            attachmentList.value.map(async (attachment) => {
             const responseFiles = await fetch('/api/onedrive/base64_string', {
                 method: 'POST',
                 body: JSON.stringify({
-                    file_url: attachment?.['@microsoft.graph.downloadUrl']
+                file_url: attachment?.['@microsoft.graph.downloadUrl']
                 })
             })
-            const {response: base64String} = await responseFiles.json()
-
-            attachmentList.value[index].base64String = base64String
-        })
+            const { response: base64String } = await responseFiles.json()
+            return { ...attachment, base64String }
+            })
+        )
+        attachmentList.value = updated
     }
 
     async function getOneDriveFiles() {
