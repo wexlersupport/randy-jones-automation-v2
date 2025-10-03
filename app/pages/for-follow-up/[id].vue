@@ -325,18 +325,22 @@
     async function calenderEventFormatDate(formattedNextMeeting: any) {
         const pad = (n: any) => String(n).padStart(2, '0');
         const _nextMeeting = new Date(formattedNextMeeting);
+        console.log('_nextMeeting:', _nextMeeting) //Mon Sep 22 2025 09:00:00 GMT+0800 (Philippine Standard Time)
         let actualMeetingStartDate = formattedNextMeeting // 2025-09-22T09:00
-        let actualMeetingEndDate = _nextMeeting.getFullYear() + '-' +
-            pad(_nextMeeting.getMonth() + 1) + '-' +
-            pad(_nextMeeting.getDate()) + 'T' +
-            String(_nextMeeting.getHours() + 1).padStart(2, '0') + ':' +
-            pad(_nextMeeting.getMinutes()) // 2025-09-22T16:00
+        let actualMeetingEndDate = new Date(_nextMeeting.setHours(_nextMeeting.getHours() + 1));
+        console.log('actualMeetingEndDate:', actualMeetingEndDate) // Mon Sep 22 2025 10:00:00 GMT+0800 (Philippine Standard Time)
+        // let actualMeetingEndDate = _nextMeeting.getFullYear() + '-' +
+        //     pad(_nextMeeting.getMonth() + 1) + '-' +
+        //     pad(_nextMeeting.getDate()) + 'T' +
+        //     String(_nextMeeting.getHours() + 1).padStart(2, '0') + ':' +
+        //     pad(_nextMeeting.getMinutes()) // 2025-09-22T16:00
 
         return { actualMeetingStartDate, actualMeetingEndDate }
     }
 
     async function handleAddCalendarEvent(attachments: any[]) {
         formattedNextMeeting.value = form.value.next_meeting_date
+        console.log('formattedNextMeeting:', formattedNextMeeting.value)
         const _date = new Date(form.value.next_meeting_date);
         nextMeetingDate.value = new Intl.DateTimeFormat("en-US", {
             year: "numeric",   // 2025
@@ -345,6 +349,7 @@
         }).format(_date);
 
         const { actualMeetingStartDate, actualMeetingEndDate } = await calenderEventFormatDate(formattedNextMeeting.value); //actualMeetingStartDate: 2025-09-22T09:00 actualMeetingEndDate: 2025-09-22T16:00
+        console.log('actualMeetingStartDate:', actualMeetingStartDate, 'actualMeetingEndDate:', actualMeetingEndDate);
 
         const { response: actualMeetingInvite } = await addCalendarEvent(actualMeetingStartDate, actualMeetingEndDate, attachments) // Outlook
         //{@odata.context: "https://graph.microsoft.com/v1.0/$metadata#users('…y%40automationpm.onmicrosoft.com')/events/$entity", @odata.etag: 'W/"MbPvhBte9Uu/e4THen7M7wAAAYXvrQ=="', id: 'AAMkADExNjcwN2FmLWY0MTQtNGEwYy1iNzJlLTY3OTRhMDIxNT…6fszvAAAAAAENAAAxs__EG171S797hMd6fszvAAABiA19AAA=', createdDateTime: '2025-09-19T03:00:00.6838407Z', lastModifiedDateTime: '2025-09-19T03:00:00.7558834Z', …}
