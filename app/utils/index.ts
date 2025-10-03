@@ -230,7 +230,7 @@ export function parseDateLocal(input: string): string | null {
 }
 
 export function plainTextToHtml(text: string): string {
-  return text
+  const cleanedBody = text
     .split(/\r?\n{2,}/)                     // split on 2+ line breaks (paragraphs)
     .map(block =>
       block
@@ -242,6 +242,8 @@ export function plainTextToHtml(text: string): string {
     .filter(block => block.length > 0)      // drop empty blocks
     .map(block => `<p>${block}</p>`)        // wrap each block in <p>
     .join("\n");
+
+    return htmlFormat(cleanedBody);
 }
 
 export function convertHtmlEmail(body: any): string {
@@ -266,13 +268,13 @@ export function convertHtmlEmail(body: any): string {
     .replace(/<p>\s*<\/p>/g, '<div style="height: 4px; line-height: 4px; font-size: 1px;">&nbsp;</div>')
 
     // Convert paragraphs to table-based layout with minimal spacing
-    .replace(/<p>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 6px 0; border-collapse: collapse;"><tr><td style="font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, Arial, sans-serif; font-size: 16px; line-height: 1.4; color: #333333; padding: 0; mso-line-height-rule: exactly;">')
+    .replace(/<p>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 6px 0; border-collapse: collapse;"><tr><td style="font-family: Verdana, sans-serif, sans-serif; font-size: 10px; line-height: 1.4; color: #333333; padding: 0; mso-line-height-rule: exactly;">')
     .replace(/<\/p>/g, '</td></tr></table>')
 
     // Handle lists with minimal spacing and Outlook compatibility
-    .replace(/<ul>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 4px 0; border-collapse: collapse;"><tr><td style="padding: 0;"><ul style="margin: 0; padding: 0 0 0 20px; font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, Arial, sans-serif; font-size: 16px; line-height: 1.4; color: #333333; mso-line-height-rule: exactly;">')
+    .replace(/<ul>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 4px 0; border-collapse: collapse;"><tr><td style="padding: 0;"><ul style="margin: 0; padding: 0 0 0 20px; font-family: Verdana, sans-serif, sans-serif; font-size: 10px; line-height: 1.4; color: #333333; mso-line-height-rule: exactly;">')
     .replace(/<\/ul>/g, '</ul></td></tr></table>')
-    .replace(/<ol>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 4px 0; border-collapse: collapse;"><tr><td style="padding: 0;"><ol style="margin: 0; padding: 0 0 0 20px; font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, Arial, sans-serif; font-size: 16px; line-height: 1.4; color: #333333; mso-line-height-rule: exactly;">')
+    .replace(/<ol>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 4px 0; border-collapse: collapse;"><tr><td style="padding: 0;"><ol style="margin: 0; padding: 0 0 0 20px; font-family: Verdana, sans-serif, sans-serif; font-size: 10px; line-height: 1.4; color: #333333; mso-line-height-rule: exactly;">')
     .replace(/<\/ol>/g, '</ol></td></tr></table>')
 
     // Improve list items with minimal spacing
@@ -294,7 +296,7 @@ export function convertHtmlEmail(body: any): string {
     .replace(/<a\s+href="([^"]*)"[^>]*>/g, '<a href="$1" style="color: #007bff; text-decoration: underline; font-weight: 500; mso-line-height-rule: exactly;" target="_blank">')
 
     // Handle headings with minimal spacing
-    .replace(/<h([1-6])>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 6px 0 4px 0; border-collapse: collapse;"><tr><td style="font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, Arial, sans-serif; font-weight: 600; color: #333333; mso-line-height-rule: exactly; font-size: $1" data-heading="$1">')
+    .replace(/<h([1-6])>/g, '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 6px 0 4px 0; border-collapse: collapse;"><tr><td style="font-family: Verdana, sans-serif; font-weight: 600; color: #333333; mso-line-height-rule: exactly; font-size: $1" data-heading="$1">')
     .replace(/<\/h[1-6]>/g, '</td></tr></table>')
 
     // Apply heading sizes with tighter line heights
@@ -317,6 +319,10 @@ export function convertHtmlEmail(body: any): string {
     .replace(/^\s+|\s+$/g, '') // Trim leading/trailing whitespace
     .trim();
 
+  return htmlFormat(cleanedBody);
+}
+
+export function htmlFormat(cleanedBody: string): string {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
         <head>

@@ -10,10 +10,10 @@ export default defineEventHandler(async (event) => {
     let subject = parseBody?.subject
     let start_date_time = parseBody?.start_date_time // e.g. "2025-09-20T15:00:00"
     let end_date_time = parseBody?.end_date_time // e.g. "2025-09-20T16:00:00"
-    let attendeesEmails =  parseBody?.attendees // Array of emails
     let zoomLink = parseBody?.zoom_link || ''
-    let attachments = parseBody?.attachments || []
     let content = parseBody?.content || ''
+    // let attendeesEmails =  parseBody?.attendees // Array of emails
+    // let attachments = parseBody?.attachments || []
 
     const newEvent = {
         subject,
@@ -32,22 +32,22 @@ export default defineEventHandler(async (event) => {
         location: {
             displayName: `Zoom Meeting Link: ${zoomLink}`
         },
-        attendees: attendeesEmails.map((email: string) => ({
-            emailAddress: { address: email },
-            type: "required"
-        })),
         isReminderOn: true,
         reminderMinutesBeforeStart: 60,
         allowNewTimeProposals: true,
+        categories: ["Blue category"],
         // isOnlineMeeting: true,
         // onlineMeetingProvider: 'teamsForBusiness',
-        categories: ["Blue category"],
-        attachments
+        // attendees: attendeesEmails.map((email: string) => ({
+        //     emailAddress: { address: email },
+        //     type: "required"
+        // })),
+        // attachments
     };
 
     try {
         const graphRes = await fetch(
-            `https://graph.microsoft.com/v1.0/users/viacry@automationpm.onmicrosoft.com/calendar/events?sendInvitations=true`,
+            `https://graph.microsoft.com/v1.0/users/viacry@automationpm.onmicrosoft.com/calendar/events`,
             {
                 method: 'POST',
                 headers: {

@@ -195,6 +195,7 @@
             })
 
         }
+        // console.log('attachments:', attachments)
 
         try {
             // const res = await sendEmail(attachments)
@@ -203,20 +204,24 @@
             // console.log('res:', res)
 
             if (res) {
+                if (attachments.length > 0) {
+                    const attachment_promise = await Promise.all(
+                        attachments.map(async (attach) => {
+                            const { response } = await addAttachments(attach)
+                            return response
+                        })
+                    )
+                    // console.log('addAttachments response:', attachment_promise)
+                }
+                const {response: addAttendeesResponse} = await addAttendees()
+                // console.log('addAttendeesResponse:', addAttendeesResponse)
+
+                const save_response = await saveClientResponse()
                 toast.add({
                     title: 'Calendar event created successfully',
                     description: 'A calendar event has been created successfully.',
                     color: 'success'
                 })
-                const save_response = await saveClientResponse()
-
-                // if (res) {
-                //     toast.add({
-                //         title: 'Calendar event created successfully',
-                //         description: 'A calendar event has been created successfully.',
-                //         color: 'success'
-                //     })
-                // }
             } else {
                 toast.add({
                     title: 'Error',
@@ -350,6 +355,32 @@
         return {actualMeetingInvite}
     }
 
+    async function addAttachments(attachment: any) {
+        const response = await fetch('/api/calendar/add_attachments', {
+            method: 'POST',
+            body: JSON.stringify({
+                eventId: eventObject.value?.id || null,
+                attachment
+            })
+        })
+        const res = await response.json()
+
+        return res
+    }
+
+    async function addAttendees() {
+        const response = await fetch('/api/calendar/add_attendees', {
+            method: 'POST',
+            body: JSON.stringify({
+                eventId: eventObject.value?.id || null,
+                attendees: [form.value.to]
+            })
+        })
+        const res = await response.json()
+
+        return res
+    }
+
     async function addCalendarEvent(start_date_time: any, end_date_time: any, attachments: any[]) {
         const content = isMergeZoomMeeting.value ? plainTextToHtml(form.value.generated_email || '') : convertHtmlEmail(form.value.generated_email || '')
         const response = await fetch('/api/calendar/add_meeting_invite', {
@@ -358,10 +389,10 @@
                 subject: form.value.subject,
                 start_date_time,
                 end_date_time,
-                attendees: [form.value.to],
+                // attendees: [form.value.to],
                 zoom_link: form.value.zoom_link || '',
                 content,
-                attachments
+                // attachments
             })
         })
         const res = await response.json()
