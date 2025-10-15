@@ -81,7 +81,7 @@
         }
 
         const nextMeetingDate = parseDateLocal(nextMeeting.value)
-        nextScheduleMeeting.value = postgreMeeting.value ? postgreMeeting.value.next_meeting_date.trim() : nextMeetingDate;
+        nextScheduleMeeting.value = postgreMeeting.value ? postgreMeeting.value.next_meeting_date?.trim() : nextMeetingDate;
         form.value.meeting_host_email = response.meeting_host_email;
         form.value.summary_title = response.summary_title;
         form.value.summary_overview = response.summary_overview;
