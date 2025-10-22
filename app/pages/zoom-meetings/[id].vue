@@ -86,12 +86,27 @@
         form.value.summary_title = response.summary_title;
         form.value.summary_overview = response.summary_overview;
         form.value.client_email = selectedContact.value ? contactList.value.find(item => item.id === selectedContact.value)?.primary_email || '' : '';
-        const { response: summary_overview } = await generateSummary()
-        ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview?.choices[0]?.message?.content
-        if (ai_summary.value.length < 10) {
-            const { response: summary_overview } = await generateSummary()
-            ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview?.choices[0]?.message?.content
+        // ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview
+        if (postgreMeeting.value) {
+            ai_summary.value = postgreMeeting.value?.meeting_ai_summary
+        } else {
+            const { data: summary_temp } = await getMeetingTemp()
+            console.log("summary_temp:", summary_temp);
+
+            if (summary_temp && summary_temp.length) {
+                ai_summary.value = (summary_temp as any)?.[0]?.meeting_ai_summary ?? '';
+            } else {
+                const { response: summary_overview, data: gpt_data } = await generateSummary()
+                ai_summary.value = summary_overview
+                console.log("GPT data:", gpt_data);
+
+                await createMeetingTemp(gpt_data)
+            }
         }
+        // if (ai_summary.value.length < 10) {
+        //     const { response: summary_overview } = await generateSummary()
+        //     ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview
+        // }
         await handleMeetingSummary()
 
         isLoading.value = false
@@ -136,8 +151,11 @@
         add_note_date += `************************************************************* \n\n`
         let content = ai_summary.value?.trim()
         if (content.length < 10) {
-            const { response: summary_overview } = await generateSummary()
-            content = summary_overview?.choices[0]?.message?.content;
+            const { response: summary_overview, data: gpt_data } = await generateSummary()
+            content = summary_overview
+            console.log("handleMeetingSummary GPT data:", gpt_data);
+
+            await createMeetingTemp(gpt_data)
         }
         form.value.ai_summary_overview = postgreMeeting.value ? content : (add_note_date + content);
 
@@ -213,12 +231,11 @@
     }
 
     async function generateSummary() {
-        const response = await fetch('/api/openrouterai/meeting_summary', {
+        const response = await fetch('/api/openai/meeting_summary_gpt', {
             method: 'POST',
             body: JSON.stringify({
                 filterObj: {
-                    summary_overview: form.value.summary_overview,
-                    next_steps: form.value.next_steps
+                    summary_overview: form.value.summary_overview
                 }
             })
         })
@@ -298,6 +315,43 @@
 
     async function handleSelectMeetingType(value: any) {
         await handleMeetingSummary()
+    }
+
+    async function getMeetingTemp() {
+        const res = await $fetch('/api/postgre/dynamic_field', {
+            method: 'GET',
+            query: {
+                table: 'meeting_summary_temp',
+                dynamic_field: 'meeting_uuid',
+                value: meetingId || '',
+                isDesc: true
+            }
+        })
+
+        return res
+    }
+
+    async function createMeetingTemp(gpt_data: any = null) {
+        const created_at = formatJsDateToDatetime(new Date())
+        const createTemp = await handleApiResponse($fetch('/api/postgre', {
+            query: { table: 'meeting_summary_temp' },
+            method: 'POST',
+            body: {
+                meeting_uuid: meetingId,
+                meeting_ai_summary: ai_summary.value,
+                openid_id: gpt_data?.id,
+                model: gpt_data?.model,
+                input_tokens: gpt_data?.usage?.input_tokens,
+                output_tokens: gpt_data?.usage?.output_tokens,
+                total_tokens: gpt_data?.usage?.total_tokens,
+                cached_tokens: gpt_data?.usage?.input_tokens_details?.cached_tokens,
+                reasoning_tokens: gpt_data?.usage?.output_tokens_details?.reasoning_tokens,
+                created_at,
+            }
+        }));
+        console.log("Created temp summary:", createTemp);
+
+        return createTemp
     }
 
     watch (

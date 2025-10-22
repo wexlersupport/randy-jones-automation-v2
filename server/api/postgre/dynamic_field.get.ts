@@ -3,12 +3,12 @@ import { neon } from '@netlify/neon';
 const sql = neon(); // automatically uses env NETLIFY_DATABASE_URL
 
 export default defineEventHandler(async (event) => {
-    const { table, dynamic_field, value } = getQuery(event)
+    const { table, dynamic_field, value, isDesc } = getQuery(event)
     try {
         if (!dynamic_field) {
             throw createError({ statusCode: 400, statusMessage: 'Invalid item' })
         }
-        const query = `SELECT * FROM ${table} WHERE ${dynamic_field} = $1`
+        const query = `SELECT * FROM ${table} WHERE ${dynamic_field} = $1 ORDER BY id ${isDesc ? 'DESC' : 'ASC'}`
         const rows = await sql(query, [value]);
 
         if (!rows) {
