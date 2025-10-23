@@ -577,8 +577,8 @@
         form.value.next_meeting_date = formattedNextMeeting.value
     }
 
-    async function generateSignature(summary_overview: any, email_draft: any) {
-        const response = await fetch('/api/openrouterai/meeting_signature', {
+    async function mergeMeetingSummary(summary_overview: any, email_draft: any) {
+        const response = await fetch('/api/openai/meeting_merge_gpt', {
             method: 'POST',
             body: JSON.stringify({
                 filterObj: {
@@ -607,8 +607,9 @@
 
             const editor = quillRef.value?.getQuill()
             const email_draft = editor.getText() // Get plain text
-            const { response: generated_signature } = await generateSignature(_postgreZoomMeetings[0]?.meeting_ai_summary, email_draft)
-            form.value.generated_email = generated_signature.choices[0]?.message?.content?.trim() || ''
+            const { response: generated_signature } = await mergeMeetingSummary(_postgreZoomMeetings[0]?.meeting_ai_summary, email_draft)
+            // console.log('generated_signature:', generated_signature)
+            form.value.generated_email = generated_signature || ''
 
             isLoadingMerge.value = false
         } else {
