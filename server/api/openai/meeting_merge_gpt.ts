@@ -6,8 +6,6 @@ export default defineEventHandler(async (event) => {
   const openaiApiKey = config.public.openaiApiKey as string | undefined; // not in public runtime config!
 
   const body = await readBody(event); // already an object if JSON
-  // Optional: quick sanity log
-  // console.log('typeof body:', typeof body, body);
 
   // If body might arrive as a string (mis-set headers), handle gracefully:
   const { filterObj = {} } = typeof body === "string" ? JSON.parse(body) : body;

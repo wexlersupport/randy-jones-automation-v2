@@ -28,7 +28,6 @@ export default defineEventHandler(async (event) => {
             ${transcript}
         `,
     });
-    // console.log("OpenAI response:", response);
 
     return {
       data: response ?? null,
