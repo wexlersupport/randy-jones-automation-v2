@@ -4,7 +4,7 @@ import { neon } from '@netlify/neon'
 const sql = neon() // automatically uses env NETLIFY_DATABASE_URL
 
 export default defineEventHandler(async (event) => {
-  const { table, dynamic_field1, value1, dynamic_field2, value2 } = getQuery(event)
+  const { table, dynamic_field1, value1, dynamic_field2, value2, isDesc } = getQuery(event)
 
   try {
     if (!table || !dynamic_field1 || !value1 || !dynamic_field2 || !value2) {
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
         SELECT * FROM ${table}
         WHERE ${dynamic_field1} = $1
         AND ${dynamic_field2} = $2
-        ORDER BY created_at DESC
+        ORDER BY id ${isDesc ? 'DESC' : 'ASC'}
     `
     const rows = await sql(query, [value1, value2])
 

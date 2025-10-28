@@ -3,9 +3,9 @@ import OpenAI from "openai";
 
 export default defineEventHandler(async (event) => {
   // const config = useRuntimeConfig();
-  console.log("process.env:", process.env);
+  // console.log("process.env:", process.env);
   const openaiApiKey = process.env.OPENAI_API_KEY || process.env.NUXT_OPENAI_API_KEY; // not in public runtime config!
-  console.log("OpenAI API Key:", openaiApiKey);
+  // console.log("OpenAI API Key:", openaiApiKey);
 
   const body = await readBody(event); // already an object if JSON
   const parseBody = JSON.parse(body)

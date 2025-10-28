@@ -53,7 +53,7 @@
     const selectedFollowUp = ref<any>(null);
 
     onMounted(async () => {
-        const leaf_process = ['']
+        // const leaf_process = ['']
         // const { data }: any = await useFetch('/api/calendar/all_calendar')
 
         const { response } = await getPersonDetail()
@@ -430,6 +430,8 @@
         }
         form.value.subject = selected?.subject || '';
         form.value.meeting_type = selected?.subject || '';
+        isMergeZoomMeeting.value = false;
+        selectedFollowUp.value = null;
         selectedFolder.value = folderList.value.find(item => item.name === selected?.folder_name)?.id || null;
 
         await updateAttachmentList()
@@ -605,11 +607,21 @@
                 return
             }
 
-            const editor = quillRef.value?.getQuill()
-            const email_draft = editor.getText() // Get plain text
-            const { response: generated_signature } = await mergeMeetingSummary(_postgreZoomMeetings[0]?.meeting_ai_summary, email_draft)
-            // console.log('generated_signature:', generated_signature)
-            form.value.generated_email = generated_signature || ''
+            const { data: summary_temp } = await getMeetingTemp()
+            console.log('summary_temp:', summary_temp)
+
+            if (summary_temp && summary_temp.length) {
+                form.value.generated_email = (summary_temp as any)?.[0]?.meeting_ai_summary ?? '';
+            } else {
+                const { data: _postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
+                const editor = quillRef.value?.getQuill()
+                const email_draft = editor.getText() // Get plain text
+                const { response: generated_signature, data: gpt_data } = await mergeMeetingSummary(_postgreZoomMeetings[0]?.meeting_ai_summary, email_draft)
+
+                await createMeetingTemp(gpt_data, generated_signature)
+                // console.log('generated_signature:', generated_signature)
+                form.value.generated_email = generated_signature || '';
+            }
 
             isLoadingMerge.value = false
         } else {
@@ -628,6 +640,51 @@
                 }
             }
         }
+    }
+
+    async function getMeetingTemp() {
+        const value2 = selectedFollowUp.value ? selectedFollowUp.value : selectedOption.value
+        const res = await $fetch('/api/postgre/dynamic', {
+            method: 'GET',
+            query: {
+                table: 'meeting_summary_temp',
+                dynamic_field1: 'meeting_uuid',
+                value1: selectedZoomMeeting.value || '',
+                dynamic_field2: 'signature_value',
+                value2,
+                dynamic_field3: 'type',
+                value3: 'merge',
+                isDesc: true
+            }
+        })
+
+        return res
+    }
+
+    async function createMeetingTemp(gpt_data: any = null, meeting_ai_summary: string | null = null) {
+        const created_at = formatJsDateToDatetime(new Date())
+        const signature_value = selectedFollowUp.value ? selectedFollowUp.value : selectedOption.value
+        const createTemp = await handleApiResponse($fetch('/api/postgre', {
+            query: { table: 'meeting_summary_temp' },
+            method: 'POST',
+            body: {
+                meeting_uuid: selectedZoomMeeting.value,
+                meeting_ai_summary,
+                openid_id: gpt_data?.id,
+                model: gpt_data?.model,
+                input_tokens: gpt_data?.usage?.input_tokens,
+                output_tokens: gpt_data?.usage?.output_tokens,
+                total_tokens: gpt_data?.usage?.total_tokens,
+                cached_tokens: gpt_data?.usage?.input_tokens_details?.cached_tokens,
+                reasoning_tokens: gpt_data?.usage?.output_tokens_details?.reasoning_tokens,
+                signature_value,
+                type: 'merge',
+                created_at,
+            }
+        }));
+        console.log("Created temp summary:", createTemp);
+
+        return createTemp
     }
 
 </script>

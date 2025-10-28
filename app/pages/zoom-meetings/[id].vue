@@ -318,12 +318,14 @@
     }
 
     async function getMeetingTemp() {
-        const res = await $fetch('/api/postgre/dynamic_field', {
+        const res = await $fetch('/api/postgre/dynamic_two', {
             method: 'GET',
             query: {
                 table: 'meeting_summary_temp',
-                dynamic_field: 'meeting_uuid',
-                value: meetingId || '',
+                dynamic_field1: 'meeting_uuid',
+                value1: meetingId || '',
+                dynamic_field2: 'type',
+                value2: 'summary',
                 isDesc: true
             }
         })
@@ -346,6 +348,7 @@
                 total_tokens: gpt_data?.usage?.total_tokens,
                 cached_tokens: gpt_data?.usage?.input_tokens_details?.cached_tokens,
                 reasoning_tokens: gpt_data?.usage?.output_tokens_details?.reasoning_tokens,
+                type: 'summary',
                 created_at,
             }
         }));
