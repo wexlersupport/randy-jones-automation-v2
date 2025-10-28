@@ -310,8 +310,14 @@
         const _nextMeeting = new Date(formattedNextMeeting);
         console.log('_nextMeeting:', _nextMeeting) //Mon Sep 22 2025 09:00:00 GMT+0800 (Philippine Standard Time)
         let actualMeetingStartDate = formattedNextMeeting // 2025-09-22T09:00
-        let actualMeetingEndDate = new Date(_nextMeeting.setHours(_nextMeeting.getHours() + 1));
-        console.log('actualMeetingEndDate:', actualMeetingEndDate) // Mon Sep 22 2025 10:00:00 GMT+0800 (Philippine Standard Time)
+        let actualMeetingEndDate: any = new Date(_nextMeeting.setHours(_nextMeeting.getHours() + 1));
+        // Format back to local time (YYYY-MM-DDTHH:mm)
+        actualMeetingEndDate = actualMeetingEndDate.getFullYear() + '-' +
+            String(actualMeetingEndDate.getMonth() + 1).padStart(2, '0') + '-' +
+            String(actualMeetingEndDate.getDate()).padStart(2, '0') + 'T' +
+            String(actualMeetingEndDate.getHours()).padStart(2, '0') + ':' +
+            String(actualMeetingEndDate.getMinutes()).padStart(2, '0');
+        console.log('actualMeetingEndDate:', actualMeetingEndDate) // 2025-09-22T10:00
 
         return { actualMeetingStartDate, actualMeetingEndDate }
     }
