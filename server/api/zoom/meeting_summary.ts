@@ -1,6 +1,7 @@
 import axios from "axios";
-
+import signatureList from "../../../app/utils/signature-list";
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig();
   const ZOOM_BASE_URL = "https://api.zoom.us/v2";
 
   try {
@@ -27,7 +28,34 @@ export default defineEventHandler(async (event) => {
           const detailRes = await axios.get(detailUrl, {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
-          return { ...m, detail: detailRes.data || null };
+
+          let postgre_data: any, person_details: any, signature: any = null;
+          const dbRes: any = await $fetch("/api/postgre/dynamic", {
+            method: "GET",
+            params: {
+              table: "zoom_meetings",           // <-- your table name
+              isDesc: "true",                   // optional
+              dynamic_field1: "meeting_uuid",   // <-- your column name
+              value1: m.meeting_uuid,               // raw UUID (recommended)
+            },
+          });
+          // console.log(`DB Response for ${encodedUuid}:`, dbRes.data.length);
+          if (dbRes.data.length > 0) {
+            postgre_data = dbRes.data[0];
+            const pipedriveApiKey = config.public.pipedriveApiKey;
+            const response = await axios.get(
+              `https://api.pipedrive.com/v1/persons/${postgre_data.person_id}?api_token=${pipedriveApiKey}`
+            );
+            // console.log('person_details:', response?.data);
+            if (response?.data) {
+              person_details = response?.data?.data || null;
+            }
+
+            const signatureItems = signatureList({ name: '-' });
+            signature = signatureItems.find((sig) => sig.value === postgre_data.signature_id);
+          }
+
+          return { ...m, detail: detailRes.data, postgre_data, person_details, signature };
         } catch (err: any) {
           console.warn(`Failed to fetch detail for ${m.id}:`, err.response?.data || err.message);
           return { ...m, detail: null };

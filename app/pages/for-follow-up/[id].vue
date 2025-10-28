@@ -53,9 +53,14 @@
     const selectedFollowUp = ref<any>(null);
 
     onMounted(async () => {
-        // const leaf_process = ['']
-        // const { data }: any = await useFetch('/api/calendar/all_calendar')
+        zoomMeetingDetails.value = zoomMeetingDetails.value.map((meeting: any) => {
+            let label = meeting?.detail?.summary_overview || meeting?.meeting_topic;
+            if (meeting?.person_details) {
+                label = meeting?.person_details?.name + ' - ' + (meeting?.signature?.subject?.replace('Invite', 'Summary') || '');
+            }
 
+            return { ...meeting, label }
+        })
         const { response } = await getPersonDetail()
         person.value = response?.data || {}
         items.value = signatureList({ name: person.value?.name })
@@ -167,12 +172,6 @@
                         contentType,
                         contentBytes: content,
                     });
-                    // attachments.push({
-                    //     content,
-                    //     filename: foundFile.name,
-                    //     type: "text/html",
-                    //     disposition: "attachment"
-                    // })
                 }
             }))
         }
@@ -186,12 +185,6 @@
                     contentType: file.type,
                     contentBytes: cleanBase64
                 });
-                // attachments.push({
-                //     content: (file.base64 as string).replace(/^data:.*;base64,/, ''),
-                //     filename: file.name,
-                //     type: "text/html",
-                //     disposition: "attachment"
-                // })
             })
 
         }
@@ -255,16 +248,6 @@
         return res
     }
 
-    // async function getMeetingDetail(meetingId: any) {
-    //     const response = await fetch('/api/zoom/meeting_detail', {
-    //         method: 'POST',
-    //         body: JSON.stringify({meetingId})
-    //     })
-    //     const res = await response.json()
-
-    //     return res
-    // }
-
     async function saveClientResponse() {
         const response = await $fetch('/api/postgre', {
             method: 'POST',
@@ -285,42 +268,42 @@
         return response
     }
 
-    async function sendEmail(attachments: any[]) {
-        const response = await fetch('/api/email/send-outlook', {
-            method: 'POST',
-            body: JSON.stringify({
-                emailObj: {
-                    attachments,
-                    from: form.value.from,
-                    to: form.value.to,
-                    subject: form.value.subject,
-                    html: convertHtmlEmail(form.value.generated_email || ''),
-                }
-            })
-        })
-        const res = await response.json()
+    // async function sendEmail(attachments: any[]) {
+    //     const response = await fetch('/api/email/send-outlook', {
+    //         method: 'POST',
+    //         body: JSON.stringify({
+    //             emailObj: {
+    //                 attachments,
+    //                 from: form.value.from,
+    //                 to: form.value.to,
+    //                 subject: form.value.subject,
+    //                 html: convertHtmlEmail(form.value.generated_email || ''),
+    //             }
+    //         })
+    //     })
+    //     const res = await response.json()
 
-        return res
-    }
+    //     return res
+    // }
 
-    async function getPreviousSunday(formattedNextMeeting: any) {
-        const pad = (n: any) => String(n).padStart(2, '0');
+    // async function getPreviousSunday(formattedNextMeeting: any) {
+    //     const pad = (n: any) => String(n).padStart(2, '0');
 
-        const meetingDate = new Date(formattedNextMeeting);
-        console.log('meetingDate:', meetingDate) //Mon Sep 22 2025 00:00:00 GMT+0800 (Philippine Standard Time)
-        const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
-        const previousSunday = new Date(meetingDate);
-        previousSunday.setDate(meetingDate.getDate() - dayOfWeek);
-        const startPreviousSunday = previousSunday.getFullYear() + '-' +
-            pad(previousSunday.getMonth() + 1) + '-' +
-            pad(previousSunday.getDate()) + 'T15:00'
+    //     const meetingDate = new Date(formattedNextMeeting);
+    //     console.log('meetingDate:', meetingDate) //Mon Sep 22 2025 00:00:00 GMT+0800 (Philippine Standard Time)
+    //     const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
+    //     const previousSunday = new Date(meetingDate);
+    //     previousSunday.setDate(meetingDate.getDate() - dayOfWeek);
+    //     const startPreviousSunday = previousSunday.getFullYear() + '-' +
+    //         pad(previousSunday.getMonth() + 1) + '-' +
+    //         pad(previousSunday.getDate()) + 'T15:00'
 
-        const endPreviousSunday = previousSunday.getFullYear() + '-' +
-            pad(previousSunday.getMonth() + 1) + '-' +
-            pad(previousSunday.getDate()) + 'T16:00'
+    //     const endPreviousSunday = previousSunday.getFullYear() + '-' +
+    //         pad(previousSunday.getMonth() + 1) + '-' +
+    //         pad(previousSunday.getDate()) + 'T16:00'
 
-        return { startPreviousSunday, endPreviousSunday }
-    }
+    //     return { startPreviousSunday, endPreviousSunday }
+    // }
 
     async function calenderEventFormatDate(formattedNextMeeting: any) {
         const pad = (n: any) => String(n).padStart(2, '0');
@@ -329,11 +312,6 @@
         let actualMeetingStartDate = formattedNextMeeting // 2025-09-22T09:00
         let actualMeetingEndDate = new Date(_nextMeeting.setHours(_nextMeeting.getHours() + 1));
         console.log('actualMeetingEndDate:', actualMeetingEndDate) // Mon Sep 22 2025 10:00:00 GMT+0800 (Philippine Standard Time)
-        // let actualMeetingEndDate = _nextMeeting.getFullYear() + '-' +
-        //     pad(_nextMeeting.getMonth() + 1) + '-' +
-        //     pad(_nextMeeting.getDate()) + 'T' +
-        //     String(_nextMeeting.getHours() + 1).padStart(2, '0') + ':' +
-        //     pad(_nextMeeting.getMinutes()) // 2025-09-22T16:00
 
         return { actualMeetingStartDate, actualMeetingEndDate }
     }
@@ -460,17 +438,6 @@
     }
 
     async function updateAllAttachmentsToBase64String() {
-        // attachmentList.value.forEach(async(attachment: any, index: number) => {
-        //     const responseFiles = await fetch('/api/onedrive/base64_string', {
-        //         method: 'POST',
-        //         body: JSON.stringify({
-        //             file_url: attachment?.['@microsoft.graph.downloadUrl']
-        //         })
-        //     })
-        //     const {response: base64String} = await responseFiles.json()
-
-        //     attachmentList.value[index].base64String = base64String
-        // })
         const updated = await Promise.all(
             attachmentList.value.map(async (attachment) => {
             const responseFiles = await fetch('/api/onedrive/base64_string', {
@@ -719,20 +686,20 @@
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Meeting:</label>
                                         <USelect
                                             v-model="selectedZoomMeeting"
-                                            :items="zoomMeetingDetails.map((item: any) => ({ value: item.meeting_uuid, label: item?.detail?.summary_overview || item.meeting_topic }))"
+                                            :items="zoomMeetingDetails.map((item: any) => ({ value: item.meeting_uuid, label: item.label }))"
                                             placeholder="Choose one or more attachments"
                                             class="w-full"
                                             @change="handleChangeZoomMeeting"
                                         />
                                     </div>
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting List:</label>
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
                                         <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" />
                                     </div>
-                                    <div class="w-full space-y-1">
+                                    <!-- <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
                                         <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full" />
-                                    </div>
+                                    </div> -->
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
                                         <UInput v-model="form.from" label="From" class="w-full" disabled />
@@ -788,12 +755,13 @@
                             </div>
                             <div class="grid grid-cols-1 gap-1">
                                 <div class="w-full space-y-1">
-                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">OneDrive Folder:</label>
+                                    <label class="block text-sm font-medium w-50 my-auto text-neutral-500">OneDrive Folder (read-only):</label>
                                     <USelect
                                         v-model="selectedFolder"
                                         :items="folderList.map(item => ({ value: item.id, label: item.name }))"
                                         placeholder="Choose folder"
                                         class="w-full"
+                                        disabled
                                         @update:modelValue="handleSelectFolder"
                                     />
                                 </div>
