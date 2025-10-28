@@ -440,14 +440,22 @@
     async function updateAllAttachmentsToBase64String() {
         const updated = await Promise.all(
             attachmentList.value.map(async (attachment) => {
-            const responseFiles = await fetch('/api/onedrive/base64_string', {
-                method: 'POST',
-                body: JSON.stringify({
-                file_url: attachment?.['@microsoft.graph.downloadUrl']
-                })
-            })
-            const { response: base64String } = await responseFiles.json()
-            return { ...attachment, base64String }
+                const {data: base64Data}: any = await getBase64String(attachment?.name)
+                // console.log('Base64 String:', base64Data)
+                if (base64Data && base64Data.length > 0) {
+                    return { ...attachment, base64String: base64Data[0]?.base64_value }
+                } else {
+                    const responseFiles = await fetch('/api/onedrive/base64_string', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            file_url: attachment?.['@microsoft.graph.downloadUrl']
+                        })
+                    })
+                    const { response: base64String } = await responseFiles.json()
+                    await createBase64String({ ...attachment, base64_string: base64String })
+
+                    return { ...attachment, base64String }
+                }
             })
         )
         attachmentList.value = updated
@@ -628,6 +636,20 @@
         return res
     }
 
+    async function getBase64String(value1: any) {
+        const res = await $fetch('/api/postgre/dynamic', {
+            method: 'GET',
+            query: {
+                table: 'base64_string',
+                dynamic_field1: 'name',
+                value1,
+                isDesc: true
+            }
+        })
+
+        return res
+    }
+
     async function createMeetingTemp(gpt_data: any = null, meeting_ai_summary: string | null = null) {
         const created_at = formatJsDateToDatetime(new Date())
         const signature_value = selectedFollowUp.value ? selectedFollowUp.value : selectedOption.value
@@ -650,6 +672,24 @@
             }
         }));
         console.log("Created temp summary:", createTemp);
+
+        return createTemp
+    }
+
+    async function createBase64String(attachment: any) {
+        const created_at = formatJsDateToDatetime(new Date())
+        const createTemp = await handleApiResponse($fetch('/api/postgre', {
+            query: { table: 'base64_string' },
+            method: 'POST',
+            body: {
+                file_id: attachment?.id,
+                url: attachment?.['@microsoft.graph.downloadUrl'],
+                base64_value: attachment?.base64_string,
+                name: attachment?.name,
+                created_at,
+            }
+        }));
+        console.log("Created createBase64String:", createTemp);
 
         return createTemp
     }
