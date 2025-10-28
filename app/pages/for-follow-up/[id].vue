@@ -440,22 +440,31 @@
     async function updateAllAttachmentsToBase64String() {
         const updated = await Promise.all(
             attachmentList.value.map(async (attachment) => {
-                const {data: base64Data}: any = await getBase64String(attachment?.name)
-                // console.log('Base64 String:', base64Data)
-                if (base64Data && base64Data.length > 0) {
-                    return { ...attachment, base64String: base64Data[0]?.base64_value }
-                } else {
-                    const responseFiles = await fetch('/api/onedrive/base64_string', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            file_url: attachment?.['@microsoft.graph.downloadUrl']
-                        })
-                    })
-                    const { response: base64String } = await responseFiles.json()
-                    await createBase64String({ ...attachment, base64_string: base64String })
+                // const {data: base64Data}: any = await getBase64String(attachment?.name)
+                // // console.log('Base64 String:', base64Data)
+                // if (base64Data && base64Data.length > 0) {
+                //     return { ...attachment, base64String: base64Data[0]?.base64_value }
+                // } else {
+                //     const responseFiles = await fetch('/api/onedrive/base64_string', {
+                //         method: 'POST',
+                //         body: JSON.stringify({
+                //             file_url: attachment?.['@microsoft.graph.downloadUrl']
+                //         })
+                //     })
+                //     const { response: base64String } = await responseFiles.json()
+                //     await createBase64String({ ...attachment, base64_string: base64String })
 
-                    return { ...attachment, base64String }
-                }
+                //     return { ...attachment, base64String }
+                // }
+
+                const responseFiles = await fetch('/api/onedrive/base64_string', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                    file_url: attachment?.['@microsoft.graph.downloadUrl']
+                    })
+                })
+                const { response: base64String } = await responseFiles.json()
+                return { ...attachment, base64String }
             })
         )
         attachmentList.value = updated
