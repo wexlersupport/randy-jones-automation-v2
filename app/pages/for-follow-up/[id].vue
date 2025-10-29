@@ -307,25 +307,11 @@
 
     async function calenderEventFormatDate(formattedNextMeeting: any) {
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const pad = (n: any) => String(n).padStart(2, '0');
+        // const pad = (n: any) => String(n).padStart(2, '0');
         const _nextMeeting = new Date(formattedNextMeeting);
         console.log('_nextMeeting:', _nextMeeting) //Mon Sep 22 2025 09:00:00 GMT+0800 (Philippine Standard Time)
         let actualMeetingStartDate = formattedNextMeeting // 2025-09-22T09:00
-        let actualMeetingEndDate: any = new Date(_nextMeeting.setHours(_nextMeeting.getHours() + 1));
-        // Format according to your timezone
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone,
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
-
-        const parts = formatter.formatToParts(actualMeetingEndDate);
-        const values = Object.fromEntries(parts.map(p => [p.type, p.value]));
-        actualMeetingEndDate = `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}` || actualMeetingEndDate; // 2025-09-22T10:00
+        let actualMeetingEndDate: any = new Date(_nextMeeting.getTime() + 60 * 60 * 1000) // Add 1 hour;
 
         return { actualMeetingStartDate, actualMeetingEndDate }
     }
