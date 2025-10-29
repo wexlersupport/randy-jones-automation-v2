@@ -597,14 +597,25 @@
             console.log('summary_temp:', summary_temp)
 
             if (summary_temp && summary_temp.length) {
-                form.value.generated_email = (summary_temp as any)?.[0]?.meeting_ai_summary ?? '';
+                const meeting_ai_summary = (summary_temp as any)?.[0]?.meeting_ai_summary ?? '';
+                form.value.generated_email = meeting_ai_summary || '';
+                if (meeting_ai_summary) {
+                    if (meeting_ai_summary?.includes('{{name}}') && person.value?.name) {
+                        form.value.generated_email = meeting_ai_summary.replace('{{name}}', person.value?.name) || '';
+                    }
+                    if (meeting_ai_summary?.includes('XXX') && person.value?.name) {
+                        form.value.generated_email = meeting_ai_summary.replace('XXX', person.value?.name) || '';
+                    }
+                }
             } else {
                 const { data: _postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
                 const editor = quillRef.value?.getQuill()
                 const email_draft = editor.getText() // Get plain text
                 const { response: generated_signature, data: gpt_data } = await mergeMeetingSummary(_postgreZoomMeetings[0]?.meeting_ai_summary, email_draft)
+                const generated_signature_new = generated_signature?.replace(/(^|\r?\n)Hi\s+[^,]+,/, `$1Hi {{name}},`);
+                // console.log('generated_signature_new:', generated_signature_new)
 
-                await createMeetingTemp(gpt_data, generated_signature)
+                await createMeetingTemp(gpt_data, generated_signature_new)
                 // console.log('generated_signature:', generated_signature)
                 form.value.generated_email = generated_signature || '';
             }
