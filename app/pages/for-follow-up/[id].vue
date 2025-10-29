@@ -306,18 +306,26 @@
     // }
 
     async function calenderEventFormatDate(formattedNextMeeting: any) {
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const pad = (n: any) => String(n).padStart(2, '0');
         const _nextMeeting = new Date(formattedNextMeeting);
         console.log('_nextMeeting:', _nextMeeting) //Mon Sep 22 2025 09:00:00 GMT+0800 (Philippine Standard Time)
         let actualMeetingStartDate = formattedNextMeeting // 2025-09-22T09:00
         let actualMeetingEndDate: any = new Date(_nextMeeting.setHours(_nextMeeting.getHours() + 1));
-        // Format back to local time (YYYY-MM-DDTHH:mm)
-        actualMeetingEndDate = actualMeetingEndDate.getFullYear() + '-' +
-            String(actualMeetingEndDate.getMonth() + 1).padStart(2, '0') + '-' +
-            String(actualMeetingEndDate.getDate()).padStart(2, '0') + 'T' +
-            String(actualMeetingEndDate.getHours()).padStart(2, '0') + ':' +
-            String(actualMeetingEndDate.getMinutes()).padStart(2, '0');
-        console.log('actualMeetingEndDate:', actualMeetingEndDate) // 2025-09-22T10:00
+        // Format according to your timezone
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+
+        const parts = formatter.formatToParts(actualMeetingEndDate);
+        const values = Object.fromEntries(parts.map(p => [p.type, p.value]));
+        actualMeetingEndDate = `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}` || actualMeetingEndDate; // 2025-09-22T10:00
 
         return { actualMeetingStartDate, actualMeetingEndDate }
     }
@@ -446,31 +454,33 @@
     async function updateAllAttachmentsToBase64String() {
         const updated = await Promise.all(
             attachmentList.value.map(async (attachment) => {
-                // const {data: base64Data}: any = await getBase64String(attachment?.name)
-                // // console.log('Base64 String:', base64Data)
-                // if (base64Data && base64Data.length > 0) {
-                //     return { ...attachment, base64String: base64Data[0]?.base64_value }
-                // } else {
-                //     const responseFiles = await fetch('/api/onedrive/base64_string', {
-                //         method: 'POST',
-                //         body: JSON.stringify({
-                //             file_url: attachment?.['@microsoft.graph.downloadUrl']
-                //         })
-                //     })
-                //     const { response: base64String } = await responseFiles.json()
-                //     await createBase64String({ ...attachment, base64_string: base64String })
-
-                //     return { ...attachment, base64String }
-                // }
-
-                const responseFiles = await fetch('/api/onedrive/base64_string', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                    file_url: attachment?.['@microsoft.graph.downloadUrl']
+                // NEW
+                const {data: base64Data}: any = await getBase64String(attachment?.name)
+                // console.log('Base64 String:', base64Data)
+                if (base64Data && base64Data.length > 0) {
+                    return { ...attachment, base64String: base64Data[0]?.base64_value }
+                } else {
+                    const responseFiles = await fetch('/api/onedrive/base64_string', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            file_url: attachment?.['@microsoft.graph.downloadUrl']
+                        })
                     })
-                })
-                const { response: base64String } = await responseFiles.json()
-                return { ...attachment, base64String }
+                    const { response: base64String } = await responseFiles.json()
+                    await createBase64String({ ...attachment, base64_string: base64String })
+
+                    return { ...attachment, base64String }
+                }
+
+                // OLD
+                // const responseFiles = await fetch('/api/onedrive/base64_string', {
+                //     method: 'POST',
+                //     body: JSON.stringify({
+                //     file_url: attachment?.['@microsoft.graph.downloadUrl']
+                //     })
+                // })
+                // const { response: base64String } = await responseFiles.json()
+                // return { ...attachment, base64String }
             })
         )
         attachmentList.value = updated
