@@ -310,7 +310,7 @@
         // const pad = (n: any) => String(n).padStart(2, '0');
         const _nextMeeting = new Date(formattedNextMeeting);
         console.log('_nextMeeting:', _nextMeeting) //Mon Sep 22 2025 09:00:00 GMT+0800 (Philippine Standard Time)
-        let actualMeetingStartDate = formattedNextMeeting // 2025-09-22T09:00
+        let actualMeetingStartDate = new Date(formattedNextMeeting);
         let actualMeetingEndDate: any = new Date(_nextMeeting.getTime() + 60 * 60 * 1000) // Add 1 hour;
 
         return { actualMeetingStartDate, actualMeetingEndDate }
