@@ -28,6 +28,7 @@
         subject: z.string(),
         meeting_type: z.string(),
         next_meeting_date: z.string().optional(),
+        duration: z.number().optional(),
         zoom_link: z.string().optional(),
     })
     const attachmentList = ref<any[]>([])
@@ -132,7 +133,8 @@
         subject: '',
         meeting_type: '',
         next_meeting_date: '',
-        zoom_link: '',
+        duration: 1,
+        zoom_link: 'https://us02web.zoom.us/j/6780533534',
     })
 
     async function onSubmit() {
@@ -311,7 +313,7 @@
         const _nextMeeting = new Date(formattedNextMeeting);
         console.log('_nextMeeting:', _nextMeeting) //Mon Sep 22 2025 09:00:00 GMT+0800 (Philippine Standard Time)
         let actualMeetingStartDate = new Date(formattedNextMeeting);
-        let actualMeetingEndDate: any = new Date(_nextMeeting.getTime() + 60 * 60 * 1000) // Add 1 hour;
+        let actualMeetingEndDate: any = new Date(_nextMeeting.getTime() + (form.value.duration * 60) * 60 * 1000) // Add duration;
 
         return { actualMeetingStartDate, actualMeetingEndDate }
     }
@@ -774,6 +776,16 @@
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
                                         <!-- <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/> -->
                                         <VueDatePicker v-model="form.next_meeting_date" :dark="colorMode.value === 'dark'" :is24="false" />
+                                    </div>
+                                    <div class="w-full space-y-1">
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">
+                                            Duration:
+                                        </label>
+                                        <UInput v-model="form.duration" label="Duration" class="w-full" type="number">
+                                            <template #trailing>
+                                                <span class="text-neutral-500 text-sm">hour</span>
+                                            </template>
+                                        </UInput>
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
