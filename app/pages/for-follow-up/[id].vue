@@ -778,14 +778,8 @@
                                         <VueDatePicker v-model="form.next_meeting_date" :dark="colorMode.value === 'dark'" :is24="false" />
                                     </div>
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">
-                                            Duration:
-                                        </label>
-                                        <UInput v-model="form.duration" label="Duration" class="w-full" type="number">
-                                            <template #trailing>
-                                                <span class="text-neutral-500 text-sm">hour</span>
-                                            </template>
-                                        </UInput>
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Duration (hours):</label>
+                                        <UInput v-model="form.duration" label="Duration" class="w-full" type="number" min="0" step="1"/>
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
