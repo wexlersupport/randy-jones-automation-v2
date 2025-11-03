@@ -31,9 +31,16 @@ export default async (req) => {
     return
 }
 
+// | UTC Time  | Eastern Time (EST, UTC-5) | Philippine Time (UTC+8) |
+// | --------- | ------------------------- | ----------------------- |
+// | 20:00 UTC | 3:00 PM EST (Sundays)     | 4:00 AM PHT (Monday)    |
+// | 20:30 UTC | 3:30 PM EST (Sundays)     | 4:30 AM PHT (Monday)    |
+// | 21:00 UTC | 4:00 PM EST (Sundays)     | 5:00 AM PHT (Monday)    |
+// | 21:30 UTC | 4:30 PM EST (Sundays)     | 5:30 AM PHT (Monday)    |
 export const config = {
     // schedule: '*/1 * * * *'
-    schedule: '0,30 19-21 * * 0' // 18-22 UTC on Sundays (1PM-5PM EST on Sundays)
+    // schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
+    schedule: '0,30 20-21 * * 1' // (20-21 UTC on Mondays) (3PM-4PM EST on Mondays) (4AM-5AM PHT on Tuesdays)
 };
 
 async function getPreviousSunday(formattedNextMeeting) {
