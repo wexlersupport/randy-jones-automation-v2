@@ -12,6 +12,7 @@
     const isLoading = ref(true)
     const isLoadingSave = ref(false)
     const isLoadingMerge = ref(false)
+    const isSendDisable = ref(false)
     const person = ref<any>({})
     const selectedOption = ref<any>(null);
     const items = ref<any[]>([]);
@@ -20,6 +21,7 @@
         name: z.string(),
         org_name: z.string(),
         primary_email: z.string().email(),
+        phone: z.string().optional(),
         add_time: z.string(),
         owner_name: z.string().optional(),
         generated_email: z.string().optional(),
@@ -52,12 +54,13 @@
     });
     const itemsFollowup = ref<any[]>(_data.value?.data?.sort((a: any, b: any) => a?.label.localeCompare(b?.label)) || []);
     const selectedFollowUp = ref<any>(null);
+    const clientRef = ref<any>(null)
 
     onMounted(async () => {
         zoomMeetingDetails.value = zoomMeetingDetails.value.map((meeting: any) => {
             let label = meeting?.detail?.summary_overview || meeting?.meeting_topic;
             if (meeting?.person_details) {
-                label = meeting?.person_details?.name + ' - ' + (meeting?.signature?.subject?.replace('Invite', 'Summary') || '');
+                label = `Meeting Summary for ${meeting?.person_details?.name} - ${(meeting?.signature?.subject?.replace('Invite', '') || '')}`;
             }
 
             return { ...meeting, label }
@@ -96,6 +99,7 @@
         form.value.name = person.value.name
         form.value.org_name = person.value.org_name
         form.value.primary_email = person.value.primary_email
+        form.value.phone = person.value?.phone[0]?.value || ''
         form.value.add_time = person.value.add_time
         form.value.owner_name = `Contact By ${person.value?.owner_name}`
         if (items.value) {
@@ -112,6 +116,7 @@
         selectedOption.value = items.value[0]?.value || null
         selectedFolder.value = folderList.value?.find((folder: any) => folder.name === items.value[0]?.folder_name)?.id || null
 
+        await sendEmailButton()
         await updateAttachmentList()
         await updateAllAttachmentsToBase64String()
 
@@ -125,6 +130,7 @@
         name: '',
         org_name: '',
         primary_email: '',
+        phone: '',
         add_time: '',
         owner_name: '',
         generated_email: '',
@@ -133,7 +139,7 @@
         subject: '',
         meeting_type: '',
         next_meeting_date: '',
-        duration: 1,
+        duration: 0.5,
         zoom_link: 'https://us02web.zoom.us/j/6780533534',
     })
 
@@ -193,8 +199,6 @@
         // console.log('attachments:', attachments)
 
         try {
-            // const res = await sendEmail(attachments)
-            // const res = {accepted: ['asdf@example.com']}
             const res= await handleAddCalendarEvent(attachments)
             // console.log('res:', res)
 
@@ -212,6 +216,9 @@
                 // console.log('addAttendeesResponse:', addAttendeesResponse)
 
                 const save_response = await saveClientResponse()
+                // console.log('clientRef.value:', clientRef.value)
+                // clientRef.value?.onUpdateData()
+                isSendDisable.value = true
                 toast.add({
                     title: 'Calendar event created successfully',
                     description: 'A calendar event has been created successfully.',
@@ -250,6 +257,12 @@
         return res
     }
 
+    async function sendEmailButton() {
+        const { data: clientResponse } = await getSelectedClientResponse()
+        // console.log('clientResponse:', clientResponse)
+        isSendDisable.value = clientResponse?.length > 0 ? true : false
+    }
+
     async function saveClientResponse() {
         const response = await $fetch('/api/postgre', {
             method: 'POST',
@@ -262,50 +275,14 @@
                 meeting_id: selectedZoomMeeting.value,
                 signature_id: selectedOption.value,
                 next_meeting_date: form.value?.next_meeting_date || null,
-                person_email: person.value?.primary_email || null,
-                person_name: person.value?.name || null
+                person_email: form.value?.to || null,
+                person_name: person.value?.name || null,
+                is_sent_reminder: true
             }
         })
 
         return response
     }
-
-    // async function sendEmail(attachments: any[]) {
-    //     const response = await fetch('/api/email/send-outlook', {
-    //         method: 'POST',
-    //         body: JSON.stringify({
-    //             emailObj: {
-    //                 attachments,
-    //                 from: form.value.from,
-    //                 to: form.value.to,
-    //                 subject: form.value.subject,
-    //                 html: convertHtmlEmail(form.value.generated_email || ''),
-    //             }
-    //         })
-    //     })
-    //     const res = await response.json()
-
-    //     return res
-    // }
-
-    // async function getPreviousSunday(formattedNextMeeting: any) {
-    //     const pad = (n: any) => String(n).padStart(2, '0');
-
-    //     const meetingDate = new Date(formattedNextMeeting);
-    //     console.log('meetingDate:', meetingDate) //Mon Sep 22 2025 00:00:00 GMT+0800 (Philippine Standard Time)
-    //     const dayOfWeek = meetingDate.getDay();     // 0=Sun, 1=Mon, ...
-    //     const previousSunday = new Date(meetingDate);
-    //     previousSunday.setDate(meetingDate.getDate() - dayOfWeek);
-    //     const startPreviousSunday = previousSunday.getFullYear() + '-' +
-    //         pad(previousSunday.getMonth() + 1) + '-' +
-    //         pad(previousSunday.getDate()) + 'T15:00'
-
-    //     const endPreviousSunday = previousSunday.getFullYear() + '-' +
-    //         pad(previousSunday.getMonth() + 1) + '-' +
-    //         pad(previousSunday.getDate()) + 'T16:00'
-
-    //     return { startPreviousSunday, endPreviousSunday }
-    // }
 
     async function calenderEventFormatDate(formattedNextMeeting: any) {
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -416,6 +393,7 @@
 
         await updateAttachmentList()
         await updateAllAttachmentsToBase64String()
+        await sendEmailButton()
 
         setTimeout(() => {
             isLoadingSave.value = false
@@ -565,6 +543,8 @@
             nextMeetingDate.value = null
         }
         form.value.next_meeting_date = formattedNextMeeting.value
+
+        await sendEmailButton()
     }
 
     async function mergeMeetingSummary(summary_overview: any, email_draft: any) {
@@ -718,6 +698,24 @@
         return createTemp
     }
 
+    async function getSelectedClientResponse() {
+        const value2 = selectedFollowUp.value ? selectedFollowUp.value : selectedOption.value
+        const res = await $fetch('/api/postgre/dynamic', {
+            method: 'GET',
+            query: {
+                table: 'client_response',
+                dynamic_field1: 'meeting_id',
+                value1: selectedZoomMeeting.value || '',
+                dynamic_field2: 'signature_id',
+                value2,
+                dynamic_field3: 'person_id',
+                value3: person.value.id,
+                isDesc: true
+            }
+        })
+
+        return res
+    }
 </script>
 
 <template>
@@ -737,7 +735,7 @@
                 v-if="isLoading"
                 class="w-full border rounded-md p-6 my-4 border-neutral-800"
             />
-            <div v-if="!isLoading" class="p-6 space-y-8">
+            <div v-if="!isLoading" class="p-6 space-y-4">
                 <UForm :state="form" :schema="schema" @submit="onSubmit" class="space-x-2 grid grid-cols-1 md:grid-cols-2">
                     <div class="col-span-2 grid grid-cols-1 md:grid-cols-3 gap-2">
                         <div>
@@ -747,7 +745,7 @@
                                 </template>
                                 <div class="grid grid-cols-1 gap-1">
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Meeting:</label>
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Title:</label>
                                         <USelect
                                             v-model="selectedZoomMeeting"
                                             :items="zoomMeetingDetails.map((item: any) => ({ value: item.meeting_uuid, label: item.label }))"
@@ -757,16 +755,19 @@
                                         />
                                     </div>
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting:</label>
                                         <USelect v-model="selectedOption" class="w-full" :items="items" @update:modelValue="handleChange" />
                                     </div>
-                                    <!-- <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
-                                        <UInput v-model="form.meeting_type" label="Meeting Type" class="w-full" />
-                                    </div> -->
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender:</label>
-                                        <UInput v-model="form.from" label="From" class="w-full" disabled />
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender Email:</label>
+                                        <!-- <UInput v-model="form.from" label="From" class="w-full" disabled /> -->
+                                         <USelect
+                                            v-model="form.from"
+                                            :items="[{ value: form.from, label: form.from }]"
+                                            placeholder="Choose a contact"
+                                            disabled
+                                            class="w-full"
+                                        />
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
@@ -774,12 +775,13 @@
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
-                                        <!-- <UInput v-model="form.next_meeting_date" type="datetime-local" label="Next Meeting Date" class="w-full"/> -->
                                         <VueDatePicker v-model="form.next_meeting_date" :dark="colorMode.value === 'dark'" :is24="false" />
                                     </div>
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Duration (hours):</label>
-                                        <UInput v-model="form.duration" label="Duration" class="w-full" type="number" min="0" step="1"/>
+                                        <label class="block text-sm font-medium w-full my-auto text-neutral-500">Duration (hours):
+                                            <span class="text-xs text-neutral-700 italic leading-snug">Default is 30mins (0.5 hour)</span>
+                                        </label>
+                                        <UInput v-model="form.duration" label="Duration" class="w-full" type="number" min="0" max="2" step="1"/>
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Zoom Link:</label>
@@ -798,6 +800,10 @@
                                         <UInput v-model="form.name" label="Person Name" disabled class="w-full"/>
                                     </div>
                                     <div class="w-full space-y-1">
+                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Phone:</label>
+                                        <UInput v-model="form.phone" label="Primary Phone" disabled class="w-full"/>
+                                    </div>
+                                    <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Email:</label>
                                         <UInput v-model="form.primary_email" label="Primary Email" disabled class="w-full"/>
                                     </div>
@@ -805,10 +811,10 @@
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Organization:</label>
                                         <UInput v-model="form.org_name" label="Organization Name" disabled class="w-full"/>
                                     </div>
-                                    <div class="w-full space-y-1">
+                                    <!-- <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Contact By:</label>
                                         <UInput v-model="form.owner_name" label="Contact By" disabled class="w-full"/>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </UCard>
                         </div>
@@ -923,12 +929,17 @@
 
                             <template #footer>
                                 <div class="flex w-full justify-end">
-                                    <UButton @click="onSubmit" :disabled="isLoadingSave" :loading="isLoadingSave" icon="i-lucide-send" size="lg" color="primary" variant="solid">Send Email</UButton>
+                                    <UButton v-if="!isSendDisable" @click="onSubmit" :disabled="isLoadingSave" :loading="isLoadingSave" icon="i-lucide-send" size="lg" color="primary" variant="solid">Send Email</UButton>
+                                    <UButton v-if="isSendDisable" disabled icon="i-lucide-check" size="lg" color="info" variant="outline">Email already sent</UButton>
                                 </div>
                             </template>
                         </UCard>
                     </div>
                 </UForm>
+
+                <div class="grid grid-cols-1 gap-2">
+                    <ForFollowUpClientResponse ref="clientRef" />
+                </div>
             </div>
         </template>
     </UDashboardPanel>

@@ -39,8 +39,8 @@ export default async (req) => {
 // | 21:30 UTC | 4:30 PM EST (Sundays)     | 5:30 AM PHT (Monday)    |
 export const config = {
     // schedule: '*/1 * * * *'
-    // schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
-    schedule: '0,30 20-21 * * 1' // (20-21 UTC on Mondays) (3PM-4PM EST on Mondays) (4AM-5AM PHT on Tuesdays)
+    schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
+    // schedule: '0,30 20-21 * * 1' // (20-21 UTC on Mondays) (3PM-4PM EST on Mondays) (4AM-5AM PHT on Tuesdays)
 };
 
 async function getPreviousSunday(formattedNextMeeting) {
@@ -80,7 +80,7 @@ async function sendEmail(name = "", to = "") {
 
     const newSchedule = {
         message: {
-            subject: 'Meeting Reminder',
+            subject: 'Quick Reminder — Upcoming Meeting with Randy Jones',
             body: {
                 contentType: "HTML",
                 content: `
@@ -88,10 +88,15 @@ async function sendEmail(name = "", to = "") {
                         <p>Hi ${name},</p>
 
                         <div style="margin: 20px 0;">
-                            <p>I look forward to the meeting. Please confirm.</p>
+                            Looking forward to connecting this week. This is a friendly reminder of our scheduled meeting on 14 November, 3:00 PM EST. The session link is below — please let me know if you need to adjust timing.
                         </div>
+                        <div style="margin: 10px 0;">
+                            <a href="#" style="color:#007bff; text-decoration:none;">Join Zoom Meeting Link</a>
+                        </div>
+                        <br>
 
                         <p style="margin:0;">
+                            Thank you,<br><br>
                             <strong>Randy Jones</strong><br>
                             <em>The Legacy Builder</em><br>
                             Office: <a href="tel:571-375-8031">571-375-8031</a><br>

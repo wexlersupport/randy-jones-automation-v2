@@ -7,8 +7,10 @@
     const route = useRoute()
     const router = useRouter()
     const meetingId = route.params.id as string
+    const personId = route.query.person_id as number | undefined
     const isLoading = ref(true)
     const isLoadingAi = ref(false)
+    const isLoadingFollowUp = ref(false)
     const notes = ref<any[]>([])
     const { data }: any = await useFetch('/api/pipedrive/all_person')
     const contactList = ref<any[]>(data.value?.response || [])
@@ -51,15 +53,15 @@
         })),
         next_steps: z.array(z.string()),
         ai_summary_overview: z.string().optional(),
-        client_email: z.string().email().optional()
+        client_email: z.string().email().optional(),
+        client_name: z.string().optional()
     })
 
     onMounted(async () => {
         meetingTypeList.value = leafProcess()
         selectedMeetingType.value = postgreMeeting.value ? postgreMeeting.value.signature_id : meetingTypeList.value[0].value;
-
-        const _selectedContactId = postgreMeeting.value ? Number(postgreMeeting.value.person_id) : contactList.value[0].id;
-        selectedContact.value = _selectedContactId && contactList.value.find(item => item.id === _selectedContactId) ? _selectedContactId : contactList.value[0].id;
+        const _selectedContactId = postgreMeeting.value ? Number(postgreMeeting.value.person_id) : (personId ? Number(personId) : contactList.value[0].id);
+        selectedContact.value = _selectedContactId && contactList.value.find(item => item.id === _selectedContactId) ? _selectedContactId : (personId ? Number(personId) : contactList.value[0].id);
 
         const { response: _notes } = await call('/api/pipedrive/all_notes', 'POST', {
             person_id: selectedContact.value, pinned_to_person_flag: 1,
@@ -83,9 +85,12 @@
         const nextMeetingDate = parseDateLocal(nextMeeting.value)
         nextScheduleMeeting.value = postgreMeeting.value ? postgreMeeting.value.next_meeting_date?.trim() : nextMeetingDate;
         form.value.meeting_host_email = response.meeting_host_email;
-        form.value.summary_title = response.summary_title;
+        // form.value.summary_title = response.summary_title;
         form.value.summary_overview = response.summary_overview;
         form.value.client_email = selectedContact.value ? contactList.value.find(item => item.id === selectedContact.value)?.primary_email || '' : '';
+        form.value.client_name = selectedContact.value ? contactList.value.find(item => item.id === selectedContact.value)?.name || '' : '';
+        const current_meeting_type = meetingTypeList.value.find(item => item.value === selectedMeetingType.value)?.label || 'Quick Call'
+        form.value.summary_title = `Meeting Summary for ${form.value.client_name} - ${current_meeting_type}`;
         // ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview
         if (postgreMeeting.value) {
             ai_summary.value = postgreMeeting.value?.meeting_ai_summary
@@ -131,13 +136,15 @@
         next_steps: [],
         summary_content: '',
         ai_summary_overview: '',
-        client_email: ''
+        client_email: '',
+        client_name: '',
     })
 
     async function handleMeetingSummary() {
         isLoadingAi.value = true
 
         const current_meeting_type = meetingTypeList.value.find(item => item.value === selectedMeetingType.value)?.label || 'Quick Call'
+        form.value.summary_title = `Meeting Summary for ${form.value.client_name} - ${current_meeting_type}`;
         let meeting_end_time: any = new Date(meetingDetail.value.meeting_end_time);
         const current_meeting_index = meetingTypeList.value.findIndex(item => item.value === selectedMeetingType.value);
         const next_meeting_type = meetingTypeList.value[current_meeting_index + 1]?.label || 'Intro';
@@ -290,14 +297,6 @@
             person_id: selectedContact.value,
             pinned_to_person_flag: 1,
         })
-        // const response = await fetch('/api/pipedrive/all_notes', {
-        //     method: 'POST',
-        //     body: JSON.stringify({
-        //         person_id: selectedContact.value,
-        //         pinned_to_person_flag: 1,
-        //     })
-        // })
-        // const res = await response.json()
 
         return res
     }
@@ -311,6 +310,10 @@
         }
 
         form.value.client_email = selectedContact.value ? contactList.value.find(item => item.id === selectedContact.value)?.primary_email || '' : '';
+        form.value.client_name = selectedContact.value ? contactList.value.find(item => item.id === selectedContact.value)?.name || '' : '';
+
+        const current_meeting_type = meetingTypeList.value.find(item => item.value === selectedMeetingType.value)?.label || 'Quick Call'
+        form.value.summary_title = `Meeting Summary for ${form.value.client_name} - ${current_meeting_type}`;
     }
 
     async function handleSelectMeetingType(value: any) {
@@ -367,6 +370,11 @@
             }
         }
     )
+
+    async function onFollowUp() {
+        isLoadingFollowUp.value = true
+        navigateTo('/for-follow-up/' + selectedContact.value)
+    }
 </script>
 
 <template>
@@ -399,12 +407,19 @@
                         </template>
                         <div class="grid grid-cols-1 gap-2">
                             <div class="w-full space-y-1">
-                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Host Email</label>
-                                <UInput v-model="form.meeting_host_email" label="Meeting Host Email" disabled class="w-full" />
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender Email</label>
+                                <!-- <UInput v-model="form.meeting_host_email" label="Meeting Host Email" disabled class="w-full" /> -->
+                                 <USelect
+                                    v-model="form.meeting_host_email"
+                                    :items="[{ value: form.meeting_host_email, label: form.meeting_host_email }]"
+                                    placeholder="Choose a contact"
+                                    disabled
+                                    class="w-full"
+                                />
                             </div>
                             <div class="w-full space-y-1">
-                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Client Email</label>
-                                <UInput v-model="form.client_email" label="Meeting Client Email" disabled class="w-full" />
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Contacts</label>
+                                <UInput v-model="form.client_name" label="Meeting Client Name" disabled class="w-full" />
                             </div>
                             <div class="w-full space-y-1">
                                 <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Title</label>
@@ -423,11 +438,11 @@
                         </template>
                         <div class="grid grid-cols-1 gap-2">
                             <div class="w-full space-y-1">
-                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Contacts:</label>
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Client Email:</label>
                                 <USelect
                                     v-model="selectedContact"
-                                    :items="contactList.map(item => ({ value: item.id, label: item.name }))"
-                                    placeholder="Choose a contact"
+                                    :items="contactList.map(item => ({ value: item.id, label: item.primary_email }))"
+                                    placeholder="Choose a email"
                                     class="w-full"
                                     :disabled="postgreMeeting"
                                     @update:modelValue="handleSelectContact"
@@ -452,9 +467,10 @@
                             <span class="text-sm text-gray-500 italic">*Please review and edit the AI-generated summary before adding it as a note.</span>
                         </div>
                         <template #footer>
-                            <div class="flex w-full justify-end">
+                            <div class="flex w-full justify-end gap-4">
                                 <UButton v-if="!postgreMeeting" @click="onSubmit" icon="i-lucide-plus" size="lg" color="primary" variant="solid">Add AI Summary in Pipedrive Notes</UButton>
                                 <UButton v-if="postgreMeeting" disabled icon="i-lucide-check" size="lg" color="info" variant="outline">Already added in Pipedrive Notes</UButton>
+                                <UButton :loading="isLoadingFollowUp" @click="onFollowUp" icon="i-lucide-send" size="lg" color="info" variant="solid">Follow Up</UButton>
                             </div>
                         </template>
                     </UCard>

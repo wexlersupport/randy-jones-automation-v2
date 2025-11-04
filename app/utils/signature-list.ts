@@ -2,7 +2,7 @@ export default function signatureList(params: any) {
   return [
     {
       index: 0,
-      label: "Quick Call Follow Up - Intro Invite <IM>",
+      label: "Intro Invite <IM>",
       value: "quick_call_follow_up_intro_invite",
       subject: "Intro Meeting Invite",
       folder_name: "IM Invite",
@@ -11,7 +11,7 @@ export default function signatureList(params: any) {
     },
     {
       index: 1,
-      label: "Intro <IM> Follow Up - G.A.P. Invite <ASMNT>",
+      label: "G.A.P. Invite <ASMNT>",
       value: "intro_follow_up_gap_invite",
       subject: "Goals, Assess, Plan (GAP) Meeting Invite",
       folder_name: "GAP Invite",
@@ -20,7 +20,7 @@ export default function signatureList(params: any) {
     },
     {
       index: 2,
-      label: "Goals/Assess/Plan <ASMNT> Follow Up - Risk Management Invite <RM>",
+      label: "Risk Management Invite <RM>",
       value: "goals_assess_plan_follow_up_risk_management_invite",
       subject: "Risk Management Meeting Invite",
       folder_name: "Risk Management Invite",
@@ -29,7 +29,7 @@ export default function signatureList(params: any) {
     },
     {
       index: 3,
-      label: "Threat, Options <RM> Follow Up - Wealth Accum & Distro Invite <WA & WD>",
+      label: "Wealth Accum & Distro Invite <WA & WD>",
       value: "threat_options_follow_up_wealth_accum_distro_invite",
       subject: "Wealth Accumulation Meeting Invite",
       folder_name: "Wealth Accumulation Invite",
@@ -38,7 +38,7 @@ export default function signatureList(params: any) {
     },
     {
       index: 4,
-      label: "Invest & Annuity <WA & WD> Follow Up - Wealth Transfer Invite <WT>",
+      label: "Wealth Transfer Invite <WT>",
       value: "invest_annuity_follow_up_wealth_transfer_invite",
       subject: "Wealth Transfer Meeting Invite",
       folder_name: "Wealth Transfer Invite",
@@ -47,7 +47,7 @@ export default function signatureList(params: any) {
     },
     {
       index: 5,
-      label: "Wealth Transfer <WT> Follow Up - Annual Review Invite <AR>",
+      label: "Annual Review Invite <AR>",
       value: "wealth_transfer_follow_up_annual_review_invite",
       subject: "Annual Review Meeting Invite",
       folder_name: "Annual Review (AR) Invite",

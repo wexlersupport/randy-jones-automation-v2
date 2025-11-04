@@ -6,7 +6,7 @@
   const { isNotificationsSlideoverOpen } = useDashboard()
 
   onMounted(async () => {
-    navigateTo('/zoom-meetings')
+    navigateTo('/for-follow-up')
   })
 
   const items = [[{

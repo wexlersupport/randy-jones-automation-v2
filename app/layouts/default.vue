@@ -7,14 +7,14 @@ const toast = useToast()
 const open = ref(false)
 
 const links = [[
-  {
-    label: 'Zoom Meetings',
-    icon: 'i-lucide-video',
-    to: '/zoom-meetings',
-    onSelect: () => {
-      open.value = false
-    }
-  },
+  // {
+  //   label: 'Zoom Meetings',
+  //   icon: 'i-lucide-video',
+  //   to: '/zoom-meetings',
+  //   onSelect: () => {
+  //     open.value = false
+  //   }
+  // },
   {
     label: 'For Follow Up',
     icon: 'i-lucide-send',
@@ -24,14 +24,14 @@ const links = [[
       open.value = false
     }
   },
-  {
-    label: 'Client Response',
-    icon: 'i-lucide-user-check',
-    to: '/client-response',
-    onSelect: () => {
-      open.value = false
-    }
-  },
+  // {
+  //   label: 'Client Response',
+  //   icon: 'i-lucide-user-check',
+  //   to: '/client-response',
+  //   onSelect: () => {
+  //     open.value = false
+  //   }
+  // },
 ],[],
 [
   {
