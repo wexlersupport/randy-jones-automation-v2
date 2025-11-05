@@ -88,7 +88,8 @@
         postgreZoomMeetings.value = zoomMeetings
 
         if (postgreZoomMeetings.value.length > 0 && postgreZoomMeetings.value[0]?.next_meeting_date) {
-            formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings.value[0]?.next_meeting_date)
+            // formattedNextMeeting.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings.value[0]?.next_meeting_date)
+            formattedNextMeeting.value = new Date(postgreZoomMeetings.value[0]?.next_meeting_date)
             nextMeetingDate.value = covertToYYYYMMDDTHHMM(postgreZoomMeetings.value[0]?.next_meeting_date)
         } else {
             formattedNextMeeting.value = null
@@ -299,7 +300,7 @@
     }
 
     async function handleAddCalendarEvent(attachments: any[]) {
-        formattedNextMeeting.value = form.value.next_meeting_date
+        formattedNextMeeting.value = new Date(form.value.next_meeting_date)
         console.log('formattedNextMeeting:', formattedNextMeeting.value)
         const _date = new Date(form.value.next_meeting_date);
         nextMeetingDate.value = new Intl.DateTimeFormat("en-US", {
@@ -539,7 +540,8 @@
         const { data: _postgreZoomMeetings }: any = await fetchPostgreZoomMeetings();
 
         if (_postgreZoomMeetings.length > 0 && _postgreZoomMeetings[0]?.next_meeting_date) {
-            formattedNextMeeting.value = covertToYYYYMMDDTHHMM(_postgreZoomMeetings[0]?.next_meeting_date)
+            // formattedNextMeeting.value = covertToYYYYMMDDTHHMM(_postgreZoomMeetings[0]?.next_meeting_date)
+            formattedNextMeeting.value = new Date(_postgreZoomMeetings[0]?.next_meeting_date)
             nextMeetingDate.value = covertToYYYYMMDDTHHMM(_postgreZoomMeetings[0]?.next_meeting_date)
         } else {
             formattedNextMeeting.value = null
