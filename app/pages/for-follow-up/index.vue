@@ -187,7 +187,6 @@
 
                         isLoading.value = true
                         const { response } = await call('/api/zoom/meeting_summary')
-                        console.log('response:', response);
                         const filtered = response.filter((meeting: any) => !meeting.postgre_data)
                         if (filtered?.length > 0) {
                             navigateTo('/zoom-meetings/' + filtered[0]?.meeting_uuid + '?person_id=' + row.original.id)

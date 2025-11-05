@@ -21,17 +21,12 @@
         pageIndex: 0,
         pageSize: 10
     })
-    const { data, refresh } = await useFetch('/api/postgre/dynamic', {
-        query: {
-            table: 'client_response',
-            isDesc: true,
-            dynamic_field1: 'person_id',
-            value1: personId
-        },
-    });
-    const clients = ref<any[]>(data.value?.data || [])
+    const clients = ref<any[]>([])
 
     onMounted(async () => {
+        const { data }: any = await getClientResponse();
+        clients.value = data || []
+
         isLoading.value = false
     })
     
@@ -132,6 +127,20 @@
         }
     ]
 
+    async function getClientResponse() {
+        const res = await $fetch('/api/postgre/dynamic', {
+            method: 'GET',
+            query: {
+                table: 'client_response',
+                isDesc: true,
+                dynamic_field1: 'person_id',
+                value1: personId
+            }
+        })
+
+        return res
+    }
+
     async function onSentClientReminder(row: any) {
         const client_response = await updateClientResponse(row)
         const calendar_event = await updateCalendarEvent(row?.event_id)
@@ -218,9 +227,14 @@
         // row.toggleSelected(!row.getIsSelected())
     }
 
-    function onUpdateData() {
-        console.log('Data updated, refreshing...')
-        // await refresh()
+    async function onUpdateData() {
+        isLoading.value = true
+        const { data }: any = await getClientResponse();
+        clients.value = data || []
+
+        setTimeout(() => {
+            isLoading.value = false
+        }, 1000);
     }
 
     // Expose functions that the parent can call
@@ -237,6 +251,10 @@
             </template>
 
             <div class="grid grid-cols-1 gap-1">
+                <UiAppLoading
+                    v-if="isLoading"
+                    class="w-full border rounded-md p-6 my-4 border-neutral-800"
+                />
                 <UTable
                     v-if="!isLoading"
                     ref="table"

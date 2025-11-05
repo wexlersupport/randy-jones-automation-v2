@@ -217,8 +217,10 @@
 
                 const save_response = await saveClientResponse()
                 // console.log('clientRef.value:', clientRef.value)
-                // clientRef.value?.onUpdateData()
+                await nextTick()
+                clientRef.value?.onUpdateData()
                 isSendDisable.value = true
+
                 toast.add({
                     title: 'Calendar event created successfully',
                     description: 'A calendar event has been created successfully.',
