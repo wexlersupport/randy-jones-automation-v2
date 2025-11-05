@@ -21,7 +21,7 @@ export default async (req) => {
         if (now < target) {
           console.log("Not yet sending...", data.id);
         } else if (now >= target) {
-          const emailResponse = await sendEmail(data.person_name, data.person_email);
+          const emailResponse = await sendEmail(data);
           console.log("Sending now...", data.person_email, emailResponse);
           const updateResponse = await updateClientResponse(data.id)
           console.log("Update response...", updateResponse[0]?.person_name);
@@ -74,7 +74,8 @@ async function updateClientResponse(id) {
   return result
 }
 
-async function sendEmail(name = "", to = "") {
+async function sendEmail(data) {
+    const convertedDate = await convertDate(data?.next_meeting_date);
     const accessToken = await microsoftAuth();
     // console.log('Access Token:', accessToken);
 
@@ -85,13 +86,13 @@ async function sendEmail(name = "", to = "") {
                 contentType: "HTML",
                 content: `
                     <div style="font-family: Arial, Helvetica, sans-serif; font-size:14px; color:#111;">
-                        <p>Hi ${name},</p>
+                        <p>Hi ${data?.person_name},</p>
 
                         <div style="margin: 20px 0;">
-                            Looking forward to connecting this week. This is a friendly reminder of our scheduled meeting on 14 November, 3:00 PM EST. The session link is below — please let me know if you need to adjust timing.
+                            Looking forward to connecting this week. This is a friendly reminder of our scheduled meeting on ${convertedDate}. The session link is below — please let me know if you need to adjust timing.
                         </div>
                         <div style="margin: 10px 0;">
-                            <a href="#" style="color:#007bff; text-decoration:none;">Join Zoom Meeting Link</a>
+                            <a href="${data?.zoom_link}" target="_blank" style="color:#007bff; text-decoration:none;">Join Zoom Meeting Link</a>
                         </div>
                         <br>
 
@@ -108,7 +109,7 @@ async function sendEmail(name = "", to = "") {
             toRecipients: [
                 {
                     emailAddress: {
-                        address: to
+                        address: data?.person_email
                     }
                 }
             ]
@@ -127,7 +128,7 @@ async function sendEmail(name = "", to = "") {
                 body: JSON.stringify(newSchedule)
             }
         )
-        const result = graphRes.status === 202 ? { message: "Email scheduled successfully", to } : await graphRes.json();
+        const result = graphRes.status === 202 ? { message: "Email scheduled successfully", email: data?.person_email } : await graphRes.json();
 
         return { success: true, response: result }
     } catch (err) {
@@ -167,5 +168,38 @@ async function microsoftAuth() {
         console.error(error)
         throw new Error(error.message || 'Failed to get access token')
     }
+}
+
+async function convertDate(dateInput) {
+    // Step 1: Create a Date object
+    const date = new Date(dateInput);
+
+    // Step 2: Define formatter for EST (America/New_York)
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone; // e.g. "Asia/Manila"
+    const options = {
+        timeZone,
+        day: '2-digit',
+        month: 'long',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    };
+
+    // Step 3: Format components
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const parts = formatter.formatToParts(date);
+
+    // Extract needed parts
+    const day = parts.find(p => p.type === 'day').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const hour = parts.find(p => p.type === 'hour').value;
+    const minute = parts.find(p => p.type === 'minute').value;
+    const dayPeriod = parts.find(p => p.type === 'dayPeriod').value.toUpperCase();
+
+    // Step 4: Construct formatted string manually
+    const formatted = `${day} ${month}, ${hour}:${minute} ${dayPeriod}`;
+
+    console.log(formatted);
+    return formatted ?? date;
 }
 // netlify functions:invoke send-scheduled-emails

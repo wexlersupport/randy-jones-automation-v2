@@ -279,7 +279,8 @@
                 next_meeting_date: form.value?.next_meeting_date || null,
                 person_email: form.value?.to || null,
                 person_name: person.value?.name || null,
-                is_sent_reminder: true
+                is_sent_reminder: true,
+                zoom_link: form.value?.zoom_link || null,
             }
         })
 
