@@ -21,8 +21,13 @@ export default async (req) => {
         if (now < target) {
           console.log("Not yet sending...", data.id);
         } else if (now >= target) {
-          const emailResponse = await sendEmail(data);
-          console.log("Sending now...", data.person_email, emailResponse);
+        const recipientEmails = data?.person_email?.split(',')
+        const recipientNames = data?.person_name?.split(',')
+        console.log("Recipient...", recipientEmails, recipientNames);
+        recipientEmails.forEach(async(email, index) => {
+          const emailResponse = await sendEmail(data, email?.trim(), recipientNames[index]);
+          console.log("Sending now...", email, emailResponse);
+        });
           const updateResponse = await updateClientResponse(data.id)
           console.log("Update response...", updateResponse[0]?.person_name);
         }
@@ -74,7 +79,7 @@ async function updateClientResponse(id) {
   return result
 }
 
-async function sendEmail(data) {
+async function sendEmail(data, email, name) {
     const convertedDate = await convertDate(data?.next_meeting_date);
     const accessToken = await microsoftAuth();
     // console.log('Access Token:', accessToken);
@@ -86,7 +91,7 @@ async function sendEmail(data) {
                 contentType: "HTML",
                 content: `
                     <div style="font-family: Arial, Helvetica, sans-serif; font-size:14px; color:#111;">
-                        <p>Hi ${data?.person_name},</p>
+                        <p>Hi ${name},</p>
 
                         <div style="margin: 20px 0;">
                             Looking forward to connecting this week. This is a friendly reminder of our scheduled meeting on ${convertedDate}. The session link is below — please let me know if you need to adjust timing.
@@ -109,7 +114,7 @@ async function sendEmail(data) {
             toRecipients: [
                 {
                     emailAddress: {
-                        address: data?.person_email
+                        address: email
                     }
                 }
             ]
@@ -128,7 +133,7 @@ async function sendEmail(data) {
                 body: JSON.stringify(newSchedule)
             }
         )
-        const result = graphRes.status === 202 ? { message: "Email scheduled successfully", email: data?.person_email } : await graphRes.json();
+        const result = graphRes.status === 202 ? { message: "Email scheduled successfully", email } : await graphRes.json();
 
         return { success: true, response: result }
     } catch (err) {

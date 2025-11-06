@@ -40,13 +40,14 @@
     const selectedFolder = ref<any>(null);
     const eventObject = ref<any>(null);
     const { data: _zoom }: any = await useFetch('/api/zoom/meeting_summary')
-    const zoomMeetingDetails = ref<any>(_zoom.value?.response?.filter((data: any) => data.detail.summary_overview) || {})
+    const zoomMeetingDetails = ref<any>(_zoom.value?.response?.filter((data: any) => data.detail?.summary_overview) || {})
     const selectedZoomMeeting = ref<any>(zoomMeetingDetails.value[0]?.meeting_uuid || null);
     const meetingDetail = ref<any>(null);
     const formattedNextMeeting = ref<any>('');
     const nextMeetingDate = ref<any>('');
     const isMergeZoomMeeting = ref(false);
     const postgreZoomMeetings = ref<any[]>([]);
+    const receivers = ref<{ name: string, email: string, selected: boolean }[]>([])
     const quillRef = ref();
 
     const { data: _data } = await useFetch('/api/postgre', {
@@ -151,6 +152,7 @@
             return
         }
         isLoadingSave.value = true
+        receivers.value.unshift({name: form.value.name, email: form.value.to, selected: true})
 
         let attachments: any[] = []
         if (selectedAttachment.value.length) {
@@ -221,6 +223,7 @@
                 await nextTick()
                 clientRef.value?.onUpdateData()
                 isSendDisable.value = true
+                receivers.value = []
 
                 toast.add({
                     title: 'Calendar event created successfully',
@@ -267,6 +270,10 @@
     }
 
     async function saveClientResponse() {
+        const person_email = receivers.value.filter(r => r.selected).map(r => r.email).join(',')
+        const person_name = receivers.value.filter(r => r.selected).map(r => r.name?.replace(',', '')).join(',')
+        console.log('saveClientResponse:', person_name, person_email)
+
         const response = await $fetch('/api/postgre', {
             method: 'POST',
             query: {
@@ -278,8 +285,8 @@
                 meeting_id: selectedZoomMeeting.value,
                 signature_id: selectedOption.value,
                 next_meeting_date: form.value?.next_meeting_date || null,
-                person_email: form.value?.to || null,
-                person_name: person.value?.name || null,
+                person_email,
+                person_name,
                 is_sent_reminder: true,
                 zoom_link: form.value?.zoom_link || null,
             }
@@ -316,7 +323,8 @@
         //{@odata.context: "https://graph.microsoft.com/v1.0/$metadata#users('…y%40automationpm.onmicrosoft.com')/events/$entity", @odata.etag: 'W/"MbPvhBte9Uu/e4THen7M7wAAAYXvrQ=="', id: 'AAMkADExNjcwN2FmLWY0MTQtNGEwYy1iNzJlLTY3OTRhMDIxNT…6fszvAAAAAAENAAAxs__EG171S797hMd6fszvAAABiA19AAA=', createdDateTime: '2025-09-19T03:00:00.6838407Z', lastModifiedDateTime: '2025-09-19T03:00:00.7558834Z', …}
         eventObject.value = actualMeetingInvite
 
-        alert(`Email and Calendar Invite sent to ${form.value.to} for ${nextMeetingDate.value}.`)
+        const array_email = receivers.value.map(r => r.email).join(', ')
+        alert(`Email and Calendar Invite sent to ${array_email} for ${nextMeetingDate.value}.`)
 
         return {actualMeetingInvite}
     }
@@ -335,11 +343,12 @@
     }
 
     async function addAttendees() {
+        const attendees = receivers.value.map(r => r.email)
         const response = await fetch('/api/calendar/add_attendees', {
             method: 'POST',
             body: JSON.stringify({
                 eventId: eventObject.value?.id || null,
-                attendees: [form.value.to]
+                attendees
             })
         })
         const res = await response.json()
@@ -355,7 +364,6 @@
                 subject: form.value.subject,
                 start_date_time,
                 end_date_time,
-                // attendees: [form.value.to],
                 zoom_link: form.value.zoom_link || '',
                 content,
                 // attachments
@@ -721,6 +729,14 @@
 
         return res
     }
+
+    const addReceiver = () => {
+        receivers.value.push({ name: '', email: '', selected: true })
+    }
+
+    const removeReceiver = (index: number) => {
+        receivers.value.splice(index, 1)
+    }
 </script>
 
 <template>
@@ -775,8 +791,55 @@
                                         />
                                     </div>
                                     <div class="w-full space-y-1">
-                                        <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Receiver:</label>
-                                        <UInput v-model="form.to" label="To" class="w-full" />
+                                        <label class="block text-sm font-medium w-full my-auto text-neutral-500">Receiver:
+                                            <span class="text-xs text-neutral-700 italic leading-snug">Click (+) icon to add more receivers</span>
+                                        </label>
+                                        <div class="flex items-center">
+                                            <UInput 
+                                                v-model="form.to" 
+                                                label="To" 
+                                                class="w-full"
+                                                placeholder="Enter receiver email"
+                                            />
+                                            <UButton 
+                                                color="primary" 
+                                                variant="solid"
+                                                icon="i-lucide-plus-circle"
+                                                @click="addReceiver"
+                                            />
+                                        </div>
+                                        <div v-if="receivers.length > 0" class="text-xs text-neutral-500 leading-snug ml-1 mb-0 pb-0">Checked box means the receiver will get reminders</div>
+                                        <div v-for="(receiver, index) in receivers" :key="index" class="flex items-center mt-1">
+                                            <UInput
+                                                v-model="receiver.name"
+                                                :label="index === 0 ? 'Name' : ''"
+                                                placeholder="Enter name"
+                                                class="w-full"
+                                            />
+                                            <UInput
+                                                v-model="receiver.email"
+                                                :label="index === 0 ? 'Email' : ''"
+                                                placeholder="Enter email"
+                                                class="w-full"
+                                            />
+                                            <UButton 
+                                                color="neutral" 
+                                                variant="subtle"
+                                            >
+                                                <UCheckbox
+                                                    v-model="receiver.selected"
+                                                    color="primary"
+                                                    class="flex-shrink-0"
+                                                />
+                                            </UButton>
+                                            <UButton 
+                                                color="error" 
+                                                variant="solid"
+                                                icon="i-lucide-trash-2"
+                                                class="ml-2"
+                                                @click="removeReceiver(index)"
+                                            />
+                                        </div>
                                     </div>
                                     <div class="w-full space-y-1">
                                         <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Next Meeting Date:</label>
