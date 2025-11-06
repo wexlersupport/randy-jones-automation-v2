@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const client = new OpenAI({ apiKey: openaiApiKey });
 
-  const system = `
+  let system = `
     You merge a meeting summary and a signature into one client-facing email.
     Keep the tone warm and professional (Randy’s style).
 
@@ -26,6 +26,20 @@ export default defineEventHandler(async (event) => {
     - Return only the complete email body (no subject line or title).
     - Ensure Randy's signature appears only once at the very end of the email.
   `;
+
+  const dbRes: any = await $fetch("/api/postgre/dynamic_field", {
+    method: "GET",
+    params: {
+      table: 'meeting_summary_temp',
+      dynamic_field: 'type',
+      value: 'ai_prompts',
+      isDesc: true
+    },
+  });
+  // console.log(`DB Response for meeting_summary_temp:`, dbRes.data.length);
+  if (dbRes?.data?.length > 0) {
+    system = dbRes.data[0].meeting_ai_summary;
+  }
 
   const user = `
     MEETING_SUMMARY:
