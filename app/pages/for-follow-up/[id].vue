@@ -967,18 +967,27 @@
                                     <USelect v-model="selectedFollowUp" class="w-full" :items="itemsFollowup" @update:modelValue="handleForFollowUp" placeholder="For Follow Up Signatures"/>
                                 </div>
                                 <div v-if="!isLoadingSave" class="w-full space-y-1">
-                                    <USwitch 
-                                        v-model="isMergeZoomMeeting"
-                                        name="myCheckbox"
-                                        label="AI will merge Zoom Meeting Summary"
-                                        description="AI can make mistakes. Check email content before sending."
-                                        @update:modelValue="handleMergeZoomMeeting"
-                                        :ui="{
-                                            label: 'text-neutral-500 font-medium text-sm',
-                                            wrapper: 'gap-2',
-                                            description: 'text-xs text-neutral-500 italic leading-snug'
-                                        }"
-                                    />
+                                    <div class="flex items-center justify-between">
+                                        <USwitch 
+                                            v-model="isMergeZoomMeeting"
+                                            name="myCheckbox"
+                                            label="AI will merge Zoom Meeting Summary"
+                                            description="AI can make mistakes. Check email content before sending."
+                                            @update:modelValue="handleMergeZoomMeeting"
+                                            :ui="{
+                                                label: 'text-neutral-500 font-medium text-sm',
+                                                wrapper: 'gap-2',
+                                                description: 'text-xs text-neutral-500 italic leading-snug'
+                                            }"
+                                        />
+                                        <UButton
+                                            size="sm"
+                                            label="AI Prompts" 
+                                            color="info" 
+                                            class="ml-4"
+                                            @click="navigateTo('/ai-prompts')"
+                                        />
+                                    </div>
                                     <div v-if="isLoadingMerge" class="w-full border rounded-md p-4 my-2 border-neutral-800">
                                         <div class="grid text-center gap-3 text-sm">
                                             <p>Merging and generating email. Please wait...</p>

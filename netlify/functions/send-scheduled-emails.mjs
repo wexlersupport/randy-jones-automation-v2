@@ -21,15 +21,16 @@ export default async (req) => {
         if (now < target) {
           console.log("Not yet sending...", data.id);
         } else if (now >= target) {
-        const recipientEmails = data?.person_email?.split(',')
-        const recipientNames = data?.person_name?.split(',')
-        console.log("Recipient...", recipientEmails, recipientNames);
-        recipientEmails.forEach(async(email, index) => {
-          const emailResponse = await sendEmail(data, email?.trim(), recipientNames[index]);
-          console.log("Sending now...", email, emailResponse);
-        });
-          const updateResponse = await updateClientResponse(data.id)
-          console.log("Update response...", updateResponse[0]?.person_name);
+            const recipientEmails = data?.person_email?.split(',')
+            const recipientNames = data?.person_name?.split(',')
+            console.log("Recipient...", recipientEmails, recipientNames);
+
+            recipientEmails.forEach(async(email, index) => {
+                const emailResponse = await sendEmail(data, email?.trim(), recipientNames[index]);
+                console.log("Sending now...", email, emailResponse);
+            });
+            const updateResponse = await updateClientResponse(data.id)
+            console.log("Update response...", updateResponse[0]?.person_name);
         }
     }
 

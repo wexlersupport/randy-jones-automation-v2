@@ -35,10 +35,15 @@ const links = [[
 ],[],
 [
   {
-  label: 'Signatures',
-  icon: 'i-lucide-settings',
-  to: '/signature'
-},
+    label: 'Signatures',
+    icon: 'i-lucide-settings',
+    to: '/signature'
+  },
+  {
+    label: 'AI Prompts',
+    icon: 'i-lucide-message-square-code',
+    to: '/ai-prompts'
+  },
   // {
   //   label: 'Feedback',
   //   icon: 'i-lucide-message-circle',
