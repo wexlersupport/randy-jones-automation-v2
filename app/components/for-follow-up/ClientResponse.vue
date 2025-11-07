@@ -278,7 +278,7 @@
                     }"
                 />
 
-                <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
+                <!-- <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
                     v-if="!isLoading">
                     <div class="text-sm text-muted">
                         {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
@@ -293,7 +293,7 @@
                         @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
                     />
                     </div>
-                </div>
+                </div> -->
             </div>
         </UCard>
     </div>

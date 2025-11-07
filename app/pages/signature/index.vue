@@ -6,9 +6,18 @@ const { data, refresh } = await useFetch('/api/postgre', {
   query: { table: 'for_follow_up_templates', isDesc: true },
 });
 const items = ref<any[]>(data.value?.data || [])
-
 const selectedItem = ref<typeof items.value[0] | null>(null)
 const isCreating = ref(false)
+
+const search = ref('')
+const filteredItems = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return items.value
+  selectedItem.value = null
+  isCreating.value = false
+
+  return items.value.filter(i => (i.label || '').toLowerCase().includes(q))
+})
 
 function selectItem(item: any) {
   selectedItem.value = { ...item } // shallow copy to avoid direct mutation
@@ -146,6 +155,13 @@ async function onDelete() {
 </script>
 
 <template>
+  <UInput
+      v-model="search"
+      size="xl"
+      class="max-w-4xl"
+      icon="i-lucide-search"
+      placeholder="Input search term"
+  />
   <div class="flex border border-gray-200 dark:border-gray-700 rounded-md max-w-4xl">
     <!-- LEFT PANEL -->
     <div
@@ -163,7 +179,7 @@ async function onDelete() {
 
       <ul class="space-y-2">
         <li
-          v-for="item in items"
+          v-for="item in filteredItems"
           :key="item.value"
           class="text-sm p-2 rounded cursor-pointer border border-gray-200 dark:border-gray-700 hover:bg-blue-100 dark:hover:bg-blue-900"
           :class="selectedItem?.id === item.id && !isCreating ? 'bg-blue-200 dark:bg-blue-800' : ''"
