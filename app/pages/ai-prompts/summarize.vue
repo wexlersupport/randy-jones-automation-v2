@@ -5,7 +5,7 @@
         query: {
             table: 'meeting_summary_temp',
             dynamic_field: 'type',
-            value: 'ai_prompts',
+            value: 'ai_summarize',
             isDesc: true
         }
     });
@@ -17,7 +17,7 @@
         isLoading.value = true
 
         await createAiPrompt()
-        await deleteMerge()
+        // await deleteMerge()
         await refresh()
         isLoading.value = false
 
@@ -41,12 +41,12 @@
             query: {
                 table: 'meeting_summary_temp',
                 dynamic_field: 'type',
-                value: 'merge'
+                value: 'summary'
             }
         }));
         // console.log('Fetched merge items:', merge_data)
         merge_data.forEach(async(item: any) => {
-            if (item?.type === 'merge') {
+            if (item?.type === 'summary') {
                 const deleteItem = await handleApiResponse($fetch(`/api/postgre/dynamic_field`, {
                     method: 'DELETE',
                     query: {
@@ -68,9 +68,9 @@
                 table: 'meeting_summary_temp'
             },
             body: {
-                meeting_uuid: 'ai_prompts',
+                meeting_uuid: 'ai_summarize',
                 meeting_ai_summary: aiPrompt.value,
-                type: 'ai_prompts',
+                type: 'ai_summarize',
                 created_at,
             }
         }));
@@ -92,7 +92,7 @@
                 <div class="grid grid-cols-1 gap-2">
                     <UCard class="w-full">
                         <template #header>
-                            <h2 class="text-lg font-semibold">AI prompts to merge Signatures and Meeting Summaries</h2>
+                            <h2 class="text-lg font-semibold">AI prompts to summarize Zoom Meetings</h2>
                         </template>
                         <div class="grid grid-cols-1 gap-3">
                             <UTextarea

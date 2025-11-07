@@ -14,22 +14,45 @@ export default defineEventHandler(async (event) => {
     apiKey: openaiApiKey,
   });
 
+  const transcript = filterObj.summary_overview || "";
+  let system = `
+    You are an AI meeting assistant.
+    Summarize the following Zoom meeting in a structured format with:
+
+    - Overview
+    - Key Points
+    - Decisions
+    - Action Items / Next Steps
+
+    Transcript:
+    ${transcript}
+  `;
+
+  const dbRes: any = await $fetch("/api/postgre/dynamic_field", {
+    method: "GET",
+    params: {
+      table: 'meeting_summary_temp',
+      dynamic_field: 'type',
+      value: 'ai_summarize',
+      isDesc: true
+    },
+  });
+  // console.log(`DB Response for meeting_summary_temp:`, dbRes.data.length);
+  if (dbRes?.data?.length > 0) {
+    system = dbRes.data[0].meeting_ai_summary;
+    system += `
+
+    Transcript:
+    ${transcript}
+    `;
+  }
+  console.log('Using AI Summarize Prompt:', system);
+
   try {
-    const transcript = filterObj.summary_overview || "";
+    
     const response: any = await client.responses.create({
       model: "gpt-4.1-mini",
-      input: `
-            You are an AI meeting assistant.
-            Summarize the following Zoom meeting in a structured format with:
-
-            - Overview
-            - Key Points
-            - Decisions
-            - Action Items / Next Steps
-
-            Transcript:
-            ${transcript}
-        `,
+      input: system,
     });
 
     return {
