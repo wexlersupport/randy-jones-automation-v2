@@ -7,12 +7,12 @@ const links = [[{
   to: '/signature',
   exact: true
 },
-//{
-//  label: 'Signatures',
-//  icon: 'i-lucide-file-signature',
-//  to: '/signature/signature-list',
-//  exact: true
-//}
+{
+  label: 'Reminders',
+  icon: 'i-lucide-bell-plus',
+  to: '/signature/reminders',
+  exact: true
+}
 // {
 //   label: 'Field Service',
 //   icon: 'i-lucide-book-open',
