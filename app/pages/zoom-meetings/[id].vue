@@ -7,6 +7,7 @@
     const route = useRoute()
     const router = useRouter()
     const meetingId = route.params.id as string
+    console.log("Meeting ID:", meetingId);
     const personId = route.query.person_id as number | undefined
     const isLoading = ref(true)
     const isLoadingAi = ref(false)

@@ -180,7 +180,7 @@
                         const selected = persons.value.find(p => p.id === row.original.id)
                         if (selected) {
                             if (selected?.zoom_meetings?.length > 0) {
-                                navigateTo('/zoom-meetings/' + selected.zoom_meetings[0]?.meeting_uuid)
+                                navigateTo('/zoom-meetings/' + encodeURIComponent(selected.zoom_meetings[0]?.meeting_uuid))
                                 return
                             }
                         }
@@ -189,7 +189,7 @@
                         const { response } = await call('/api/zoom/meeting_summary')
                         const filtered = response.filter((meeting: any) => !meeting.postgre_data)
                         if (filtered?.length > 0) {
-                            navigateTo('/zoom-meetings/' + filtered[0]?.meeting_uuid + '?person_id=' + row.original.id)
+                            navigateTo('/zoom-meetings/' + encodeURIComponent(filtered[0]?.meeting_uuid) + '?person_id=' + row.original.id)
                         } else {
                             isLoading.value = false
                         }
