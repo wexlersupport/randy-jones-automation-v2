@@ -84,8 +84,9 @@ async function updateClientResponse(id) {
 
 async function sendEmail(data, email, name, reminders_data) {
     const convertedDate = await convertDate(data?.next_meeting_date);
+    console.log('Converted Date:', convertedDate);
     const accessToken = await microsoftAuth();
-    // console.log('Access Token:', accessToken);
+    console.log('Access Token:', accessToken);
     const replacements = {
         name,
         meeting_date: convertedDate,
@@ -93,6 +94,7 @@ async function sendEmail(data, email, name, reminders_data) {
     };
     let content = fillTemplate(reminders_data?.meeting_ai_summary, replacements);
     content = await plainTextToHtml(content);
+    console.log('Email Content:', content);
 
     const newSchedule = {
         message: {
@@ -124,6 +126,7 @@ async function sendEmail(data, email, name, reminders_data) {
             }
         )
         const result = graphRes.status === 202 ? { message: "Email scheduled successfully", email } : await graphRes.json();
+        console.log('Graph API Response:', result);
 
         return { success: true, response: result }
     } catch (err) {

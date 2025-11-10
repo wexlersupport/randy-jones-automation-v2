@@ -29,7 +29,7 @@
     onMounted(async () => {
         navigateTo('/for-follow-up')
 
-        return
+        return;
         await mergeMeetings()
 
 
