@@ -27,16 +27,6 @@ export default async (req) => {
             const recipientNames = data?.person_name?.split(',')
             console.log("Recipient...", recipientEmails, recipientNames);
 
-            // let emailResponse = null;
-            // recipientEmails.forEach(async(email, index) => {
-            //     emailResponse = await sendEmail(data, email?.trim(), recipientNames[index], reminders_data?.[0]);
-            //     console.log("Sending now...", email, emailResponse);
-            // });
-            // if (emailResponse?.success) {
-            //     console.log("Email sent successfully to all recipients for client_response ID:", data.id);
-            //     const updateResponse = await updateClientResponse(data.id)
-            //     console.log("Update response...", updateResponse[0]?.person_name);
-            // }
             let emailResponses = await Promise.all(
                 recipientEmails.map((email, index) =>
                     sendEmail(data, email?.trim(), recipientNames[index], reminders_data?.[0])
@@ -68,7 +58,8 @@ export default async (req) => {
 // | 21:00 UTC | 4:00 PM EST (Sundays)     | 5:00 AM PHT (Monday)    |
 // | 21:30 UTC | 4:30 PM EST (Sundays)     | 5:30 AM PHT (Monday)    |
 export const config = {
-    schedule: '*/1 * * * *'
+    // schedule: '*/1 * * * *'
+    schedule: '0 10 * * *' // # runs daily at 6PM PHT
     // schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
     // schedule: '0,30 20-21 * * 1' // (20-21 UTC on Mondays) (3PM-4PM EST on Mondays) (4AM-5AM PHT on Tuesdays)
 };
@@ -148,7 +139,7 @@ async function sendEmail(data, email, name, reminders_data) {
             }
         )
         const result = graphRes.status === 202 ? { message: "Email scheduled successfully", email } : await graphRes.json();
-        console.log('Graph API Response:', result);
+        // console.log('Graph API Response:', result);
 
         return { success: true, response: result }
     } catch (err) {
@@ -172,7 +163,7 @@ async function microsoftAuth() {
     const onedriveTenantId = process.env.NUXT_PUBLIC_ONEDRIVE_TENANT_ID
     const onedriveAccountId = process.env.NUXT_PUBLIC_ONEDRIVE_ACCOUNT_ID
     const onedriveClientSecret = process.env.NUXT_PUBLIC_ONEDRIVE_CLIENT_SECRET
-    console.log('Microsoft Auth Env:', { onedriveTenantId, onedriveAccountId, onedriveClientSecret });
+    // console.log('Microsoft Auth Env:', { onedriveTenantId, onedriveAccountId, onedriveClientSecret });
 
     try {
         // 1️⃣ Get Access Token
@@ -193,7 +184,7 @@ async function microsoftAuth() {
         )
         // console.log('Microsoft Auth Token Response Status:', tokenRes);
         const res = await tokenRes.json()
-        console.log('Microsoft Auth Response:', res);
+        // console.log('Microsoft Auth Response:', res);
         const accessToken = res.access_token
         // console.log('Access Token:', accessToken);
         return accessToken
