@@ -116,7 +116,7 @@ async function sendEmail(data, email, name, reminders_data) {
     };
     let content = fillTemplate(reminders_data?.meeting_ai_summary, replacements);
     content = await plainTextToHtml(content);
-    console.log('Email Content:', content);
+    // console.log('Email Content:', content);
 
     const newSchedule = {
         message: {
@@ -191,11 +191,11 @@ async function microsoftAuth() {
                 }
             }
         )
-        console.log('Microsoft Auth Token Response Status:', tokenRes);
+        // console.log('Microsoft Auth Token Response Status:', tokenRes);
         const res = await tokenRes.json()
         console.log('Microsoft Auth Response:', res);
         const accessToken = res.access_token
-        console.log('Access Token:', accessToken);
+        // console.log('Access Token:', accessToken);
         return accessToken
     } catch (error) {
         console.error(error)
