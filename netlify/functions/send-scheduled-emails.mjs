@@ -150,6 +150,7 @@ async function microsoftAuth() {
     const onedriveTenantId = process.env.NUXT_PUBLIC_ONEDRIVE_TENANT_ID
     const onedriveAccountId = process.env.NUXT_PUBLIC_ONEDRIVE_ACCOUNT_ID
     const onedriveClientSecret = process.env.NUXT_PUBLIC_ONEDRIVE_CLIENT_SECRET
+    console.log('Microsoft Auth Env:', { onedriveTenantId, onedriveAccountId, onedriveClientSecret });
 
     try {
         // 1️⃣ Get Access Token
@@ -169,6 +170,7 @@ async function microsoftAuth() {
             }
         )
         const res = await tokenRes.json()
+        console.log('Microsoft Auth Response:', res);
         const accessToken = res.access_token
 
         return accessToken
