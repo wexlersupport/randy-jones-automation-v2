@@ -68,8 +68,8 @@ export default async (req) => {
 // | 21:00 UTC | 4:00 PM EST (Sundays)     | 5:00 AM PHT (Monday)    |
 // | 21:30 UTC | 4:30 PM EST (Sundays)     | 5:30 AM PHT (Monday)    |
 export const config = {
-    // schedule: '*/1 * * * *'
-    schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
+    schedule: '*/1 * * * *'
+    // schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
     // schedule: '0,30 20-21 * * 1' // (20-21 UTC on Mondays) (3PM-4PM EST on Mondays) (4AM-5AM PHT on Tuesdays)
 };
 
@@ -106,7 +106,7 @@ async function updateClientResponse(id) {
 
 async function sendEmail(data, email, name, reminders_data) {
     const convertedDate = await convertDate(data?.next_meeting_date);
-    console.log('Converted Date:', convertedDate);
+    // console.log('Converted Date:', convertedDate);
     const accessToken = await microsoftAuth();
     console.log('Access Token:', accessToken);
     const replacements = {
