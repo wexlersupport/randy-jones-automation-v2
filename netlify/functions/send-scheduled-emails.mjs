@@ -169,10 +169,11 @@ async function microsoftAuth() {
                 }
             }
         )
+        console.log('Microsoft Auth Token Response Status:', tokenRes);
         const res = await tokenRes.json()
         console.log('Microsoft Auth Response:', res);
         const accessToken = res.access_token
-
+        console.log('Access Token:', accessToken);
         return accessToken
     } catch (error) {
         console.error(error)
