@@ -153,19 +153,17 @@ async function microsoftAuth() {
     console.log('Microsoft Auth Env:', { onedriveTenantId, onedriveAccountId, onedriveClientSecret });
 
     try {
-        const bodyObj = {
-            client_id: onedriveAccountId,
-            client_secret: onedriveClientSecret,
-            scope: 'https://graph.microsoft.com/.default',
-            grant_type: 'client_credentials'
-        }
-        console.log('Microsoft Auth Body:', bodyObj);
         // 1️⃣ Get Access Token
         const tokenRes = await fetch(
             `https://login.microsoftonline.com/${onedriveTenantId}/oauth2/v2.0/token`,
             {
                 method: 'POST',
-                body: JSON.stringify(bodyObj),
+                body: new URLSearchParams({
+                        client_id: onedriveAccountId,
+                        client_secret: onedriveClientSecret,
+                        scope: 'https://graph.microsoft.com/.default',
+                        grant_type: 'client_credentials'
+                    }).toString(),
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
