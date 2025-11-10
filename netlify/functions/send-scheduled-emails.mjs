@@ -27,15 +27,33 @@ export default async (req) => {
             const recipientNames = data?.person_name?.split(',')
             console.log("Recipient...", recipientEmails, recipientNames);
 
-            let emailResponse = null;
-            recipientEmails.forEach(async(email, index) => {
-                emailResponse = await sendEmail(data, email?.trim(), recipientNames[index], reminders_data?.[0]);
-                console.log("Sending now...", email, emailResponse);
+            // let emailResponse = null;
+            // recipientEmails.forEach(async(email, index) => {
+            //     emailResponse = await sendEmail(data, email?.trim(), recipientNames[index], reminders_data?.[0]);
+            //     console.log("Sending now...", email, emailResponse);
+            // });
+            // if (emailResponse?.success) {
+            //     console.log("Email sent successfully to all recipients for client_response ID:", data.id);
+            //     const updateResponse = await updateClientResponse(data.id)
+            //     console.log("Update response...", updateResponse[0]?.person_name);
+            // }
+            let emailResponses = await Promise.all(
+                recipientEmails.map((email, index) =>
+                    sendEmail(data, email?.trim(), recipientNames[index], reminders_data?.[0])
+                )
+            );
+            // Log each response
+            emailResponses.forEach((response, index) => {
+                console.log("Sending now...", recipientEmails[index], response);
             });
-            if (emailResponse?.success) {
-                console.log("Email sent successfully to all recipients for client_response ID:", data.id);
-                const updateResponse = await updateClientResponse(data.id)
+            // Check if all were successful
+            const allSuccessful = emailResponses.every(res => res?.success);
+            if (allSuccessful) {
+                console.log("Emails sent successfully to all recipients for client_response ID:", data.id);
+                const updateResponse = await updateClientResponse(data.id);
                 console.log("Update response...", updateResponse[0]?.person_name);
+            } else {
+                console.warn("Some emails failed to send:", emailResponses);
             }
         }
     }
