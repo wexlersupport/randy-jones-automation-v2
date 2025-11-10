@@ -14,8 +14,9 @@ export default async (req) => {
         const { startPreviousSunday, endPreviousSunday } = await getPreviousSunday(scheduledTime);
         console.log(`Sunday Reminders: ${startPreviousSunday}`);
         const now = new Date(); // current local date & time
+        // const now = new Date('2025-11-09T15:00'); // current local date & time
+        console.log(`now date & time: ${now.toISOString()}`);
         const target = new Date(startPreviousSunday); // interpreted as local
-        // const target = new Date('2025-10-30T12:01'); // 2025-10-30T12:01
         console.log(`Target date & time: ${target.toISOString()}`);
 
         if (now < target) {
@@ -45,8 +46,8 @@ export default async (req) => {
 // | 21:00 UTC | 4:00 PM EST (Sundays)     | 5:00 AM PHT (Monday)    |
 // | 21:30 UTC | 4:30 PM EST (Sundays)     | 5:30 AM PHT (Monday)    |
 export const config = {
-    // schedule: '*/1 * * * *'
-    schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
+    schedule: '*/1 * * * *'
+    // schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
     // schedule: '0,30 20-21 * * 1' // (20-21 UTC on Mondays) (3PM-4PM EST on Mondays) (4AM-5AM PHT on Tuesdays)
 };
 
