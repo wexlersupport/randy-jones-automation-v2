@@ -58,9 +58,8 @@ export default async (req) => {
 // | 21:00 UTC | 4:00 PM EST (Sundays)     | 5:00 AM PHT (Monday)    |
 // | 21:30 UTC | 4:30 PM EST (Sundays)     | 5:30 AM PHT (Monday)    |
 export const config = {
-    // schedule: '*/1 * * * *'
-    schedule: '0 10 * * *' // # runs daily at 6PM PHT
-    // schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
+    // schedule: '*/1 * * * *' // (every 1 minute)
+    schedule: '0,30 20-21 * * 0' // (20-21 UTC on Sundays) (3PM-4PM EST on Sundays) (4AM-5AM PHT on Mondays)
     // schedule: '0,30 20-21 * * 1' // (20-21 UTC on Mondays) (3PM-4PM EST on Mondays) (4AM-5AM PHT on Tuesdays)
 };
 
