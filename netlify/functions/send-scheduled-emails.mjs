@@ -27,12 +27,16 @@ export default async (req) => {
             const recipientNames = data?.person_name?.split(',')
             console.log("Recipient...", recipientEmails, recipientNames);
 
+            let emailResponse = null;
             recipientEmails.forEach(async(email, index) => {
-                const emailResponse = await sendEmail(data, email?.trim(), recipientNames[index], reminders_data?.[0]);
+                emailResponse = await sendEmail(data, email?.trim(), recipientNames[index], reminders_data?.[0]);
                 console.log("Sending now...", email, emailResponse);
             });
-            const updateResponse = await updateClientResponse(data.id)
-            console.log("Update response...", updateResponse[0]?.person_name);
+            if (emailResponse?.success) {
+                console.log("Email sent successfully to all recipients for client_response ID:", data.id);
+                const updateResponse = await updateClientResponse(data.id)
+                console.log("Update response...", updateResponse[0]?.person_name);
+            }
         }
     }
 
