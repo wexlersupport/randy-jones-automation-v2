@@ -89,32 +89,6 @@
             {
                 type: 'separator'
             },
-            // {
-            //     label: 'Copy Email',
-            //     icon: 'i-lucide-copy',
-            //     onSelect() {
-            //         if (!navigator.clipboard) {
-            //             toast.add({
-            //                 title: 'Clipboard not supported',
-            //                 description: 'Your browser does not support clipboard operations.'
-            //             })
-            //             return
-            //         }
-            //         if (!row.original || !row.original.primary_email) {
-            //             toast.add({
-            //                 title: 'Error',
-            //                 description: 'No email found for this row.'
-            //             })
-            //             return
-            //         }
-            //         navigator.clipboard.writeText(row.original.primary_email)
-
-            //         toast.add({
-            //             title: 'Copied to clipboard',
-            //             description: 'Email copied to clipboard'
-            //         })
-            //     }
-            // },
             {
                 label: 'View Contact Details',
                 icon: 'i-lucide-list',
@@ -198,46 +172,6 @@
                 })
             }
         },
-        // {
-        //     id: "Client Email",
-        //     accessorKey: 'primary_email',
-        //     header: ({ column }) => {
-        //         const isSorted = column.getIsSorted()
-
-        //         return h(UButton, {
-        //             color: 'neutral',
-        //             variant: 'ghost',
-        //             label: 'Email',
-        //             icon: isSorted
-        //             ? isSorted === 'asc'
-        //                 ? 'i-lucide-arrow-up-narrow-wide'
-        //                 : 'i-lucide-arrow-down-wide-narrow'
-        //             : 'i-lucide-arrow-up-down',
-        //             class: '-mx-2.5',
-        //             onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-        //         })
-        //     },
-        // },
-        // {
-        //     id: "Organization Name",
-        //     accessorKey: 'org_name',
-        //     header: ({ column }) => {
-        //         const isSorted = column.getIsSorted()
-
-        //         return h(UButton, {
-        //             color: 'neutral',
-        //             variant: 'ghost',
-        //             label: 'Organization Name',
-        //             icon: isSorted
-        //             ? isSorted === 'asc'
-        //                 ? 'i-lucide-arrow-up-narrow-wide'
-        //                 : 'i-lucide-arrow-down-wide-narrow'
-        //             : 'i-lucide-arrow-up-down',
-        //             class: '-mx-2.5',
-        //             onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-        //         })
-        //     },
-        // },
         {
             id: 'Last Meeting Date',
             accessorKey: 'zoom_summary',

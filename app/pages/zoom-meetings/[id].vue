@@ -24,6 +24,9 @@
     const nextScheduleMeeting = ref<any>(null);
     const ai_summary_html = ref<string>('');
 
+    const { data: _zoom }: any = await useFetch('/api/zoom/meeting_summary')
+    const zoomMeetingDetails = ref<any>(_zoom.value?.response?.filter((data: any) => data.detail?.summary_overview) || {})
+    const selectedZoomMeeting = ref<any>(zoomMeetingDetails.value[0]?.meeting_uuid || null);
     const { data: _data } = await useFetch('/api/postgre/dynamic_field', {
         query: {
             table: 'zoom_meetings',
@@ -59,6 +62,15 @@
     })
 
     onMounted(async () => {
+        zoomMeetingDetails.value = zoomMeetingDetails.value.map((meeting: any) => {
+            let label = meeting?.detail?.summary_overview || meeting?.meeting_topic;
+            if (meeting?.person_details) {
+                label = `Meeting Summary for ${meeting?.person_details?.name} - ${(meeting?.signature?.subject?.replace('Invite', '') || '')}`;
+            }
+
+            return { ...meeting, label }
+        })
+
         meetingTypeList.value = leafProcess()
         selectedMeetingType.value = postgreMeeting.value ? postgreMeeting.value.signature_id : meetingTypeList.value[0].value;
         const _selectedContactId = postgreMeeting.value ? Number(postgreMeeting.value.person_id) : (personId ? Number(personId) : contactList.value[0].id);
@@ -376,6 +388,48 @@
         isLoadingFollowUp.value = true
         navigateTo('/for-follow-up/' + selectedContact.value)
     }
+
+    async function handleChangeZoomMeeting() {
+        isLoadingAi.value = true
+        // console.log("Changed selected Zoom meeting to:", selectedZoomMeeting.value);
+        const { response: meetingResponse } = await call('/api/zoom/meeting_detail', 'POST', { meetingId: selectedZoomMeeting.value })
+        // console.log("Fetched meeting detail for selected Zoom meeting:", meetingResponse);
+        if (meetingResponse) {
+            form.value.summary_overview = meetingResponse.summary_overview;
+
+            const { data } = await useFetch('/api/postgre/dynamic_field', {
+                query: {
+                    table: 'zoom_meetings',
+                    dynamic_field: 'meeting_uuid',
+                    value: selectedZoomMeeting.value
+                }
+            });
+            if (data.value?.data?.length) {
+                postgreMeeting.value = data.value?.data[0] || null;
+                ai_summary.value = postgreMeeting.value?.meeting_ai_summary
+            } else {
+                postgreMeeting.value = null;
+                nextMeeting.value = null;
+                const { response: summary_overview, data: gpt_data } = await generateSummary()
+                ai_summary.value = summary_overview
+                meetingDetail.value = meetingResponse
+
+                const { response: next_meeting } = await getNextMeeting(meetingResponse.summary_overview)
+                if (next_meeting?.choices?.length) {
+                    const _next_meeting = next_meeting?.choices[0]?.message?.content?.trim() || 'none';
+                    if (_next_meeting?.length < 7 || _next_meeting.toLowerCase().includes('none')) {
+                    } else {
+                        nextMeeting.value = _next_meeting;
+                    }
+                }
+
+                nextScheduleMeeting.value = parseDateLocal(nextMeeting.value)
+            }
+
+            await handleMeetingSummary()
+        }
+        isLoadingAi.value = false
+    }
 </script>
 
 <template>
@@ -408,6 +462,16 @@
                         </template>
                         <div class="grid grid-cols-1 gap-2">
                             <div class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Title:</label>
+                                <USelect
+                                    v-model="selectedZoomMeeting"
+                                    :items="zoomMeetingDetails.map((item: any) => ({ value: item.meeting_uuid, label: item.label }))"
+                                    placeholder="Choose one or more attachments"
+                                    class="w-full"
+                                    @change="handleChangeZoomMeeting"
+                                />
+                            </div>
+                            <div class="w-full space-y-1">
                                 <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender Email</label>
                                 <!-- <UInput v-model="form.meeting_host_email" label="Meeting Host Email" disabled class="w-full" /> -->
                                  <USelect
@@ -426,7 +490,11 @@
                                 <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Title</label>
                                 <UInput v-model="form.summary_title" label="Summary Title" disabled class="w-full" />
                             </div>
-                            <div class="w-full space-y-1">
+                            <UiAppLoading
+                                v-if="isLoadingAi"
+                                class="w-full border rounded-md p-6 my-4 border-neutral-800"
+                            />
+                            <div v-if="!isLoadingAi" class="w-full space-y-1">
                                 <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Overview</label>
                                 <UTextarea v-model="form.summary_overview" label="Overview" disabled :rows="15" class="w-full" />
                             </div>
