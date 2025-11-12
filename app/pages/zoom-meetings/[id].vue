@@ -64,11 +64,17 @@
     onMounted(async () => {
         zoomMeetingDetails.value = zoomMeetingDetails.value.map((meeting: any) => {
             let label = meeting?.detail?.summary_overview || meeting?.meeting_topic;
+            let is_formatted = false;
             if (meeting?.person_details) {
-                label = `Meeting Summary for ${meeting?.person_details?.name} - ${(meeting?.signature?.subject?.replace('Invite', '') || '')}`;
+                label = `Meeting Summary for ${meeting?.person_details?.name} - Quick Call`;
+                if (meeting?.postgre_data) {
+                    const meeting_type = leafProcess()?.find((item: any) => item.value === meeting?.postgre_data?.signature_id)?.label || 'Quick Call';
+                    label = `Meeting Summary for ${meeting?.person_details?.name} - ${meeting_type}`;
+                    is_formatted = true;
+                }
             }
 
-            return { ...meeting, label }
+            return { ...meeting, is_formatted, label }
         })
 
         meetingTypeList.value = leafProcess()
@@ -107,8 +113,9 @@
         // ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview
         if (postgreMeeting.value) {
             ai_summary.value = postgreMeeting.value?.meeting_ai_summary
-            // selectedZoomMeeting.value = postgreMeeting.value?.meeting_uuid
+            selectedZoomMeeting.value = postgreMeeting.value?.meeting_uuid
         } else {
+            selectedZoomMeeting.value = meetingDetail.value?.meeting_uuid
             const { data: summary_temp } = await getMeetingTemp()
             console.log("summary_temp:", summary_temp);
 
@@ -392,11 +399,26 @@
 
     async function handleChangeZoomMeeting() {
         isLoadingAi.value = true
-        // console.log("Changed selected Zoom meeting to:", selectedZoomMeeting.value);
+        // console.log("selectedZoomMeeting:", selectedZoomMeeting.value, zoomMeetingDetails.value);
         const { response: meetingResponse } = await call('/api/zoom/meeting_detail', 'POST', { meetingId: selectedZoomMeeting.value })
-        // console.log("Fetched meeting detail for selected Zoom meeting:", meetingResponse);
+        // console.log("meetingResponse:", meetingResponse);
         if (meetingResponse) {
             form.value.summary_overview = meetingResponse.summary_overview;
+            const selectedMeeting = zoomMeetingDetails.value?.filter((meeting: any) => meeting.is_formatted)?.find((meeting: any) => meeting.meeting_uuid === selectedZoomMeeting.value);
+            // console.log("Selected meeting:", selectedMeeting);
+            if (selectedMeeting) {
+                if (selectedMeeting?.person_details?.id) {
+                    selectedContact.value = selectedMeeting?.person_details?.id;
+                    await handleSelectContact(selectedContact.value);
+                }
+                if (selectedMeeting?.postgre_data?.signature_id) {
+                    selectedMeetingType.value = selectedMeeting?.postgre_data?.signature_id || meetingTypeList.value[0].value;
+                }
+            } else {
+                selectedContact.value = (personId ? Number(personId) : contactList.value[0].id);
+                await handleSelectContact(selectedContact.value);
+                selectedMeetingType.value = meetingTypeList.value[0]?.value;
+            }
 
             const { data } = await useFetch('/api/postgre/dynamic_field', {
                 query: {
@@ -445,13 +467,12 @@
             console.log("deleteItem:", deleteItem);
 
             toast.add({
-                title: 'Meeting summary removed',
+                title: 'Generated summary removed',
                 description: 'The AI-generated meeting summary has been removed from the database.',
                 color: 'success'
             })
 
             setTimeout(() => {
-                console.log("Navigating back after removal.");
                 router.back()
             }, 500)
         }
@@ -509,18 +530,18 @@
                                     class="w-full"
                                 />
                             </div>
-                            <div class="w-full space-y-1">
-                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Contacts</label>
-                                <UInput v-model="form.client_name" label="Meeting Client Name" disabled class="w-full" />
-                            </div>
-                            <div class="w-full space-y-1">
-                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Title</label>
-                                <UInput v-model="form.summary_title" label="Summary Title" disabled class="w-full" />
-                            </div>
                             <UiAppLoading
                                 v-if="isLoadingAi"
                                 class="w-full border rounded-md p-6 my-4 border-neutral-800"
                             />
+                            <div v-if="!isLoadingAi" class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Contacts</label>
+                                <UInput v-model="form.client_name" label="Meeting Client Name" disabled class="w-full" />
+                            </div>
+                            <div v-if="!isLoadingAi" class="w-full space-y-1">
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Title</label>
+                                <UInput v-model="form.summary_title" label="Summary Title" disabled class="w-full" />
+                            </div>
                             <div v-if="!isLoadingAi" class="w-full space-y-1">
                                 <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Overview</label>
                                 <UTextarea v-model="form.summary_overview" label="Overview" disabled :rows="15" class="w-full" />
@@ -533,7 +554,11 @@
                             <h2 class="text-lg font-semibold">AI Generated Summary Details</h2>
                         </template>
                         <div class="grid grid-cols-1 gap-2">
-                            <div class="w-full space-y-1">
+                            <UiAppLoading
+                                v-if="isLoadingAi"
+                                class="w-full border rounded-md p-6 my-4 border-neutral-800"
+                            />
+                            <div v-if="!isLoadingAi" class="w-full space-y-1">
                                 <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Client Email:</label>
                                 <USelect
                                     v-model="selectedContact"
@@ -544,7 +569,7 @@
                                     @update:modelValue="handleSelectContact"
                                 />
                             </div>
-                            <div class="w-full space-y-2">
+                            <div v-if="!isLoadingAi" class="w-full space-y-2">
                                 <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Type:</label>
                                 <USelect
                                     v-model="selectedMeetingType"
@@ -555,14 +580,10 @@
                                     @update:modelValue="handleSelectMeetingType"
                                 />
                             </div>
-                            <UiAppLoading
-                                v-if="isLoadingAi"
-                                class="w-full border rounded-md p-6 my-4 border-neutral-800"
-                            />
                             <UTextarea :disabled="postgreMeeting" v-if="!isLoadingAi" v-model="form.ai_summary_overview" label="Overview" :rows="20" />
                             <span class="text-sm text-gray-500 italic">*Please review and edit the AI-generated summary before adding it as a note.</span>
                         </div>
-                        <template #footer>
+                        <template #footer v-if="!isLoadingAi">
                             <div class="flex w-full justify-between gap-4">
                                 <UButton v-if="postgreMeeting" @click="onRemove" icon="i-lucide-trash-2" size="lg" color="error" variant="solid">Remove</UButton>
                                 <div class="flex w-full justify-end gap-4">

@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
     ${transcript}
     `;
   }
-  console.log('Using AI Summarize Prompt:', system);
+  // console.log('Using AI Summarize Prompt:', system);
 
   try {
     
