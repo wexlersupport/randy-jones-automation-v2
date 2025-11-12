@@ -107,6 +107,7 @@
         // ai_summary.value = postgreMeeting.value ? postgreMeeting.value.meeting_ai_summary : summary_overview
         if (postgreMeeting.value) {
             ai_summary.value = postgreMeeting.value?.meeting_ai_summary
+            // selectedZoomMeeting.value = postgreMeeting.value?.meeting_uuid
         } else {
             const { data: summary_temp } = await getMeetingTemp()
             console.log("summary_temp:", summary_temp);
@@ -430,6 +431,32 @@
         }
         isLoadingAi.value = false
     }
+
+    async function onRemove() {
+        if (confirm('Are you sure do you want to delete the generated summary from the database, but it will remain in Pipedrive Notes. \n Remove it there manually if needed.')) {
+            const deleteItem = await handleApiResponse($fetch(`/api/postgre/dynamic_field`, {
+                method: 'DELETE',
+                query: {
+                    table: 'zoom_meetings',
+                    dynamic_field: 'id',
+                    value: Number(postgreMeeting.value?.id)
+                }
+            }));
+            console.log("deleteItem:", deleteItem);
+
+            toast.add({
+                title: 'Meeting summary removed',
+                description: 'The AI-generated meeting summary has been removed from the database.',
+                color: 'success'
+            })
+
+            setTimeout(() => {
+                console.log("Navigating back after removal.");
+                router.back()
+            }, 500)
+        }
+        
+    }
 </script>
 
 <template>
@@ -462,7 +489,7 @@
                         </template>
                         <div class="grid grid-cols-1 gap-2">
                             <div class="w-full space-y-1">
-                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting Title:</label>
+                                <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Meeting List:</label>
                                 <USelect
                                     v-model="selectedZoomMeeting"
                                     :items="zoomMeetingDetails.map((item: any) => ({ value: item.meeting_uuid, label: item.label }))"
@@ -536,10 +563,16 @@
                             <span class="text-sm text-gray-500 italic">*Please review and edit the AI-generated summary before adding it as a note.</span>
                         </div>
                         <template #footer>
-                            <div class="flex w-full justify-end gap-4">
-                                <UButton v-if="!postgreMeeting" @click="onSubmit" icon="i-lucide-plus" size="lg" color="primary" variant="solid">Add AI Summary in Pipedrive Notes</UButton>
-                                <UButton v-if="postgreMeeting" disabled icon="i-lucide-check" size="lg" color="info" variant="outline">Already added in Pipedrive Notes</UButton>
-                                <UButton :loading="isLoadingFollowUp" @click="onFollowUp" icon="i-lucide-send" size="lg" color="info" variant="solid">Follow Up</UButton>
+                            <div class="flex w-full justify-between gap-4">
+                                <UButton v-if="postgreMeeting" @click="onRemove" icon="i-lucide-trash-2" size="lg" color="error" variant="solid">Remove</UButton>
+                                <div class="flex w-full justify-end gap-4">
+                                    <UButton v-if="!postgreMeeting" @click="onSubmit" icon="i-lucide-plus" size="lg" color="primary" variant="solid">Add AI Summary in Pipedrive Notes</UButton>
+                                    <UButton v-if="postgreMeeting" disabled icon="i-lucide-check" size="lg" color="info" variant="outline">Already added in Pipedrive Notes</UButton>
+                                    <UButton :loading="isLoadingFollowUp" @click="onFollowUp" icon="i-lucide-send" size="lg" color="info" variant="solid">Follow Up</UButton>
+                                </div>
+                            </div>
+                            <div v-if="postgreMeeting" class="text-sm text-gray-500 italic mt-2">
+                                ⚠️ Removes the generated summary from the database, but it will remain in Pipedrive Notes. Remove it there manually if needed.
                             </div>
                         </template>
                     </UCard>

@@ -75,7 +75,7 @@ import { is } from 'valibot';
             <!-- Helper notice -->
             <div class="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 p-3 mb-4 text-sm">
                 <strong>Placeholders:</strong> these auto-fill when sending. Please don’t edit the curly-brace text. <br />
-                Available: <code v-pre>{{name}}</code>, <code v-pre>{{meeting_date}}</code>, <code v-pre>{{zoom_link}}</code>.
+                Available: <code v-pre>{{name}}</code> and <code v-pre>{{meeting_date}}</code>.
             </div>
             <UiAppLoading
                 v-if="isLoading"

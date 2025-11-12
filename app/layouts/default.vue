@@ -42,7 +42,7 @@ const links = [[
   {
     label: 'AI Prompts',
     icon: 'i-lucide-message-square-code',
-    to: '/ai-prompts'
+    to: '/ai-prompts/summarize'
   },
   // {
   //   label: 'Feedback',

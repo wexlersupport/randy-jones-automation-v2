@@ -3,17 +3,17 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 const links = [[
   {
+    label: 'Summarize',
+    icon: 'i-lucide-file-text',
+    to: '/ai-prompts/summarize',
+    exact: true
+  },
+  {
     label: 'Merge',
     icon: 'i-lucide-shuffle',
     to: '/ai-prompts',
     exact: true
   },
-  {
-    label: 'Summarize',
-    icon: 'i-lucide-file-text',
-    to: '/ai-prompts/summarize',
-    exact: true
-  }
 ]] satisfies NavigationMenuItem[][]
 </script>
 
