@@ -455,7 +455,9 @@
     }
 
     async function onRemove() {
-        if (confirm('Are you sure do you want to delete the generated summary from the database, but it will remain in Pipedrive Notes. \n Remove it there manually if needed.')) {
+        if (
+            confirm('Executing this action will permanently delete the Generated Summary record from the system database. However, a copy of the summary will remain stored in the associated Pipedrive Notes. To ensure complete data removal, please manually delete the corresponding note in Pipedrive if needed.')
+        ) {
             const deleteItem = await handleApiResponse($fetch(`/api/postgre/dynamic_field`, {
                 method: 'DELETE',
                 query: {
