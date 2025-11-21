@@ -50,6 +50,48 @@ export function convertDate(date: any) {
     return formattedDate;
 }
 
+export function fillTemplate(tpl = "", map = {}, { forSubject = false } = {}) {
+  if (!tpl) return "";
+  return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => {
+    let val = map[key] ?? "";
+    // subjects shouldn't have newlines; keep HTML in body as-is
+    if (forSubject) val = String(val).replace(/\r?\n/g, " ").trim();
+    return String(val);
+  });
+}
+
+export function clientResponseDate(dateInput: any) {
+    // Step 1: Create a Date object
+    const date = new Date(dateInput);
+
+    // Step 2: Define formatter for EST (America/New_York)
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone; // e.g. "Asia/Manila"
+    const options: any = {
+        timeZone,
+        day: '2-digit',
+        month: 'long',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    };
+
+    // Step 3: Format components
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const parts = formatter.formatToParts(date);
+
+    // Extract needed parts
+    const day = parts?.find(p => p.type === 'day')?.value;
+    const month = parts?.find(p => p.type === 'month')?.value;
+    const hour = parts?.find(p => p.type === 'hour')?.value;
+    const minute = parts?.find(p => p.type === 'minute')?.value;
+    const dayPeriod = parts?.find(p => p.type === 'dayPeriod')?.value.toUpperCase();
+    // Step 4: Construct formatted string manually
+    const formatted = `${day} ${month}, ${hour}:${minute} ${dayPeriod}`;
+
+    // console.log(formatted);
+    return formatted ?? date;
+}
+
 export function convertDateFormat(dateString: any) {
   const date = new Date(dateString);
 

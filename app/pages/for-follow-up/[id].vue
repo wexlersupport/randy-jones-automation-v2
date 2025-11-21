@@ -742,7 +742,7 @@
 <template>
     <UDashboardPanel  id="person-details" :ui="{ body: 'gap-2 sm:gap-2 h-full' }">
         <template #header>
-            <UDashboardNavbar title="Person Details">
+            <UDashboardNavbar title="Meeting Invite Details">
                 <template #leading>
                     <UDashboardSidebarCollapse />
                 </template>

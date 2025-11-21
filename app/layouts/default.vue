@@ -16,7 +16,7 @@ const links = [[
   //   }
   // },
   {
-    label: 'For Follow Up',
+    label: 'Client Meeting Dashboard',
     icon: 'i-lucide-send',
     to: '/for-follow-up',
     slot: 'for-follow-up-components' as const,

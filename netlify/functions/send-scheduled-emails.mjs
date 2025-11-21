@@ -222,7 +222,7 @@ async function convertDate(dateInput) {
     // Step 4: Construct formatted string manually
     const formatted = `${day} ${month}, ${hour}:${minute} ${dayPeriod}`;
 
-    console.log(formatted);
+    // console.log(formatted);
     return formatted ?? date;
 }
 

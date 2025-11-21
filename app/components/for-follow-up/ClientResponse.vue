@@ -93,13 +93,13 @@
         {
             id: 'person_name',
             accessorKey: 'person_name',
-            header: 'Name',
+            header: 'Client Name',
         },
-        {
-            id: 'person_email',
-            accessorKey: 'person_email',
-            header: 'Client Email',
-        },
+        // {
+        //     id: 'person_email',
+        //     accessorKey: 'person_email',
+        //     header: 'Client Email',
+        // },
         {
             id: 'signature_id',
             accessorKey: 'signature_id',
@@ -113,7 +113,7 @@
         {
             id: 'next_meeting_date',
             accessorKey: 'next_meeting_date',
-            header: 'Next Meeting Date',
+            header: 'Meeting Date',
             cell: ({ row }) => {
                 return new Date(row.getValue('next_meeting_date')).toLocaleString('en-US', {
                     year: "numeric",
@@ -123,6 +123,34 @@
                     minute: '2-digit',
                     hour12: true
                 })
+            }
+        },
+        {
+            id: 'is_script_sent',
+            accessorKey: 'is_script_sent',
+            header: 'Reminder Status',
+            cell: ({ row }) => {
+                // return row.getValue('is_script_sent') ? 'Sent' : 'Pending'
+                if (row.original?.is_script_sent) {
+                    return 'Sent last ' + new Date(row.original.sent_reminder_date).toLocaleString('en-US', {
+                        year: "numeric",
+                        day: 'numeric',
+                        month: 'short'
+                    })
+                } else {
+                    return h('div', { class: 'flex items-center justify-between w-full' }, [
+                        h('span', 'Pending'),
+                        h(UButton, {
+                            icon: 'i-lucide-send',
+                            color: 'primary',
+                            variant: 'subtle',
+                            label: 'Send Now',
+                            onClick: () => onSendNow(row.original),
+                            class: 'cursor-pointer',
+                        })
+                    ])
+
+                }
             }
         }
     ]
@@ -138,6 +166,88 @@
             }
         })
 
+        return res
+    }
+
+    async function getInviteReminders() {
+        const res = await $fetch('/api/postgre/dynamic', {
+            method: 'GET',
+            query: {
+                table: 'meeting_summary_temp',
+                isDesc: true,
+                dynamic_field1: 'type',
+                value1: 'invite_reminders'
+            }
+        })
+
+        return res
+    }
+
+    async function onSendNow(row: any) {
+        if (confirm(`Are you sure you want to send a reminder to ${row.person_email}?`)) {
+            isLoading.value = true
+            const { data }: any = await getInviteReminders();
+            const reminders_data = data || {}
+            // console.log("Reminders Data...", reminders_data);
+            const recipientEmails = row?.person_email?.split(',')
+            const recipientNames = row?.person_name?.split(',')
+            // console.log("Recipient...", recipientEmails, recipientNames);
+
+            let emailResponses = await Promise.all(
+                recipientEmails.map((email: any, index: number) =>
+                    sendEmail(row, email?.trim(), recipientNames[index], reminders_data?.[0])
+                )
+            );
+            // console.log("emailResponses...", emailResponses);
+
+            const allSuccessful = emailResponses.every(res => res?.success);
+            // console.log("allSuccessful...", allSuccessful);
+            if (allSuccessful) {
+                // console.log("Emails sent successfully to all recipients for client_response ID:", row.id);
+                const updateResponse: any = await updateClientResponse(row);
+                // console.log("Update response...", updateResponse);
+            }
+
+            await onUpdateData()
+            isLoading.value = false
+        }
+    }
+
+    async function sendEmail(data: any, email: any, name: any, reminders_data: any) {
+        const convertedDate = clientResponseDate(new Date(data?.next_meeting_date));
+        const replacements = {
+            name,
+            meeting_date: convertedDate,
+            zoom_link: data?.zoom_link,
+        };
+        let content = fillTemplate(reminders_data?.meeting_ai_summary, replacements);
+        content = plainTextToHtml(content);
+        // console.log('Email Content:', content);
+
+        const newSchedule = {
+            message: {
+                subject: reminders_data.model || 'Quick Reminder — Upcoming Meeting with Randy Jones',
+                body: {
+                    contentType: "HTML",
+                    content
+                },
+                toRecipients: [
+                    {
+                        emailAddress: {
+                            address: email
+                        }
+                    }
+                ]
+            },
+        };
+        // console.log('newSchedule:', newSchedule);
+
+        const response = await fetch(`/api/email/sent-reminders-now`, {
+            method: 'POST',
+            body: JSON.stringify({newSchedule})
+        })
+        const res = await response.json()
+        // console.log('Email sent response:', res);
         return res
     }
 
@@ -211,7 +321,7 @@
                 dynamic_value: row.id
             },
             body: {
-                is_sent_reminder: true,
+                is_script_sent: true,
                 sent_reminder_date: new Date()
             },
         })
@@ -278,22 +388,6 @@
                     }"
                 />
 
-                <!-- <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
-                    v-if="!isLoading">
-                    <div class="text-sm text-muted">
-                        {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
-                        {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
-                    </div>
-
-                    <div class="flex items-center gap-1.5">
-                    <UPagination
-                        :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-                        :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-                        :total="table?.tableApi?.getFilteredRowModel().rows.length"
-                        @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-                    />
-                    </div>
-                </div> -->
             </div>
         </UCard>
     </div>

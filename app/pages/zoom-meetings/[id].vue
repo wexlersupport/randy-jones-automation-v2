@@ -591,7 +591,7 @@
                                 <div class="flex w-full justify-end gap-4">
                                     <UButton v-if="!postgreMeeting" @click="onSubmit" icon="i-lucide-plus" size="lg" color="primary" variant="solid">Add AI Summary in Pipedrive Notes</UButton>
                                     <UButton v-if="postgreMeeting" disabled icon="i-lucide-check" size="lg" color="info" variant="outline">Already added in Pipedrive Notes</UButton>
-                                    <UButton :loading="isLoadingFollowUp" @click="onFollowUp" icon="i-lucide-send" size="lg" color="info" variant="solid">Follow Up</UButton>
+                                    <UButton :loading="isLoadingFollowUp" @click="onFollowUp" icon="i-lucide-send" size="lg" color="info" variant="solid">Create Meeting Invite</UButton>
                                 </div>
                             </div>
                             <div v-if="postgreMeeting" class="text-sm text-gray-500 italic mt-2">

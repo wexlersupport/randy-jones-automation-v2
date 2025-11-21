@@ -25,7 +25,17 @@
 
     onMounted(async () => {
         const {response} = await getPipedrivePerson()
-        persons.value = response || []
+        persons.value = response.map((person: any) => {
+            let meeting_type = '-'
+            if (person?.zoom_meetings?.length > 0) {
+                meeting_type = leafProcess()?.find((item: any) => item.value === person?.zoom_meetings[0]?.signature_id)?.label || 'Quick Call'
+            }
+            return {
+                ...person,
+                meeting_label: meeting_type
+            }
+        })
+        // console.log('persons.value:', persons.value)
 
         isLoading.value = false
     })
@@ -94,10 +104,14 @@
                 icon: 'i-lucide-list',
                 onSelect() {
                     // navigateTo('/for-follow-up/' + row.original.id)
-                    selectedPerson.value = persons.value.find(p => p.id === row.original.id)
-                    selectedPerson.value.primary_phone = selectedPerson.value?.phone?.length > 0 ? selectedPerson.value.phone[0]?.value : ''
-                    console.log('View Contact Details clicked', selectedPerson.value);
-                    isOpen.value = true
+                    // selectedPerson.value = persons.value.find(p => p.id === row.original.id)
+                    // selectedPerson.value.primary_phone = selectedPerson.value?.phone?.length > 0 ? selectedPerson.value.phone[0]?.value : ''
+                    // console.log('View Contact Details clicked', selectedPerson.value);
+                    // isOpen.value = true
+
+                    const id = row.original.id // Adjust depending on your row data
+                    const url = `https://randyjonesautomation.pipedrive.com/person/${id}`
+                    window.open(url, '_blank')
                 }
             },
             {
@@ -173,6 +187,11 @@
             }
         },
         {
+            id: 'meeting_label',
+            accessorKey: 'meeting_label',
+            header: 'Meeting Type'
+        },
+        {
             id: 'Last Meeting Date',
             accessorKey: 'zoom_summary',
             header: ({ column }) => {
@@ -244,7 +263,7 @@
 <template>
     <UDashboardPanel id="for-follow-up-index">
         <template #header>
-            <UDashboardNavbar title="For Follow Up">
+            <UDashboardNavbar title="Client Meeting Dashboard">
                 <template #leading>
                     <UDashboardSidebarCollapse />
                 </template>
