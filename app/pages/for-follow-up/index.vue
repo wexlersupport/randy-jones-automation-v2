@@ -22,6 +22,7 @@
     })
     const persons = ref<any[]>([])
     const selectedPerson = ref<any>(null)
+    const filterMeetingsOnly = ref(false)
 
     onMounted(async () => {
         const {response} = await getPipedrivePerson()
@@ -49,45 +50,44 @@
         return res
     }
 
-    
     const filteredRows = computed(() => {
-        if (search.value.startsWith('FilteredByStatus:')) {
-            const status = search.value.replace('FilteredByStatus:', '')
-            if (status === 'all') return persons.value
-            
-            return persons.value.filter((person: any) => {
-                return person.status === status
+        let rows = [...persons.value]    // always start with full list
+
+        // 1. APPLY MEETING FILTER
+        if (filterMeetingsOnly.value) {
+            rows = rows.filter((person: any) => {
+                const hasZoomMeeting = person?.zoom_meetings?.length > 0
+                const hasZoomSummary = !!person?.zoom_summary?.meeting_end_time
+                return hasZoomMeeting || hasZoomSummary
             })
         }
-        
-        if (!search.value) {
-            return persons.value
+
+        // 2. APPLY STATUS FILTER
+        if (search.value.startsWith('FilteredByStatus:')) {
+            const status = search.value.replace('FilteredByStatus:', '')
+
+            if (status !== 'all') {
+                rows = rows.filter((person: any) => person.status === status)
+            }
+
+            return rows   // now this is safe because meeting filter already applied
         }
-        
-        const searchTerm = search.value.toLowerCase()
-        return persons.value.filter((person: any) => {
-            if (person.name && 
-                String(person.name).toLowerCase().includes(searchTerm)) {
-                return true
-            }
-            
-            if (person.primary_email && 
-                String(person.primary_email).toLowerCase().includes(searchTerm)) {
-                return true
-            }
-            
-            if (person.org_name && 
-                String(person.org_name).toLowerCase().includes(searchTerm)) {
-                return true
-            }
-            
-            if (person.notes && 
-                String(person.notes).toLowerCase().includes(searchTerm)) {
-                return true
-            }
-            
-            return false
-        })
+
+        // 3. APPLY TEXT SEARCH (ONLY modifies rows, doesn't reset!)
+        if (search.value.trim()) {
+            const term = search.value.toLowerCase()
+
+            rows = rows.filter((person: any) => {
+                return (
+                    person.name?.toLowerCase().includes(term) ||
+                    person.primary_email?.toLowerCase().includes(term) ||
+                    person.org_name?.toLowerCase().includes(term) ||
+                    person.notes?.toLowerCase().includes(term)
+                )
+            })
+        }
+
+        return rows   // ALWAYS return final filtered result
     })
 
     function getRowItems(row: Row<any>) {
@@ -277,12 +277,19 @@
             />
 
             <div v-if="!isLoading" class="flex flex-wrap items-center justify-between gap-1.5">
-                <UInput
-                    v-model="search"
-                    class="max-w-sm"
-                    icon="i-lucide-search"
-                    placeholder="Input search term"
-                />
+                <div>
+                    <UInput
+                        v-model="search"
+                        class="max-w-sm"
+                        icon="i-lucide-search"
+                        placeholder="Input search term..."
+                    />
+                    <UCheckbox 
+                        v-model="filterMeetingsOnly"
+                        label="Show only contacts with meetings"
+                        class="mt-4"
+                    />
+                </div>
 
                 <div class="flex flex-wrap items-center gap-1.5">
                     <UDropdownMenu
