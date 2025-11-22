@@ -18,9 +18,17 @@ export default defineEventHandler(async (event) => {
     const summaryRes = await axios.get(summaryUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+    // Calculate cutoff date (today - 30 days)
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 30);
+    // Filter summaries by summary_created_time
+    const recentSummaries = summaryRes.data?.summaries?.filter((s: any) => {
+      const created = new Date(s.summary_created_time);
+      return created >= cutoffDate;
+    });
 
      const detailedMeetings = await Promise.all(
-      summaryRes.data?.summaries.map(async (m: any) => {
+      recentSummaries?.map(async (m: any) => {
         try {
           // Zoom UUIDs require *double* encoding
           const encodedUuid = encodeURIComponent(encodeURIComponent(m.meeting_uuid));

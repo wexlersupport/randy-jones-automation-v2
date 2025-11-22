@@ -104,14 +104,10 @@
                 icon: 'i-lucide-list',
                 onSelect() {
                     // navigateTo('/for-follow-up/' + row.original.id)
-                    // selectedPerson.value = persons.value.find(p => p.id === row.original.id)
-                    // selectedPerson.value.primary_phone = selectedPerson.value?.phone?.length > 0 ? selectedPerson.value.phone[0]?.value : ''
-                    // console.log('View Contact Details clicked', selectedPerson.value);
-                    // isOpen.value = true
-
-                    const id = row.original.id // Adjust depending on your row data
-                    const url = `https://randyjonesautomation.pipedrive.com/person/${id}`
-                    window.open(url, '_blank')
+                    selectedPerson.value = persons.value.find(p => p.id === row.original.id)
+                    selectedPerson.value.primary_phone = selectedPerson.value?.phone?.length > 0 ? selectedPerson.value.phone[0]?.value : ''
+                    console.log('View Contact Details clicked', selectedPerson.value);
+                    isOpen.value = true
                 }
             },
             {
@@ -258,6 +254,14 @@
     function select(row: TableRow<any>, e?: Event) {
         row.toggleSelected(!row.getIsSelected())
     }
+
+    function gotoPipedrive() {
+        if (selectedPerson.value) {
+            const id = selectedPerson.value.id // Adjust depending on your row data
+            const url = `https://randyjonesautomation.pipedrive.com/person/${id}`
+            window.open(url, '_blank')
+        }
+    }
 </script>
 
 <template>
@@ -390,10 +394,18 @@
             <UButton
                 block
                 color="info"
-                class="p-4"
+                @click="gotoPipedrive()"
+            >
+                Go to PipeDrive
+            </UButton>
+            <UButton
+                block
+                color="info"
+                variant="outline"
+                class="w-50"
                 @click="isOpen = false"
             >
-                OK
+                Close
             </UButton>
         </template>
     </USlideover>

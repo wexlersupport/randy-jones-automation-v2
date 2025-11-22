@@ -17,6 +17,20 @@ export default defineEventHandler(async (event) => {
         }
     );
     const accessToken = zoom_auth?.access_token || null;
+    // ---- 2. Fetch Zoom Summaries ----
+    const summaryRes = await axios.get(`${ZOOM_BASE_URL}/meetings/meeting_summaries`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    // Cutoff: 30 days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 30);
+    // Filter Zoom summaries
+    const recentSummaries = summaryRes.data?.summaries?.filter((s: any) => {
+      const created = new Date(s.summary_created_time);
+      return created >= cutoffDate;
+    }) || [];
+    // Extract UUIDs to match PostgreSQL rows
+    const recentUUIDs = recentSummaries.map((s: any) => s.meeting_uuid);
 
     const response = await axios.get(
       `${PIPEDRIVE_BASE_URL}/persons?api_token=${pipedriveApiKey}`
@@ -27,21 +41,22 @@ export default defineEventHandler(async (event) => {
       persons.map(async (person: any) => {
         const query = `SELECT * FROM zoom_meetings WHERE person_id = $1 ORDER BY created_at DESC`;
         const rows = await sql(query, [person.id]);
+        // ---- Filter rows based on recent Zoom summaries ----
+        const filteredRows = rows.filter((r: any) =>
+          recentUUIDs.includes(r.meeting_uuid)
+        );
 
         let detailRes: any = null;
-        // if (rows.length === 0 ) throw new Error("No Zoom meetings found for this person.");
-        if (rows.length > 0) {
-          const meeting_uuid = rows.length > 0 ? rows[0]?.meeting_uuid : null;
-          const encodedUuid = encodeURIComponent(encodeURIComponent(meeting_uuid || ''));
-          const detailUrl = `${ZOOM_BASE_URL}/meetings/${encodedUuid}/meeting_summary`;
-          detailRes = await axios.get(detailUrl, {
+        if (filteredRows.length > 0) {
+          const encodedUuid = encodeURIComponent(encodeURIComponent(filteredRows[0]?.meeting_uuid));
+          detailRes = await axios.get(`${ZOOM_BASE_URL}/meetings/${encodedUuid}/meeting_summary`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
         }
 
         return {
           ...person,
-          zoom_meetings: rows || null, // attach DB row if found
+          zoom_meetings: filteredRows || null,
           zoom_summary: detailRes?.data || null
         };
       })

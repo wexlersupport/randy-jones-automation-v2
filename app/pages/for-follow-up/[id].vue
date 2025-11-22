@@ -81,7 +81,12 @@
                 return orderA - orderB;
             });
         if (person.value?.zoom_meetings?.length) {
-            selectedZoomMeeting.value = person.value?.zoom_meetings?.[0]?.meeting_uuid || selectedZoomMeeting.value
+            const match = person.value?.zoom_meetings?.find((id: any) => 
+                zoomMeetingDetails.value.filter((m: any) => 
+                    m.meeting_uuid === id.meeting_uuid
+                ).length > 0
+            );
+            selectedZoomMeeting.value = match?.meeting_uuid || selectedZoomMeeting.value
         }
         const { response: meetingResponse } = await call('/api/zoom/meeting_detail', 'POST', { meetingId: selectedZoomMeeting.value })
         meetingDetail.value = meetingResponse || {}
