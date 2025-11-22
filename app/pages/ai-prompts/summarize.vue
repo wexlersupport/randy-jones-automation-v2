@@ -13,15 +13,8 @@
     // const promptData = data.value?.data?.[0] || null
     const aiPrompt = ref<string>(data.value?.data?.[0]?.meeting_ai_summary || '')
     const ai_password = ref<any>(null)
-    const adminPassword = ref('')
     const isAuthorized = ref(false)
     const correctPassword = ref('')
-
-    const newPassword = ref('')
-    const confirmPassword = ref('')
-    const oldPassword = ref('')
-    const isChangingPassword = ref(false)
-    const showChangePassword = ref(false)
 
     const handleSubmit = async() => {
         isLoading.value = true
@@ -106,89 +99,6 @@
 
         return res
     }
-
-    const verifyPassword = () => {
-        if (adminPassword.value === correctPassword.value) {
-            isAuthorized.value = true
-            toast.add({
-                title: 'Access Granted',
-                description: 'Admin permissions unlocked.',
-                icon: 'i-lucide-lock-open',
-                color: 'success'
-            })
-        } else {
-            toast.add({
-                title: 'Invalid Password',
-                description: 'The password you entered is incorrect.',
-                icon: 'i-lucide-alert-triangle',
-                color: 'error'
-            })
-        }
-    }
-
-    const updatePassword = async () => {
-        if (oldPassword.value !== correctPassword.value) {
-            toast.add({
-                title: 'Incorrect Old Password',
-                description: 'The old password you entered is incorrect.',
-                icon: 'i-lucide-alert-triangle',
-                color: 'error'
-            })
-            return
-        }
-
-        if (newPassword.value.trim().length < 4) {
-            toast.add({
-                title: 'Password Too Short',
-                description: 'New password must be at least 4 characters.',
-                icon: 'i-lucide-alert-triangle',
-                color: 'error'
-            })
-            return
-        }
-
-        if (newPassword.value !== confirmPassword.value) {
-            toast.add({
-                title: 'Password Mismatch',
-                description: 'New password and confirmation do not match.',
-                icon: 'i-lucide-alert-triangle',
-                color: 'error'
-            })
-            return
-        }
-
-        // Save in DB
-        const created_at = formatJsDateToDatetime(new Date())
-        const res = await $fetch('/api/postgre/' + ai_password.value.id, {
-            method: 'PUT',
-            query: {
-                table: 'meeting_summary_temp',
-                dynamic_field: 'id',
-                dynamic_value: ai_password.value.id
-            },
-            body: {
-                created_at,
-                openid_id: newPassword.value
-            },
-        })
-        // console.log('Password update response:', res)
-
-        correctPassword.value = newPassword.value // update frontend value
-
-        toast.add({
-            title: 'Password Updated',
-            description: 'The admin password has been successfully changed.',
-            icon: 'i-lucide-check-circle',
-            color: 'success'
-        })
-
-        // Reset UI
-        oldPassword.value = ''
-        newPassword.value = ''
-        confirmPassword.value = ''
-        isChangingPassword.value = false
-        showChangePassword.value = false
-    }
 </script>
 
 <template>
@@ -206,71 +116,8 @@
                             <h2 class="text-lg font-semibold">AI prompts to summarize Zoom Meetings</h2>
                         </template>
                         <div class="grid grid-cols-1 gap-3">
-                            <div class="flex items-center space-x-3">
-                                <UInput
-                                    v-model="adminPassword"
-                                    type="password"
-                                    placeholder="Enter admin password"
-                                    class="w-50"
-                                />
-
-                                <UButton
-                                    color="info"
-                                    icon="i-lucide-lock"
-                                    @click="verifyPassword"
-                                >
-                                    Unlock AI Prompt
-                                </UButton>
-                                <UButton
-                                    v-if="isAuthorized"
-                                    color="neutral"
-                                    icon="i-lucide-key"
-                                    class="w-fit"
-                                    @click="showChangePassword = !showChangePassword"
-                                >
-                                    {{ showChangePassword ? 'Hide Password Change' : 'Change Admin Password' }}
-                                </UButton>
-                            </div>
-                            <span class="text-xs text-neutral-400 italic mb-2">
-                                *To change admin password, please unlock the AI prompt first.
-                            </span>
-
-                            <!-- CHANGE PASSWORD SECTION -->
-                            <div v-if="isAuthorized && showChangePassword" class="p-4 border rounded-md border-neutral-700 bg-neutral-900 space-y-4">
-                                <h3 class="text-md font-semibold text-white">Change Admin Password</h3>
-
-                                <div class="grid grid-cols-1 gap-3">
-                                    <UInput
-                                        v-model="oldPassword"
-                                        type="password"
-                                        placeholder="Enter old password"
-                                        class="w-60"
-                                    />
-
-                                    <UInput
-                                        v-model="newPassword"
-                                        type="password"
-                                        placeholder="Enter new password"
-                                        class="w-60"
-                                    />
-
-                                    <UInput
-                                        v-model="confirmPassword"
-                                        type="password"
-                                        placeholder="Confirm new password"
-                                        class="w-60"
-                                    />
-
-                                    <UButton
-                                        color="warning"
-                                        icon="i-lucide-key"
-                                        class="w-fit"
-                                        @click="updatePassword"
-                                    >
-                                        Update Password
-                                    </UButton>
-                                </div>
-                            </div>
+                            <!-- ADMIN PASSWORD MODULE -->
+                            <AdminPassword @authorized="isAuthorized = true" />
 
                             <UTextarea
                                 v-model="aiPrompt"

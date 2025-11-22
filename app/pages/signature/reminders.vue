@@ -15,6 +15,7 @@ import { is } from 'valibot';
     const remindersData = ref<any>(data.value?.data?.[0] || null)
     const subject = ref<string>(remindersData.value?.model || '')
     const content = ref<string>(remindersData.value?.meeting_ai_summary || '')
+    const isAuthorized = ref(false)
 
     onMounted(async () => {
         setTimeout(() => {
@@ -72,8 +73,11 @@ import { is } from 'valibot';
             <div class="flex items-center mb-6">
                 <h2 class="text-lg font-bold">Invite Reminders Template</h2>
             </div>
+            <!-- ADMIN PASSWORD MODULE -->
+            <AdminPassword @authorized="isAuthorized = true" />
+            <hr class="mt-4" />
             <!-- Helper notice -->
-            <div class="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 p-3 mb-4 text-sm">
+            <div v-if="!isLoading && isAuthorized" class="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 p-3 my-4 text-sm">
                 <strong>Placeholders:</strong> these auto-fill when sending. Please don’t edit the curly-brace text. <br />
                 Available: <code v-pre>{{name}}</code> and <code v-pre>{{meeting_date}}</code>.
             </div>
@@ -81,15 +85,16 @@ import { is } from 'valibot';
                 v-if="isLoading"
                 class="w-full border rounded-md p-6 my-4 border-neutral-800"
             />
-            <div v-if="!isLoading" class="flex items-center justify-between mb-2 gap-2">
+            <div v-if="!isLoading && isAuthorized" class="flex items-center justify-between mb-2 gap-2">
                 <label class="w-25 font-medium text-gray-600 dark:text-gray-300">Subject: </label>
                 <input
                     v-model="subject"
                     type="text"
+                    :disabled="!isAuthorized"
                     class="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 />
             </div>
-            <div v-if="!isLoading">
+            <div v-if="!isLoading && isAuthorized">
                 <ClientOnly>
                     <QuillEditor
                         contentType="html"
@@ -99,13 +104,14 @@ import { is } from 'valibot';
                     />
                 </ClientOnly>
             </div>
-            <div class="grid grid-cols-1 gap-3 my-4">
+            <div v-if="!isLoading && isAuthorized" class="grid grid-cols-1 gap-3 my-4">
                 <UButton
-                    color="primary"
+                    :color="isAuthorized ? 'primary' : 'neutral'"
                     size="lg"
                     class="w-fit"
                     icon="i-lucide-save"
                     :loading="isLoading"
+                    :disabled="!isAuthorized"
                     @click="onSave"
                 >
                     Save Template
