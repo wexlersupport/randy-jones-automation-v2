@@ -517,9 +517,10 @@
                                     v-model="selectedZoomMeeting"
                                     :items="zoomMeetingDetails.map((item: any) => ({ value: item.meeting_uuid, label: item.label }))"
                                     placeholder="Choose one or more attachments"
-                                    class="w-full"
+                                    class="w-full mb-0"
                                     @change="handleChangeZoomMeeting"
                                 />
+                                <span class="text-xs text-neutral-700 italic leading-snug">*Meetings created more than 30 days ago are automatically removed.</span>
                             </div>
                             <div class="w-full space-y-1">
                                 <label class="block text-sm font-medium w-50 my-auto text-neutral-500">Sender Email</label>
